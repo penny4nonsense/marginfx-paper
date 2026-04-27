@@ -22,16 +22,26 @@ MODE = 'production'  # 'dev' or 'production'
 # ---------------------------------------------------------------------------
 
 if MODE == 'dev':
-    N_ITER_REGRESSION = 50
-    N_ITER_CLASSIFICATION = 20
-    SAMPLE_SIZES = [250, 1000]
-    MODELS = ['logistic', 'rf', 'xgboost']  # TF excluded for speed in dev
+    N_ITER_REGRESSION = 1000
+    N_ITER_CLASSIFICATION = 500
+    SAMPLE_SIZES = [250, 500, 1000, 2500, 5000]
+    MODELS = ['logistic', 'rf', 'xgboost', 'tensorflow']
+    # Calibration-specific
+    N_ITER_CALIBRATION = 100
+    N_BOOTSTRAP_CALIBRATION = 100
+    CALIBRATION_MODELS = ['logistic', 'xgboost']
+    CALIBRATION_SAMPLE_SIZES = [250, 1000]
 
 elif MODE == 'production':
     N_ITER_REGRESSION = 1000
     N_ITER_CLASSIFICATION = 500
     SAMPLE_SIZES = [250, 500, 1000, 2500, 5000]
     MODELS = ['logistic', 'rf', 'xgboost', 'tensorflow']
+    # Calibration-specific
+    N_ITER_CALIBRATION = 500
+    N_BOOTSTRAP_CALIBRATION = 200
+    CALIBRATION_MODELS = ['logistic', 'xgboost', 'tensorflow']
+    CALIBRATION_SAMPLE_SIZES = [250, 1000, 5000]
 
 # ---------------------------------------------------------------------------
 # DGP settings
@@ -100,19 +110,17 @@ N_JOBS = -1
 
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-DATA_DIR = os.path.join(BASE_DIR, '', 'data')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # simulations/
 
 SIM1_RESULTS_DIR = os.path.join(
-    BASE_DIR, '', 'sim1_ame_recovery', 'results'
+    BASE_DIR, 'sim1_ame_recovery', 'results'
 )
 SIM2_RESULTS_DIR = os.path.join(
-    BASE_DIR, 'sim2_se_calibration', 'sim1_ame_recovery/results'
+    BASE_DIR, 'sim2_se_calibration', 'results'
 )
-
-# Ground truth AMEs saved here — computed once, reused across simulations
-GROUND_TRUTH_DIR = os.path.join(BASE_DIR, 'sim1_ame_recovery/ground_truth')
+GROUND_TRUTH_DIR = os.path.join(
+    BASE_DIR, 'sim1_ame_recovery', 'ground_truth'
+)
 
 # ---------------------------------------------------------------------------
 # Reproducibility
@@ -150,3 +158,7 @@ def print_config():
 
 if __name__ == '__main__':
     print_config()
+    print("BASE_DIR:", BASE_DIR)
+    print("SIM1_RESULTS_DIR:", SIM1_RESULTS_DIR)
+    print("SIM2_RESULTS_DIR:", SIM2_RESULTS_DIR)
+    print("GROUND_TRUTH_DIR:", GROUND_TRUTH_DIR)
