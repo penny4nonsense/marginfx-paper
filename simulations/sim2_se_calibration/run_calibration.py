@@ -29,11 +29,16 @@ To change settings (dev vs production, models, bootstrap replicates):
 """
 
 import os
+os.environ['CUDA_VISIBLE_DEVICES'] = ''
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import sys
 import time
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
+
+import warnings
+warnings.filterwarnings('ignore')
 
 # ---------------------------------------------------------------------------
 # Path setup
@@ -236,6 +241,7 @@ def run_one_iteration(
             'elapsed':    elapsed,
         })
 
+    print('.', end='', flush=True)
     return rows
 
 
