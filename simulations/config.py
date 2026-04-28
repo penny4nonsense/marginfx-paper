@@ -102,7 +102,7 @@ TF_LEARNING_RATE = 1e-3
 # Number of parallel jobs for joblib
 # -1 uses all available cores
 # Set to 1 to disable parallelization (useful for debugging)
-N_JOBS = 16
+N_JOBS = 8
 
 # ---------------------------------------------------------------------------
 # Paths
