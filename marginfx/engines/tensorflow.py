@@ -280,7 +280,7 @@ def get_engine(
     >>> result.summary()
     """
     predict_fn = make_predict_fn(model)
-    fit_fn = make_fit_fn(model, n_epochs=n_epochs, batch_size=batch_size)
+    fit_fn = make_fit_fn(model, n_epochs=n_epochs, batch_size=batch_size, verbose=0)
     gradient_ame_fn = make_gradient_ame_fn(model)
 
     return predict_fn, fit_fn, gradient_ame_fn
