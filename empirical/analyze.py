@@ -127,7 +127,7 @@ def fit_model(
             tf.keras.layers.Dense(1, activation=output_activation),
         ])
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=float(1e-3)),
             loss=loss,
         )
         model.fit(X, y, epochs=50, batch_size=64, verbose=0)

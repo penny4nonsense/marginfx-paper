@@ -114,31 +114,41 @@ if __name__ == '__main__':
         dataset_name='credit_default',
     )
 
-    # --- SHAP for full specification ---
-    print("\nComputing SHAP values (full specification ABC)...")
     X_full = df[full_features].values.astype(float)
     y = df[OUTCOME].values.astype(float)
 
-    shap_results = compute_shap_full(
-        model_names=MODELS,
-        X=X_full,
-        y=y,
-        feature_names=full_features,
-        outcome_type=OUTCOME_TYPE,
-        seed=SEED,
-    )
+    # --- SHAP for full specification ---
+    shap_path = os.path.join(OUTPUT_DIR, 'adult_shap.parquet')
+    if os.path.exists(shap_path):
+        print("SHAP results already exist, skipping...")
+        shap_results = pd.read_parquet(shap_path)
+    else:
+        print("\nComputing SHAP values (full specification ABC)...")
+        shap_results = compute_shap_full(
+            model_names=MODELS,
+            X=X_full,
+            y=y,
+            feature_names=full_features,
+            outcome_type=OUTCOME_TYPE,
+            seed=SEED,
+        )
 
     # --- PDP for full specification ---
-    print("\nComputing PDP slopes (full specification ABC)...")
-    pdp_results = compute_pdp_full(
-        model_names=MODELS,
-        X=X_full,
-        y=y,
-        feature_names=full_features,
-        categorical_features=CATEGORICAL_FEATURES,
-        outcome_type=OUTCOME_TYPE,
-        seed=SEED,
-    )
+    pdp_path = os.path.join(OUTPUT_DIR, 'adult_pdp.parquet')
+    if os.path.exists(pdp_path):
+        print("PDP results already exist, skipping...")
+        pdp_results = pd.read_parquet(pdp_path)
+    else:
+        print("\nComputing PDP slopes (full specification ABC)...")
+        pdp_results = compute_pdp_full(
+            model_names=MODELS,
+            X=X_full,
+            y=y,
+            feature_names=full_features,
+            categorical_features=CATEGORICAL_FEATURES,
+            outcome_type=OUTCOME_TYPE,
+            seed=SEED,
+        )
 
     # --- Save results ---
     print("\nSaving results...")

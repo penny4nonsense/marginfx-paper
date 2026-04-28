@@ -205,10 +205,9 @@ def make_fit_fn(
         # Inherit compilation from original model
         new_model.compile(
             optimizer=current_model.optimizer.__class__(
-                learning_rate=current_model.optimizer.learning_rate
+                learning_rate=float(current_model.optimizer.learning_rate.numpy())
             ),
             loss=current_model.loss,
-            metrics=current_model.compiled_metrics._metrics,
         )
 
         X_tensor = tf.cast(tf.constant(X_boot), dtype=tf.float32)
