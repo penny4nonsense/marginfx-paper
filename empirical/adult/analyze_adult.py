@@ -51,7 +51,7 @@ N_BOOTSTRAP = 200
 SEED = 42
 OUTCOME_TYPE = 'classification'
 
-MODELS = ['logistic', 'rf', 'xgboost']
+MODELS = ['logistic', 'rf', 'xgboost', 'tensorflow']
 
 PROCESSED_PATH = os.path.join(
     PAPER_DIR, 'data', 'processed', 'adult', 'adult_processed.csv'

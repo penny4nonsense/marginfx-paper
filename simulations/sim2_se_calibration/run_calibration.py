@@ -181,6 +181,9 @@ def run_one_iteration(
         iteration, dgp, n, model, feature, ame_estimate, true_ame,
         se, conf_low, conf_high, covered, ci_width, elapsed.
     """
+    import os
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     seed = BASE_SEED + iteration
     rng = np.random.default_rng(seed)
 
