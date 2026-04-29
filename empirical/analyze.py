@@ -326,7 +326,7 @@ def compute_shap_full(
 
         try:
             model = fit_model(model_name, X, y, outcome_type, seed)
-            shap_results = compute_shap_ames(model, X, feature_names)
+            shap_results = compute_shap_ames(model, X, feature_names, outcome_type=outcome_type)
             elapsed = time.time() - t0
             print(f" done ({elapsed:.1f}s)")
 
