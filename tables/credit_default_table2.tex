@@ -1,0 +1,38 @@
+\begin{table*}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{UCI Credit Card Default: Model Comparison. Average marginal effects on P(Default), full specification (A+B+C).}
+\label{tab:credit_default_model_comparison}
+\begin{tabular}{lrrrr}
+\toprule
+Feature & Logistic & Random Forest & XGBoost & Neural Net \\
+\midrule
+age & 0.0005$^{*}$ & -0.0000 & -0.0004 & -0.0019$^{***}$ \\
+ & (0.0003) & (0.0000) & (0.0006) & (0.0003) \\
+female & -0.0175$^{***}$ & -0.0062$^{***}$ & -0.0146$^{***}$ & -0.0239$^{***}$ \\
+ & (0.0046) & (0.0000) & (0.0031) & (0.0015) \\
+education & 0.0052$^{*}$ & 0.0029$^{***}$ & 0.0030$^{*}$ & -0.0031$^{***}$ \\
+ & (0.0030) & (0.0001) & (0.0016) & (0.0003) \\
+married & 0.0155$^{***}$ & 0.0054$^{***}$ & 0.0142$^{***}$ & 0.0225$^{***}$ \\
+ & (0.0052) & (0.0000) & (0.0035) & (0.0017) \\
+\midrule
+avg\_pay\_status & -0.0296$^{***}$ & -0.0000 & 0.1027$^{***}$ & 0.0894$^{***}$ \\
+ & (0.0042) & (0.0000) & (0.0225) & (0.0061) \\
+months\_delayed & 0.0843$^{***}$ & 0.0179$^{***}$ & 0.0209$^{***}$ & 0.1135$^{***}$ \\
+ & (0.0021) & (0.0002) & (0.0009) & (0.0073) \\
+\midrule
+avg\_bill\_amt & 0.0000 & -0.0000$^{***}$ & -0.0000$^{*}$ & 0.0000$^{***}$ \\
+ & (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+avg\_pay\_amt & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & 0.0000 \\
+ & (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+pay\_ratio & -0.0502$^{***}$ & -0.4306$^{***}$ & -0.4396$^{***}$ & 0.0061$^{***}$ \\
+ & (0.0079) & (0.0058) & (0.1289) & (0.0005) \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

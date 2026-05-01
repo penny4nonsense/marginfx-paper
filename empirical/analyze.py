@@ -159,9 +159,10 @@ def compute_ames_all_specs(
     For each specification and model:
         1. Select features for this specification
         2. Fit the model
-        3. Compute AMEs with bootstrap SEs
-        4. Collect results into tidy DataFrame
-        5. Save partial results incrementally (if output_dir provided)
+        3. Compute fit statistics (McFadden R2 + Accuracy or R2 + RMSE)
+        4. Compute AMEs with bootstrap SEs
+        5. Collect results into tidy DataFrame
+        6. Save partial results incrementally (if output_dir provided)
 
     Parameters
     ----------
@@ -171,7 +172,6 @@ def compute_ames_all_specs(
         Processed dataset with all features and outcome.
     specifications : dict
         Mapping of spec name -> list of feature names.
-        e.g. {'A': ['age', 'female'], 'AB': ['age', 'female', 'hours']}
     outcome : str
         Name of outcome column.
     categorical_features : list of str
@@ -184,22 +184,29 @@ def compute_ames_all_specs(
         Random seed.
     output_dir : str, optional
         Directory to save partial results after each model completes.
-        If None, no incremental saving is performed.
     dataset_name : str, optional
         Dataset name used for partial results filename.
-        Required if output_dir is provided.
 
     Returns
     -------
     pd.DataFrame
         Tidy results with columns:
-        model, spec, feature, estimate, std_error,
-        statistic, p_value, conf_low, conf_high.
+        model, spec, term, estimate, std_error,
+        statistic, p_value, conf_low, conf_high,
+        fit_stat1, fit_stat1_name, fit_stat2, fit_stat2_name, n_obs.
+
+        For classification: fit_stat1=mcfadden_r2, fit_stat2=accuracy
+        For regression:     fit_stat1=r2,           fit_stat2=rmse
     """
+    from sklearn.metrics import (
+        log_loss, accuracy_score, r2_score, mean_squared_error
+    )
+
     y = df[outcome].values.astype(float)
+    n_obs = len(y)
     all_rows = []
 
-    # Check for existing partial results — skip completed combinations
+    # Check for existing partial results
     partial_path = None
     completed = set()
     if output_dir and dataset_name:
@@ -210,9 +217,7 @@ def compute_ames_all_specs(
         if os.path.exists(partial_path):
             existing = pd.read_parquet(partial_path)
             all_rows.append(existing)
-            completed = set(
-                zip(existing['spec'], existing['model'])
-            )
+            completed = set(zip(existing['spec'], existing['model']))
             print(f"  Resuming from partial results "
                   f"({len(completed)} combinations already done)")
 
@@ -220,13 +225,10 @@ def compute_ames_all_specs(
         print(f"\n  Specification {spec_name}: {features}")
 
         X = df[features].values.astype(float)
-
-        # Categorical features for this specification
         cat_feats = [f for f in categorical_features if f in features]
 
         for model_name in model_names:
 
-            # Skip if already completed in a previous run
             if (spec_name, model_name) in completed:
                 print(f"    Skipping {model_name} (already done)")
                 continue
@@ -236,6 +238,42 @@ def compute_ames_all_specs(
 
             try:
                 model = fit_model(model_name, X, y, outcome_type, seed)
+
+                # --- Fit statistics ---
+                if outcome_type == 'classification':
+                    if hasattr(model, 'predict_proba'):
+                        y_pred_proba = model.predict_proba(X)[:, 1]
+                    else:
+                        import tensorflow as tf
+                        y_pred_proba = model(
+                            tf.cast(tf.constant(X), dtype=tf.float32),
+                            training=False
+                        ).numpy().squeeze()
+
+                    y_pred_class = (y_pred_proba > 0.5).astype(int)
+                    null_ll = log_loss(y, np.full_like(y_pred_proba, y.mean()))
+                    model_ll = log_loss(y, np.clip(y_pred_proba, 1e-10, 1 - 1e-10))
+                    fit_stat1 = float(1 - model_ll / null_ll)  # McFadden R2
+                    fit_stat2 = float(accuracy_score(y, y_pred_class))  # Accuracy
+                    fit_stat1_name = 'mcfadden_r2'
+                    fit_stat2_name = 'accuracy'
+
+                else:
+                    if hasattr(model, 'predict'):
+                        y_pred = model.predict(X)
+                    else:
+                        import tensorflow as tf
+                        y_pred = model(
+                            tf.cast(tf.constant(X), dtype=tf.float32),
+                            training=False
+                        ).numpy().squeeze()
+
+                    fit_stat1 = float(r2_score(y, y_pred))  # R2
+                    fit_stat2 = float(np.sqrt(mean_squared_error(y, y_pred)))  # RMSE
+                    fit_stat1_name = 'r2'
+                    fit_stat2_name = 'rmse'
+
+                # --- AMEs ---
                 result = mfx.fit(
                     model, X, y,
                     feature_names=features,
@@ -245,14 +283,20 @@ def compute_ames_all_specs(
                     verbose=False,
                 )
                 elapsed = time.time() - t0
-                print(f" done ({elapsed:.1f}s)")
+                print(f" done ({elapsed:.1f}s) | "
+                      f"{fit_stat1_name}={fit_stat1:.3f} "
+                      f"{fit_stat2_name}={fit_stat2:.3f}")
 
                 tidy = result.tidy()
                 tidy['model'] = model_name
                 tidy['spec'] = spec_name
+                tidy['fit_stat1'] = fit_stat1
+                tidy['fit_stat1_name'] = fit_stat1_name
+                tidy['fit_stat2'] = fit_stat2
+                tidy['fit_stat2_name'] = fit_stat2_name
+                tidy['n_obs'] = n_obs
                 all_rows.append(tidy)
 
-                # Save partial results after every completed combination
                 if partial_path:
                     partial = pd.concat(all_rows, ignore_index=True)
                     partial.to_parquet(partial_path, index=False)
@@ -267,9 +311,10 @@ def compute_ames_all_specs(
 
     results = pd.concat(all_rows, ignore_index=True)
 
-    # Reorder columns
     cols = ['model', 'spec', 'term', 'estimate', 'std_error',
-            'statistic', 'p_value', 'conf_low', 'conf_high']
+            'statistic', 'p_value', 'conf_low', 'conf_high',
+            'fit_stat1', 'fit_stat1_name', 'fit_stat2', 'fit_stat2_name',
+            'n_obs']
     cols = [c for c in cols if c in results.columns]
     results = results[cols]
 

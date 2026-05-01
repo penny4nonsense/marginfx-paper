@@ -1,0 +1,71 @@
+\documentclass[12pt]{article}
+
+% Page layout
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\doublespacing  % or \onehalfspacing
+
+% Math
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+
+% Tables
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{threeparttable}
+\usepackage{tabularx}
+
+% General
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{natbib}
+
+\usepackage{fancyhdr}
+\fancyhead{}
+\renewcommand{\headrulewidth}{0pt}
+\fancyfoot[C]{Copyright \textcopyright\ 2026 Jason Parker. All rights reserved.}
+
+% Theorems/Definitions if needed
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{definition}{Definition}
+
+\begin{document}
+	
+	\title{Model-Agnostic Interpretation of Machine Learning via Average Marginal Effects}
+	\author{Jason Parker}
+	\date{May 2026}
+	
+	\maketitle
+	\thispagestyle{fancy}
+	
+	\begin{abstract}
+	\end{abstract}
+	
+	\section{Introduction}
+	
+	\section{Methodology}
+	
+	\section{Empirical Examples}
+	
+	\subsection{UCI Adult Income}
+	
+	\subsection{UCI Credit Default}
+	
+	\subsection{Ames Housing}
+	
+	% Parenthetical: (De Cock, 2011)
+	The Ames Housing dataset \citep{decock2011}...
+	
+	% In-text: De Cock (2011)
+	\citet{decock2011} introduced the Ames Housing dataset...
+	
+	\section{Simulation}
+	
+	\section{Conclusion}
+	
+	\bibliographystyle{apalike}  % or plainnat, or whatever style you prefer
+	\bibliography{references}
+	
+\end{document}
