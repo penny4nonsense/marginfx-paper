@@ -128,6 +128,54 @@ SPEC_LABELS = {
 
 SPECS_ORDER = ['A', 'AB', 'AC', 'ABC']
 
+# ---------------------------------------------------------------------------
+# Simulation constants — defined here so all functions can access them
+# ---------------------------------------------------------------------------
+
+SIM1_RESULTS_DIR = os.path.join(PAPER_DIR, 'simulations', 'sim1_ame_recovery', 'results')
+SIM2_RESULTS_DIR = os.path.join(PAPER_DIR, 'simulations', 'sim2_se_calibration', 'results')
+
+SAMPLE_SIZES = [250, 500, 1000, 2500, 5000]
+CALIBRATION_SAMPLE_SIZES = [250, 1000, 5000]
+
+SIM_MODELS_REGRESSION = ['linear', 'rf', 'xgboost', 'tensorflow']
+SIM_MODELS_CLASSIFICATION = ['logistic', 'rf', 'xgboost', 'tensorflow']
+CALIBRATION_MODELS = ['logistic', 'xgboost', 'tensorflow']
+
+SIM_MODEL_LABELS = {
+    'linear':     'Linear',
+    'logistic':   'Logistic',
+    'rf':         'Random Forest',
+    'xgboost':    'XGBoost',
+    'tensorflow': 'Neural Net',
+}
+
+TRUE_AMES = {
+    'regression': {
+        'linear':      {'x1': 2.0,  'x2': 3.0,  'x3': 0.0, 'x4': 0.0},
+        'nonlinear':   {'x1': 0.0,  'x2': 3.0,  'x3': 0.0, 'x4': 0.0},
+        'interaction': {'x1': 2.0,  'x2': 3.0,  'x3': 0.0, 'x4': 0.0},
+    },
+    'classification': {
+        'linear':      {'x1': 0.199, 'x2': 0.298, 'x3': 0.0, 'x4': 0.0},
+        'nonlinear':   {'x1': 0.0,   'x2': 0.298, 'x3': 0.0, 'x4': 0.0},
+        'interaction': {'x1': 0.199, 'x2': 0.298, 'x3': 0.0, 'x4': 0.0},
+    },
+}
+
+FEATURES = ['x1', 'x2', 'x3', 'x4']
+
+DGP_LABELS = {
+    'linear':      'Linear',
+    'nonlinear':   'Nonlinear',
+    'interaction': 'Interaction',
+}
+
+OUTCOME_TYPE_LABELS = {
+    'regression':     'Regression',
+    'classification': 'Classification',
+}
+
 
 # ---------------------------------------------------------------------------
 # Formatting helpers
@@ -240,6 +288,48 @@ def iter_feature_groups(feature_groups: dict, available_features: list):
 
 
 # ---------------------------------------------------------------------------
+# Fit statistics helper
+# ---------------------------------------------------------------------------
+
+def fmt_fit_stat(value: float, stat_name: str) -> str:
+    if pd.isna(value):
+        return '--'
+    if stat_name == 'rmse':
+        return f"{value:,.1f}"
+    return f"{value:.3f}"
+
+
+def add_fit_stat_rows(lines, ames_df, models, specs, n_data_cols):
+    if 'fit_stat1' not in ames_df.columns:
+        return
+    lines.append(r'\midrule')
+    stat1_name = ames_df['fit_stat1_name'].iloc[0]
+    stat2_name = ames_df['fit_stat2_name'].iloc[0]
+    stat1_label = {'mcfadden_r2': 'McFadden $R^2$', 'r2': '$R^2$'}.get(stat1_name, stat1_name)
+    stat2_label = {'accuracy': 'Accuracy', 'rmse': 'RMSE'}.get(stat2_name, stat2_name)
+
+    # Stat 1 row
+    stat1_row = stat1_label
+    for model in models:
+        for spec in specs:
+            subset = ames_df[(ames_df['model'] == model) & (ames_df['spec'] == spec)]
+            val = subset['fit_stat1'].iloc[0] if len(subset) > 0 else np.nan
+            stat1_row += f' & {fmt_fit_stat(val, stat1_name)}'
+    stat1_row += r' \\'
+    lines.append(stat1_row)
+
+    # Stat 2 row
+    stat2_row = stat2_label
+    for model in models:
+        for spec in specs:
+            subset = ames_df[(ames_df['model'] == model) & (ames_df['spec'] == spec)]
+            val = subset['fit_stat2'].iloc[0] if len(subset) > 0 else np.nan
+            stat2_row += f' & {fmt_fit_stat(val, stat2_name)}'
+    stat2_row += r' \\'
+    lines.append(stat2_row)
+
+
+# ---------------------------------------------------------------------------
 # Table 1: Specification search
 # ---------------------------------------------------------------------------
 
@@ -247,7 +337,6 @@ def make_table1(ames_df, dataset, config):
     decimals = get_decimals(config['outcome_type'])
     models = config['spec_models']
     n_data_cols = len(models) * len(SPECS_ORDER)
-    n_total_cols = n_data_cols
 
     col_spec = 'l' + 'r' * n_data_cols
     caption = (
@@ -259,7 +348,7 @@ def make_table1(ames_df, dataset, config):
     lines = latex_begin(caption, label, col_spec)
 
     # Model header
-    model_header = ''
+    model_header = 'Variable'
     for model in models:
         model_header += f' & \\multicolumn{{{len(SPECS_ORDER)}}}{{c}}{{{MODEL_LABELS[model]}}}'
     model_header += r' \\'
@@ -282,16 +371,13 @@ def make_table1(ames_df, dataset, config):
     lines.append(spec_header)
     lines.append(r'\midrule')
 
-    # Get available features
     available_features = ames_df['term'].unique().tolist()
     feature_groups = config['feature_groups']
 
-    # Build summary data
     rows = []
     first_panel = True
 
     for panel_label, features in iter_feature_groups(feature_groups, available_features):
-        # Panel separator and label
         if not first_panel:
             lines.append(r'\midrule')
         first_panel = False
@@ -325,20 +411,19 @@ def make_table1(ames_df, dataset, config):
 
             rows.append(row)
 
-            # Estimate row
             est_row = f'\\quad {escape_feature(feature)}'
             for cell in est_cells:
                 est_row += f' & {cell}'
             est_row += r' \\'
             lines.append(est_row)
 
-            # SE row
             se_row = ''
             for cell in se_cells:
                 se_row += f' & {cell}'
             se_row += r' \\'
             lines.append(se_row)
 
+    add_fit_stat_rows(lines, ames_df, models, SPECS_ORDER, n_data_cols)
     lines.extend(latex_end_with_stars())
 
     summary_df = pd.DataFrame(rows)
@@ -364,8 +449,7 @@ def make_table2(ames_df, dataset, config):
 
     lines = latex_begin(caption, label, col_spec)
 
-    # Header
-    header = 'Feature'
+    header = 'Variable'
     for model in models:
         header += f' & {MODEL_LABELS[model]}'
     header += r' \\'
@@ -421,6 +505,7 @@ def make_table2(ames_df, dataset, config):
             se_row += r' \\'
             lines.append(se_row)
 
+    add_fit_stat_rows(lines, full_df, models, ['ABC'], n_data_cols)
     lines.extend(latex_end_with_stars())
     summary_df = pd.DataFrame(rows)
     return '\n'.join(lines), summary_df
@@ -446,14 +531,12 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
 
     lines = latex_begin(caption, label, col_spec)
 
-    # Model header
-    model_header = ''
+    model_header = 'Variable'
     for model in models:
         model_header += f' & \\multicolumn{{{len(methods)}}}{{c}}{{{MODEL_LABELS[model]}}}'
     model_header += r' \\'
     lines.append(model_header)
 
-    # Cmidrule
     cmidrule = ''
     col = 2
     for _ in models:
@@ -461,7 +544,6 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
         col += len(methods)
     lines.append(cmidrule)
 
-    # Method header
     method_header = ''
     for _ in models:
         for method in methods:
@@ -487,7 +569,6 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
             cells = []
 
             for model in models:
-                # AME
                 ame_sub = full_ame[
                     (full_ame['term'] == feature) &
                     (full_ame['model'] == model)
@@ -496,7 +577,6 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
                 row[f'{model}_ame'] = ame_val
                 cells.append(fmt_point(ame_val, decimals))
 
-                # SHAP
                 shap_val = np.nan
                 if shap_df is not None:
                     shap_sub = shap_df[
@@ -508,7 +588,6 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
                 row[f'{model}_shap'] = shap_val
                 cells.append(fmt_point(shap_val, decimals))
 
-                # PDP
                 pdp_val = np.nan
                 if pdp_df is not None:
                     pdp_sub = pdp_df[
@@ -534,69 +613,11 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
 
 
 # ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
-# Simulation results paths
-# ---------------------------------------------------------------------------
-
-SIM1_RESULTS_DIR = os.path.join(PAPER_DIR, 'simulations', 'sim1_ame_recovery', 'results')
-
-SAMPLE_SIZES = [250, 500, 1000, 2500, 5000]
-
-SIM_MODELS_REGRESSION = ['linear', 'rf', 'xgboost', 'tensorflow']
-SIM_MODELS_CLASSIFICATION = ['logistic', 'rf', 'xgboost', 'tensorflow']
-
-SIM_MODEL_LABELS = {
-    'linear':     'Linear',
-    'logistic':   'Logistic',
-    'rf':         'Random Forest',
-    'xgboost':    'XGBoost',
-    'tensorflow': 'Neural Net',
-}
-
-# True AMEs for each DGP and feature
-# regression: linear y = 2*x1 + 3*x2, nonlinear y = 2*x1^2 + 3*x2
-# classification: same DGPs wrapped in sigmoid
-TRUE_AMES = {
-    'regression': {
-        'linear':      {'x1': 2.0,  'x2': 3.0,  'x3': 0.0, 'x4': 0.0},
-        'nonlinear':   {'x1': 0.0,  'x2': 3.0,  'x3': 0.0, 'x4': 0.0},
-        'interaction': {'x1': 2.0,  'x2': 3.0,  'x3': 0.0, 'x4': 0.0},
-    },
-    'classification': {
-        'linear':      {'x1': 0.199, 'x2': 0.298, 'x3': 0.0, 'x4': 0.0},
-        'nonlinear':   {'x1': 0.0,   'x2': 0.298, 'x3': 0.0, 'x4': 0.0},
-        'interaction': {'x1': 0.199, 'x2': 0.298, 'x3': 0.0, 'x4': 0.0},
-    },
-}
-
-FEATURES = ['x1', 'x2', 'x3', 'x4']
-
-DGP_LABELS = {
-    'linear':      'Linear',
-    'nonlinear':   'Nonlinear',
-    'interaction': 'Interaction',
-}
-
-OUTCOME_TYPE_LABELS = {
-    'regression':     'Regression',
-    'classification': 'Classification',
-}
-
-
-# ---------------------------------------------------------------------------
-# Simulation table helpers
+# Simulation 1: AME Recovery helpers
 # ---------------------------------------------------------------------------
 
 def load_sim1_results(outcome_type: str, dgp: str) -> pd.DataFrame:
-    """
-    Load and concatenate all sim1 results for a given outcome type and DGP.
-
-    Returns a DataFrame with columns:
-        iteration, dgp, n, model, feature, ame_estimate, true_ame, ...
-    """
+    """Load and concatenate all sim1 results for a given outcome type and DGP."""
     prefix = 'regression' if outcome_type == 'regression' else 'classification'
     models = SIM_MODELS_REGRESSION if outcome_type == 'regression' else SIM_MODELS_CLASSIFICATION
     dfs = []
@@ -616,19 +637,7 @@ def load_sim1_results(outcome_type: str, dgp: str) -> pd.DataFrame:
 
 
 def compute_bias_rmse(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute mean bias and RMSE per model, n, feature.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Simulation results with columns: model, n, feature, ame_estimate, true_ame
-
-    Returns
-    -------
-    pd.DataFrame
-        Columns: model, n, feature, bias, rmse
-    """
+    """Compute mean bias and RMSE per model, n, feature."""
     rows = []
     for (model, n, feature), group in df.groupby(['model', 'n', 'feature']):
         bias = (group['ame_estimate'] - group['true_ame']).mean()
@@ -643,34 +652,13 @@ def compute_bias_rmse(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# ---------------------------------------------------------------------------
-# Simulation Table: AME Recovery (one per DGP x outcome_type)
-# ---------------------------------------------------------------------------
-
-def make_sim1_table(
-    outcome_type: str,
-    dgp: str,
-) -> tuple:
+def make_sim1_table(outcome_type: str, dgp: str) -> tuple:
     """
     Generate Simulation 1 AME Recovery table for one DGP and outcome type.
 
-    Structure:
-        Rows: features (x1, x2, x3, x4) with true AME shown
-              grouped by model with panel labels
-        Columns: n=250, n=500, n=1000, n=2500, n=5000
-        Each cell: bias on top, (RMSE) below
-
-    Parameters
-    ----------
-    outcome_type : str
-        'regression' or 'classification'
-    dgp : str
-        'linear', 'nonlinear', or 'interaction'
-
-    Returns
-    -------
-    tuple
-        (latex_string, summary_df)
+    Rows: features grouped by model with panel labels
+    Columns: n=250, n=500, n=1000, n=2500, n=5000
+    Each cell: bias on top, (RMSE) below
     """
     df = load_sim1_results(outcome_type, dgp)
     if df.empty:
@@ -681,26 +669,24 @@ def make_sim1_table(
     true_ames = TRUE_AMES[outcome_type][dgp]
 
     n_cols = len(SAMPLE_SIZES)
-    col_spec = 'lr' + 'r' * n_cols  # feature, true AME, then sample size columns
+    col_spec = 'lr' + 'r' * n_cols
 
     outcome_label = OUTCOME_TYPE_LABELS[outcome_type]
     dgp_label = DGP_LABELS[dgp]
 
+    n_iters = '1,000' if outcome_type == 'regression' else '500'
     caption = (
-        f"Simulation 1: AME Recovery — {dgp_label} DGP ({outcome_label}). "
-        f"Mean bias and RMSE (in parentheses) across 1{',000' if outcome_type == 'regression' else ',000'} "
-        f"Monte Carlo iterations."
+        f"Simulation 1: AME Recovery --- {dgp_label} DGP ({outcome_label}). "
+        f"Mean bias and RMSE (in parentheses) across {n_iters} Monte Carlo iterations."
     )
     label = f"tab:sim1_{outcome_type}_{dgp}"
 
     lines = latex_begin(caption, label, col_spec)
 
-    # Spanning header: "Bias (RMSE)" over sample size columns
-    span_header = f' & & \\multicolumn{{{len(SAMPLE_SIZES)}}}{{c}}{{Bias (RMSE)}} \\\\'
+    span_header = f' & & \\multicolumn{{{n_cols}}}{{c}}{{Bias (RMSE)}} \\\\'
     lines.append(span_header)
-    lines.append(f'\\cmidrule(lr){{3-{2 + len(SAMPLE_SIZES)}}}')
+    lines.append(f'\\cmidrule(lr){{3-{2 + n_cols}}}')
 
-    # Column header row
     header = 'Variable & True AME'
     for n in SAMPLE_SIZES:
         header += f' & $n={n:,}$'
@@ -708,13 +694,11 @@ def make_sim1_table(
     lines.append(header)
     lines.append(r'\midrule')
 
-    # Data rows — grouped by model
     summary_rows = []
     first_model = True
 
     models = SIM_MODELS_REGRESSION if outcome_type == 'regression' else SIM_MODELS_CLASSIFICATION
     for model in models:
-        # Model panel label
         if not first_model:
             lines.append(r'\midrule')
         first_model = False
@@ -742,7 +726,6 @@ def make_sim1_table(
                     rmse = subset['rmse'].values[0]
                     bias_cells.append(f"{bias:.4f}")
                     rmse_cells.append(f"({rmse:.4f})")
-
                     summary_rows.append({
                         'outcome_type': outcome_type,
                         'dgp': dgp,
@@ -754,28 +737,171 @@ def make_sim1_table(
                         'rmse': rmse,
                     })
 
-            # Bias row
             bias_row = f'\\quad {escape_feature(feature)} & {true_ame:.3f}'
             for cell in bias_cells:
                 bias_row += f' & {cell}'
             bias_row += r' \\'
             lines.append(bias_row)
 
-            # RMSE row
             rmse_row = ' & '
             for cell in rmse_cells:
                 rmse_row += f' & {cell}'
             rmse_row += r' \\'
             lines.append(rmse_row)
 
-    # Footer — no stars for simulation tables
     lines += [
         r'\bottomrule',
         r'\end{tabular}',
         r'\begin{tablenotes}',
         r'\footnotesize',
         r'\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over '
-        f'{"1,000" if outcome_type == "regression" else "500"} Monte Carlo iterations. '
+        f'{n_iters} Monte Carlo iterations. '
+        r'True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. '
+        r'Noise features x3 and x4 have true AME of zero.',
+        r'\end{tablenotes}',
+        r'\end{threeparttable}',
+        r'\end{table*}',
+    ]
+
+    summary_df = pd.DataFrame(summary_rows)
+    return '\n'.join(lines), summary_df
+
+
+# ---------------------------------------------------------------------------
+# Simulation 2: SE Calibration helpers
+# ---------------------------------------------------------------------------
+
+def load_sim2_results(dgp: str) -> pd.DataFrame:
+    """Load and concatenate all sim2 calibration results for a given DGP."""
+    dfs = []
+    for model in CALIBRATION_MODELS:
+        for n in CALIBRATION_SAMPLE_SIZES:
+            fname = f'calibration_{dgp}_n{n}_{model}.parquet'
+            fpath = os.path.join(SIM2_RESULTS_DIR, fname)
+            if os.path.exists(fpath):
+                df = pd.read_parquet(fpath)
+                dfs.append(df)
+    if not dfs:
+        return pd.DataFrame()
+    return pd.concat(dfs, ignore_index=True)
+
+
+def compute_coverage_stats(df: pd.DataFrame) -> pd.DataFrame:
+    """Compute mean coverage and mean CI width per model, n, feature."""
+    rows = []
+    for (model, n, feature), group in df.groupby(['model', 'n', 'feature']):
+        rows.append({
+            'model': model,
+            'n': n,
+            'feature': feature,
+            'coverage': group['covered'].mean(),
+            'ci_width': group['ci_width'].mean(),
+        })
+    return pd.DataFrame(rows)
+
+
+def make_sim2_table(dgp: str = 'linear') -> tuple:
+    """
+    Generate Simulation 2 SE Calibration table.
+
+    Rows: features grouped by model with panel labels
+    Columns: n=250, n=1000, n=5000
+    Each cell: coverage rate on top, (mean CI width) below
+    Nominal coverage target stated in caption.
+    """
+    df = load_sim2_results(dgp)
+    if df.empty:
+        print(f"    WARNING: No calibration data found for dgp={dgp}")
+        return '', pd.DataFrame()
+
+    stats = compute_coverage_stats(df)
+    available_models = [m for m in CALIBRATION_MODELS if m in stats['model'].unique()]
+    true_ame_map = df.groupby('feature')['true_ame'].first().to_dict()
+
+    n_cols = len(CALIBRATION_SAMPLE_SIZES)
+    col_spec = 'lr' + 'r' * n_cols
+
+    caption = (
+        f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP (Classification). "
+        f"Nominal coverage target: 95\\%. "
+        f"Coverage rate and mean 95\\% CI width (in parentheses) across 500 Monte Carlo iterations."
+    )
+    label = f"tab:sim2_calibration_{dgp}"
+
+    lines = latex_begin(caption, label, col_spec)
+
+    span_header = f' & & \\multicolumn{{{n_cols}}}{{c}}{{Coverage (CI Width)}} \\\\'
+    lines.append(span_header)
+    lines.append(f'\\cmidrule(lr){{3-{2 + n_cols}}}')
+
+    header = 'Variable & True AME'
+    for n in CALIBRATION_SAMPLE_SIZES:
+        header += f' & $n={n:,}$'
+    header += r' \\'
+    lines.append(header)
+    lines.append(r'\midrule')
+
+    summary_rows = []
+    first_model = True
+
+    for model in available_models:
+        if not first_model:
+            lines.append(r'\midrule')
+        first_model = False
+        lines.append(
+            f"\\multicolumn{{{n_cols + 2}}}{{l}}"
+            f"{{\\textit{{Panel: {SIM_MODEL_LABELS[model]}}}}} \\\\"
+        )
+
+        for feature in FEATURES:
+            true_ame = true_ame_map.get(feature, 0.0)
+            cov_cells = []
+            width_cells = []
+
+            for n in CALIBRATION_SAMPLE_SIZES:
+                subset = stats[
+                    (stats['model'] == model) &
+                    (stats['n'] == n) &
+                    (stats['feature'] == feature)
+                ]
+                if len(subset) == 0:
+                    cov_cells.append('--')
+                    width_cells.append('')
+                else:
+                    coverage = subset['coverage'].values[0]
+                    ci_width = subset['ci_width'].values[0]
+                    cov_cells.append(f"{coverage:.3f}")
+                    width_cells.append(f"({ci_width:.4f})")
+                    summary_rows.append({
+                        'dgp': dgp,
+                        'model': model,
+                        'n': n,
+                        'feature': feature,
+                        'true_ame': true_ame,
+                        'coverage': coverage,
+                        'ci_width': ci_width,
+                    })
+
+            cov_row = f'\\quad {escape_feature(feature)} & {true_ame:.3f}'
+            for cell in cov_cells:
+                cov_row += f' & {cell}'
+            cov_row += r' \\'
+            lines.append(cov_row)
+
+            width_row = ' & '
+            for cell in width_cells:
+                width_row += f' & {cell}'
+            width_row += r' \\'
+            lines.append(width_row)
+
+    lines += [
+        r'\bottomrule',
+        r'\end{tabular}',
+        r'\begin{tablenotes}',
+        r'\footnotesize',
+        r'\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) '
+        r'computed over 500 Monte Carlo iterations. '
+        r'Bootstrap SEs from nonparametric bootstrap with 200 replicates. '
         r'True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. '
         r'Noise features x3 and x4 have true AME of zero.',
         r'\end{tablenotes}',
@@ -828,7 +954,7 @@ def main():
             print(f"    Saved: {tex_path}")
 
     # --- Simulation 1 tables ---
-    print(f"\nGenerating simulation tables...")
+    print(f"\nGenerating simulation 1 tables...")
 
     for outcome_type in ['regression', 'classification']:
         for dgp in ['linear', 'nonlinear', 'interaction']:
@@ -845,6 +971,23 @@ def main():
                 if not df.empty:
                     df.to_parquet(pq_path, index=False)
                 print(f"    Saved: {tex_path}")
+
+    # --- Simulation 2 tables ---
+    print(f"\nGenerating simulation 2 calibration tables...")
+
+    for dgp in ['linear']:
+        print(f"  Generating sim2_calibration_{dgp}...")
+        tex, df = make_sim2_table(dgp)
+
+        if tex:
+            tex_path = os.path.join(TABLES_DIR, f'sim2_calibration_{dgp}.tex')
+            pq_path  = os.path.join(TABLES_DIR, f'sim2_calibration_{dgp}.parquet')
+
+            with open(tex_path, 'w') as f:
+                f.write(tex)
+            if not df.empty:
+                df.to_parquet(pq_path, index=False)
+            print(f"    Saved: {tex_path}")
 
     print(f"\nAll tables generated. Output in: {TABLES_DIR}")
 

@@ -6,7 +6,7 @@
 \label{tab:ames_housing_spec_search}
 \begin{tabular}{lrrrrrrrr}
 \toprule
- & \multicolumn{4}{c}{Linear} & \multicolumn{4}{c}{Random Forest} \\
+Variable & \multicolumn{4}{c}{Linear} & \multicolumn{4}{c}{Random Forest} \\
 \cmidrule(lr){2-5} \cmidrule(lr){6-9} 
  & Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
 \midrule
@@ -39,6 +39,9 @@
  &  &  & (7451.69) & (9809.90) &  &  & (999.15) & (255.98) \\
 \quad nbhd\_mid & -- & -- & 31391.51$^{***}$ & 7508.07 & -- & -- & 25973.59$^{***}$ & 5949.97$^{***}$ \\
  &  &  & (3266.03) & (5151.49) &  &  & (531.38) & (259.64) \\
+\midrule
+$R^2$ & 0.584 & 0.758 & 0.739 & 0.802 & 0.829 & 0.937 & 0.926 & 0.953 \\
+RMSE & 51,243.9 & 39,080.1 & 40,596.4 & 35,355.5 & 32,830.9 & 19,881.6 & 21,534.2 & 17,244.4 \\
 \bottomrule
 \end{tabular}
 \begin{tablenotes}

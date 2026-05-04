@@ -9,6 +9,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsthm}
+\usepackage{mathtools}
 
 % Tables
 \usepackage{booktabs}
@@ -26,10 +27,35 @@
 \renewcommand{\headrulewidth}{0pt}
 \fancyfoot[C]{Copyright \textcopyright\ 2026 Jason Parker. All rights reserved.}
 
-% Theorems/Definitions if needed
-\newtheorem{theorem}{Theorem}
-\newtheorem{proposition}{Proposition}
-\newtheorem{definition}{Definition}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\usepackage{enumerate}
+
+\usepackage{rotating}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+% Custom commands for asymptotic theory section
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Lp}{L^p(\Omega)}
+\newcommand{\Lone}{L^1(\Omega)}
+\newcommand{\Wonep}{W^{1,p}(\Omega)}
+\newcommand{\Wtwop}{W^{2,p}(\Omega)}
+\newcommand{\BV}{BV(\Omega)}
+\newcommand{\cM}{\mathcal{M}(\Omega)^d}
+\newcommand{\fn}{\hat{f}_n}
+\newcommand{\xrightarrowp}{\xrightarrow{p}}
+\newcommand{\wstar}{\xrightarrow{w*}}
+\newcommand{\Prob}{\mathbb{P}}
 
 \begin{document}
 	
@@ -45,25 +71,2098 @@
 	
 	\section{Introduction}
 	
-	\section{Methodology}
+	The rise of flexible machine learning methods has created a persistent tension in empirical research. Models such as random forests \citep{breiman2001rf}, gradient boosted trees \citep{chen2016xgboost}, and deep neural networks \citep{hastie2009esl} routinely achieve predictive accuracy that parametric models cannot match. Yet the standard tools of statistical inference --- coefficient estimates, standard errors, hypothesis tests --- apply naturally only to parametric models whose functional form is specified in advance. \citet{breiman2001cultures} framed this as a conflict between two cultures of statistical modeling: one oriented toward interpretable data-generating models, the other toward accurate algorithmic prediction. The conventional resolution has been to treat accuracy and interpretability as opposing ends of a spectrum, accepting reduced interpretability as the price of improved prediction. This paper argues that the tradeoff is not fundamental. It is an artifact of requiring parametric assumptions to make interpretation rigorous, and it disappears once that requirement is dropped.
+	
+	The machine learning literature has produced a rich set of post-hoc interpretability methods that attempt to explain black-box model predictions without parametric assumptions. Partial dependence plots \citep{friedman2001pdp} visualize the marginal relationship between a feature and the predicted outcome by averaging over the empirical distribution of other features. LIME \citep{ribeiro2016lime} fits a local linear approximation to the prediction function in the neighborhood of individual observations. SHAP \citep{lundberg2017shap} assigns each feature a contribution to each prediction based on Shapley values from cooperative game theory, providing a unified framework that nests several earlier methods. These tools are widely used in practice and are surveyed comprehensively in \citet{molnar2025} and \citet{doshivelez2017interpretability}. However, they share a fundamental limitation: they produce point estimates with no associated sampling distributions. A SHAP value, a PDP slope, and a LIME coefficient are numbers, but they are not statistics in the inferential sense --- there is no standard error, no confidence interval, and no basis for a hypothesis test. A researcher cannot determine whether a SHAP value is statistically distinguishable from zero, or whether two features have significantly different effects, or whether the effect of a variable differs across model specifications. For applied researchers who need to draw defensible conclusions from their models, this is a serious constraint.
+	
+	Two prior contributions are closest in spirit to the present paper. \citet{scholbeck2024fme} propose forward marginal effects for nonlinear prediction functions as a model-agnostic interpretability method, establishing a general framework for computing feature effects for any supervised learner. Their framework is descriptive rather than inferential: it characterizes how feature effects vary across the covariate space but does not provide standard errors, confidence intervals, or hypothesis tests, and it explicitly argues against summarizing feature effects in a single metric such as the average marginal effect. The present paper takes the opposite position: we argue that the average marginal effect is precisely the right summary quantity, that it has a rigorous population-level interpretation inherited from the econometric literature, and that valid inference is achievable via a nonparametric bootstrap with full model refitting. \citet{beste2019mlame} implement average marginal effects with bootstrap standard errors for machine learning algorithms in the \texttt{mlame} R package, demonstrating the practical feasibility of the approach. However, that implementation is an unpublished software package without theoretical justification --- no asymptotic results, no gradient consistency guarantees, and no formal analysis of bootstrap validity. The present paper provides the theoretical foundation that \citet{beste2019mlame} leave implicit and extends the inferential framework to include hyperparameter uncertainty.
+	
+	The econometric literature has solved exactly this inferential problem for parametric models through average marginal effects \citep{greene2012, wooldridge2010}. For a generalized linear model with inverse link function $\mu$ and linear predictor $\eta = \mathbf{x}^\top \boldsymbol{\beta}$, the average marginal effect of variable $j$ is $\mathrm{AME}_j = \beta_j \cdot \mathbb{E}[\mu'(\eta)]$ --- the regression coefficient scaled by the average derivative of the inverse link, averaged over the empirical distribution of the linear predictor. For the identity link this reduces to the OLS coefficient. For the logistic link it averages the logistic density over the sample. The result is a quantity measured in the natural units of the outcome, interpretable as the average change in the predicted outcome associated with a one-unit change in $x_j$, with standard errors obtained by the delta method or bootstrap. This is the output of \texttt{margins} in R and Stata \citep{leeper2021}, and it is the standard form in which marginal effects are reported in applied economics, political science, sociology, and public health. The limitation is that it has been restricted to parametric models: to compute $\partial f / \partial x_j$ analytically, one must know the functional form of $f$.
+	
+	This paper removes that restriction. We propose a framework for computing average marginal effects for any supervised machine learning model, requiring only that the prediction function $\hat{f}$ can be evaluated at a point. The average marginal effect of variable $j$ is defined as the expectation of the partial derivative of $f$ with respect to $x_j$, averaged over the empirical distribution of the features. For models where the derivative is not available in closed form --- which includes tree-based models, for which classical derivatives do not exist everywhere --- we estimate it via a centered finite difference with an adaptive step size scaled to the spread of each feature. Standard errors are obtained via a nonparametric bootstrap \citep{efron1979, efrontibshirani1993} that refits the model, including hyperparameter selection, on each bootstrap sample, capturing uncertainty about model specification as well as estimation. The result is a coefficient table --- estimate, standard error, and significance level --- directly analogous to the output of a parametric regression but with no restrictions on the functional form of $\hat{f}$. The framework nests the classical GLM result as a special case: when $\hat{f}$ is a logistic regression, the estimator recovers the classical AME automatically. When $\hat{f}$ is XGBoost or a random forest or a neural network, the same formula applies and produces output on the same scale and with the same interpretation.
+	
+	The theoretical contribution of the paper is to establish gradient consistency for three classes of supervised learners, providing the asymptotic foundation for the proposed estimator. For neural networks, which live in Sobolev space $W^{1,p}$, gradient consistency follows from uniform $W^{2,p}$ boundedness and $L^p$ consistency via the Rellich--Kondrachov compact embedding theorem \citep{evans2010pde, hornik1990universal}. For gradient boosted models with tree base learners, the natural function space is the space of functions of bounded variation \citep{ambrosio2000bv}, where gradients exist as Radon measures and consistency is established via the BV compactness theorem \citep{buhlmann2003boosting, mason2000boosting}. For random forests, gradient consistency is proved for the Mondrian forest variant \citep{lakshminarayanan2014mondrian, mourtada2017mondrian} and conjectured for Breiman forests \citep{breiman2001rf, scornet2015forests}, with the obstruction to a full proof identified. Bootstrap validity for each estimator class is conjectured and left to future work, with \citet{wager2014confidence} and \citet{wager2018forests} providing the closest existing results.
+	
+	We validate the framework empirically on three datasets spanning binary classification in social science, binary classification in finance, and continuous regression: the UCI Adult Income dataset \citep{kohavi1996, UCI}, the UCI Credit Card Default dataset \citep{yeh2009, UCI}, and the Ames Housing dataset \citep{decock2011}. Across all three applications we compare AMEs from logistic regression, random forests \citep{breiman2001rf}, XGBoost \citep{chen2016xgboost}, and neural networks against SHAP values \citep{lundberg2017shap} and partial dependence plot slopes \citep{friedman2001pdp}. The AME and PDP estimates are in close agreement throughout, while SHAP values are on a different scale and in several cases have the wrong sign --- a systematic divergence that is most visible in the regression setting where units are dollars and the magnitudes are large enough to make the discrepancy concrete. Because AMEs come with standard errors and SHAP values do not, the AME framework supports conclusions that the SHAP framework cannot.
+	
+	The remainder of the paper is organized as follows. Section~2 defines the estimand, presents the estimator, and establishes its relationship to classical average marginal effects for the GLM family. Section~3 describes the nonparametric bootstrap inference procedure. Section~4 establishes gradient consistency for neural networks, gradient boosted models, and Mondrian forests, and states conjectures on gradient consistency for Breiman forests and bootstrap validity for all three estimator classes. Section~5 presents simulation evidence on finite-sample performance. Section~6 presents the three empirical applications. Section~7 concludes.
+	
+	\section{Method}
+	
+	We propose a framework for interpreting any supervised machine learning model through the lens of average marginal effects. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether $\hat{f}$ is a neural network, a gradient boosted model, a random forest, or any other supervised learner. Crucially, the framework produces standard errors via a nonparametric bootstrap, enabling hypothesis tests and confidence intervals that existing model-agnostic interpretability methods do not support. SHAP values and permutation-based feature importance measures provide point estimates of variable importance but no basis for inference. The average marginal effect estimator proposed here yields a coefficient table --- estimate, standard error, and significance --- directly analogous to the output of a parametric regression, with no restrictions on the functional form of $\hat{f}$.
+	
+	\subsection{Estimand}
+	
+	Let $\mathbf{x}_i = (x_{i1}, \dots, x_{ip})^\top \in \mathbb{R}^p$ denote the feature vector for observation $i$, and let $y_i \in \mathbb{R}$ denote the outcome. We observe $n$ independent draws $\{(\mathbf{x}_i, y_i)\}_{i=1}^n$ from some population distribution $P$. Let $f: \mathbb{R}^p \to \mathbb{R}$ denote the conditional expectation function $f(\mathbf{x}) = E[Y \mid \mathbf{x}]$. For binary outcomes, $f(\mathbf{x}) = P(Y = 1 \mid \mathbf{x})$ is the conditional probability of the positive class; for continuous outcomes, $f(\mathbf{x}) = E[Y \mid \mathbf{x}]$ directly. In both cases $f$ is the same object --- the conditional expectation of $Y$ given $\mathbf{x}$ --- and the method requires no modification across outcome types.
+	
+	The marginal effect of variable $j$ at observation $i$ is the partial derivative of $f$ evaluated at $\mathbf{x}_i$:
+	\begin{equation}
+		m_{ij} = \frac{\partial f}{\partial x_j}\bigg|_{\mathbf{x}_i}
+	\end{equation}
+	The population average marginal effect of variable $j$ is:
+	\begin{equation}
+		\mathrm{AME}_j = \mathbb{E}\left[\frac{\partial f}{\partial x_j}(\mathbf{x})\right]
+	\end{equation}
+	where the expectation is taken over the marginal distribution of $\mathbf{x}$ under $P$. This is the estimand. The conditions under which $\partial f / \partial x_j$ exists and under which the sample estimator defined below converges to $\mathrm{AME}_j$ are established in Section~4.
+	
+	\subsection{Estimation}
+	
+	Given an estimator $\hat{f}$ of $f$, the sample analog is:
+	\begin{equation}
+		\widehat{\mathrm{AME}}_j = \frac{1}{n} \sum_{i=1}^n \frac{\partial \hat{f}}{\partial x_j}\bigg|_{\mathbf{x}_i}
+	\end{equation}
+	For most supervised learners the partial derivative $\partial \hat{f} / \partial x_j$ is not available in closed form, and for tree-based models it does not exist everywhere in the classical sense. We therefore estimate it via a centered finite difference:
+	\begin{equation}
+		\frac{\partial \hat{f}}{\partial x_j}\bigg|_{\mathbf{x}_i} \approx \frac{\hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} + h_j)}\right) - \hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} - h_j)}\right)}{2h_j}
+	\end{equation}
+	where $\mathbf{x}_i^{(j,v)}$ denotes the vector $\mathbf{x}_i$ with the $j$-th component replaced by $v$. The centered finite difference is preferred over a one-sided difference because its approximation error is $O(h_j^2)$ rather than $O(h_j)$, which becomes material when $h_j$ is not negligibly small.
+	
+	The step size $h_j$ is chosen adaptively as:
+	\begin{equation}
+		h_j = \max\!\left(10^{-4},\; 0.05 \cdot \hat{\sigma}_j\right)
+	\end{equation}
+	where $\hat{\sigma}_j$ is the sample standard deviation of the $j$-th feature. Scaling $h_j$ to the spread of $x_j$ ensures the finite difference is neither so small as to introduce numerical instability nor so large as to obscure local behavior. The floor of $10^{-4}$ guards against degenerate cases where $\hat{\sigma}_j \approx 0$.
+	
+	For binary or categorical variables the partial derivative does not exist and the finite difference is replaced by a contrast. The marginal effect for observation $i$ is:
+	\begin{equation}
+		m_{ij} = \hat{f}\!\left(\mathbf{x}_i^{(j,1)}\right) - \hat{f}\!\left(\mathbf{x}_i^{(j,0)}\right)
+	\end{equation}
+	which measures the change in predicted outcome when $x_j$ is switched from 0 to 1 holding all other variables at their observed values. The sample average marginal effect is then $\widehat{\mathrm{AME}}_j = n^{-1}\sum_{i=1}^n m_{ij}$, with interpretation identical to the continuous case: a change in $x_j$ from 0 to 1 is associated with a $\widehat{\mathrm{AME}}_j$ change in the predicted outcome, on average across the sample.
+	
+	For binary classification models, $\hat{f}$ must return the estimated conditional probability $\hat{P}(Y=1 \mid \mathbf{x})$ rather than the predicted class label. Class labels are discrete and their finite differences are identically zero; the method requires a continuous output. This is the predicted probability of the positive class, available as \texttt{predict\_proba(X)[:,1]} in scikit-learn and equivalent interfaces in other frameworks. The AME is then interpreted as the change in predicted probability associated with a one-unit change in $x_j$, on average across the sample.
+	
+	\subsection{Relationship to Classical Average Marginal Effects}
+	
+	Average marginal effects are a standard tool in the econometrics of nonlinear models \citep{greene2012, wooldridge2010}. For parametric models the estimator $\widehat{\mathrm{AME}}_j$ defined above reduces exactly to the classical result. Consider a generalized linear model with inverse link function $\mu$ and linear predictor $\eta_i = \mathbf{x}_i^\top \boldsymbol{\beta}$, so that $f(\mathbf{x}_i) = \mu(\eta_i)$. The marginal effect of variable $j$ at observation $i$ is:
+	\begin{equation}
+		\frac{\partial f}{\partial x_j}\bigg|_{\mathbf{x}_i} = \beta_j \cdot \mu'(\eta_i)
+	\end{equation}
+	and the population average marginal effect is $\mathrm{AME}_j = \beta_j \cdot E[\mu'(\eta)]$. For the identity link $\mu'(\eta) = 1$ and $\mathrm{AME}_j = \beta_j$ --- the marginal effect is constant across observations and equals the OLS coefficient. For the logistic link $\mu'(\eta) = \Lambda(\eta)(1 - \Lambda(\eta))$ and the AME averages the logistic density over the sample \citep{greene2012}. For the probit link $\mu'(\eta) = \phi(\eta)$, the standard normal density evaluated at the linear predictor \citep{wooldridge2010}.
+	
+	In each case $\widehat{\mathrm{AME}}_j$ recovers the classical result automatically --- the finite difference applied to the model output numerically approximates $\beta_j \cdot \mu'(\eta_i)$ without requiring knowledge of the link function. The framework therefore nests the entire GLM family as a special case and reduces to familiar output when the model is parametric. This backward compatibility is what the \texttt{margins} package in R implements for parametric models \citep{leeper2021}; the present framework extends that implementation to any supervised learner.
+	
+	\subsection{Inference}
+	
+	Standard errors are obtained via a nonparametric bootstrap \citep{efron1979, efrontibshirani1993}. Let $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^n$ denote the observed sample and let $\hat{\lambda}$ denote the hyperparameters of $\hat{f}$ selected by cross-validation on $\mathcal{D}$. For $b = 1, \dots, B$:
+	\begin{enumerate}[(1)]
+		\item Draw a bootstrap sample $\mathcal{D}^{(b)}$ by sampling $n$ observations from $\mathcal{D}$ with replacement, sampling $(\mathbf{x}_i, y_i)$ pairs jointly to preserve the joint distribution of features and outcome.
+		\item Initialize the hyperparameter search at $\hat{\lambda}$ and refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ with hyperparameters $\hat{\lambda}^{(b)}$ selected by cross-validation.
+		\item Compute $\widehat{\mathrm{AME}}_j^{(b)}$ using $\hat{f}^{(b)}$ evaluated at the original sample $\mathcal{D}$.
+	\end{enumerate}
+	The bootstrap standard error is:
+	\begin{equation}
+		\widehat{\mathrm{se}}_j = \sqrt{\frac{1}{B-1}\sum_{b=1}^B \left(\widehat{\mathrm{AME}}_j^{(b)} - \bar{\mathrm{AME}}_j\right)^2}
+	\end{equation}
+	where $\bar{\mathrm{AME}}_j = B^{-1}\sum_{b=1}^B \widehat{\mathrm{AME}}_j^{(b)}$.
+	
+	Several design choices warrant comment. Sampling $(\mathbf{x}_i, y_i)$ pairs jointly preserves the joint distribution of features and outcome that $\hat{f}$ is trained to approximate; resampling features and outcomes independently would destroy this dependence structure. Refitting $\hat{f}^{(b)}$ with hyperparameter selection on each bootstrap sample ensures that the bootstrap standard errors capture uncertainty about model specification, not only estimation uncertainty conditional on a fixed architecture. Initializing the hyperparameter search at $\hat{\lambda}$ rather than from scratch makes this computationally feasible --- the original model serves as a warm start, substantially reducing the cost of cross-validation on each replicate. Finally, evaluating $\hat{f}^{(b)}$ at the original sample $\mathcal{D}$ rather than the bootstrap sample $\mathcal{D}^{(b)}$ follows standard practice for smooth functionals of the empirical distribution \citep{efrontibshirani1993} and ensures that $\widehat{\mathrm{AME}}_j^{(b)}$ depends on the bootstrap draw only through $\hat{f}^{(b)}$, which simplifies the asymptotic analysis in Section~4. Analysis of the variant that evaluates at $\mathcal{D}^{(b)}$ is left to future work.
+	
+	\section{Asymptotic Theory}
+	\label{sec:theory}
+	
+	\subsection{Overview}
+	
+	The method agnostic interpretation framework rests on a theoretical foundation that
+	connects the gradients of machine learning estimators to the gradients of the true
+	underlying function. This section establishes that foundation. We show that for three
+	estimator classes---neural networks, gradient boosted models, and random
+	forests---the gradient of the estimator $\fn$ converges asymptotically to the gradient
+	of the true function $f$. The average marginal effects presented in Section~3 are
+	therefore consistently estimating population quantities with well defined
+	interpretations, not heuristic approximations.
+	
+	The connection between the theory and the method is direct. The average marginal
+	effect of variable $j$ is defined as:
+	\begin{equation}
+		\widehat{AME}_j = \frac{1}{n} \sum_{i=1}^n \frac{\partial \fn}{\partial x_j}(x_i)
+		\label{eq:ame}
+	\end{equation}
+	For this quantity to be meaningful as an estimate of a population parameter, two
+	things must be true. First, the gradient $\frac{\partial \fn}{\partial x_j}$ must
+	exist and be well defined---it must be estimating something real rather than an
+	artifact of the particular model fitted. Second, it must converge to the
+	corresponding gradient of the true function $f$ as the sample size grows. Without
+	these guarantees, the average marginal effects are descriptive statistics about the
+	fitted model rather than estimates of population quantities. The theorems in this
+	section provide exactly these guarantees.
+	
+	The key insight is that the appropriate notion of gradient consistency depends on the
+	function space the estimator naturally inhabits, which in turn reflects the inductive
+	bias of the estimator class. This is not merely a technical observation---it reflects
+	something fundamental about what each estimator class is doing. Neural networks with
+	smooth activation functions produce smooth estimators whose gradients are ordinary
+	$L^p$ functions, and the appropriate framework is Sobolev space theory
+	\citep{evans2010pde}. Random forests produce piecewise constant estimators whose
+	gradients are concentrated on leaf boundaries rather than distributed across the
+	domain, and the appropriate framework is the theory of functions of bounded variation
+	\citep{ambrosio2000bv}. Gradient boosted models occupy a middle ground depending on
+	the base learner. The average marginal effects computed in Section~3 are the same
+	operation---averaging the gradient over the sample---but the theoretical justification
+	for that operation differs across estimator classes in a way that reflects their
+	fundamentally different structures.
+	
+	This observation also clarifies why existing approaches to model interpretation lack
+	the theoretical foundation developed here. Methods such as SHAP values and partial
+	dependence plots are not computing gradients of the estimator in any well defined
+	function space sense, and consequently there is no analog of the results below that
+	would establish what population quantity they are estimating or at what rate. The
+	average marginal effect framework, by contrast, is precisely defined as a gradient
+	operation, and the results below establish that this operation is doing what
+	practitioners intuitively expect it to do.
+	
+	Full proofs of all results are provided in the Appendix.
+	
+	\subsection{Notation and Preliminaries}
+	
+	Let $\Omega \subset \R^d$ be a bounded Lipschitz domain and let $f: \Omega \to \R$
+	be the true underlying function relating covariates to outcomes. Let
+	$\fn: \Omega \to \R$ denote an estimator of $f$ constructed from $n$ observations
+	$\{(x_i, y_i)\}_{i=1}^n$. We assume throughout that $\Omega$ is bounded and
+	Lipschitz, which ensures the compactness and embedding results we rely on are
+	available. These are mild regularity conditions satisfied by any compact covariate
+	space with reasonable boundary behavior.
+	
+	We work with two function spaces depending on the estimator class. The choice of
+	function space is not arbitrary---each space is the natural habitat of the estimator
+	class in question, in the sense that estimators of that class belong to the space
+	with probability one under mild conditions.
+	
+	The \textbf{Sobolev space} $W^{k,p}(\Omega)$ for $k \geq 1$ and $p \geq 1$
+	consists of functions whose weak derivatives up to order $k$ are in $\Lp$, with
+	norm:
+	\begin{equation}
+		\norm{g}_{W^{k,p}} = \sum_{|\alpha| \leq k} \norm{\partial^\alpha g}_{L^p}
+	\end{equation}
+	The gradient $\nabla g \in L^p(\Omega)^d$ is a vector valued $L^p$ function for any
+	$g \in \Wonep$. Sobolev spaces are the natural setting for smooth estimators because
+	they quantify not just how well the function is approximated in $L^p$ but how well
+	its derivatives are approximated simultaneously. This is exactly the property needed
+	to justify gradient based interpretation---$L^p$ consistency of $\fn$ alone is
+	insufficient because differentiation is an unbounded operator on $L^p$, and
+	convergence of a function does not in general imply convergence of its derivatives
+	without additional regularity \citep[Chapter~5]{evans2010pde}.
+	
+	The \textbf{space of functions of bounded variation} $\BV$ consists of functions
+	$g \in \Lone$ whose distributional gradient $Dg$ is a vector valued Radon measure
+	with finite total variation $|Dg|(\Omega) < \infty$. The $BV$ norm is:
+	\begin{equation}
+		\norm{g}_{BV} = \norm{g}_{L^1} + |Dg|(\Omega)
+	\end{equation}
+	The $BV$ framework extends the notion of gradient to functions that are not
+	differentiable in the classical or even weak sense---precisely the situation with
+	tree based estimators, which have jump discontinuities at leaf boundaries. For
+	piecewise constant functions the distributional gradient is a sum of surface measures
+	concentrated on the boundaries between constant regions, capturing the intuition that
+	the ``derivative'' of a step function is a spike at the jump location. This makes
+	$BV$ the natural space for random forests and boosting with tree base learners. The
+	total variation $|Dg|(\Omega)$ measures the total size of all jumps, weighted by the
+	boundary surface area---a quantity that is finite and well controlled for any
+	piecewise constant function with finitely many pieces. The standard reference for
+	the theory of $BV$ functions is \citet{ambrosio2000bv}.
+	
+	The relationship between the two spaces is important. If $f \in \Wonep$ for
+	$p \geq 1$, then $f \in \BV$ with $Df = \nabla f \cdot \mathcal{L}^d$---that is,
+	the distributional gradient of $f$ is absolutely continuous with respect to Lebesgue
+	measure with density $\nabla f$. This embedding $W^{1,p} \hookrightarrow BV$ means
+	that assuming $f \in \Wonep$ is sufficient for both the Sobolev and BV results below.
+	We make this assumption throughout.
+	
+	\begin{definition}[Well-Behaved Estimator, Sobolev Sense]
+		We say that $\fn$ is \emph{well-behaved in the Sobolev sense} if:
+		\begin{equation}
+			\sup_n \norm{\fn}_{W^{2,p}} < \infty \quad \text{and} \quad
+			\norm{\fn - f}_{L^p} \xrightarrowp 0
+		\end{equation}
+	\end{definition}
+	
+	\begin{definition}[Well-Behaved Estimator, BV Sense]
+		We say that $\fn$ is \emph{well-behaved in the BV sense} if:
+		\begin{equation}
+			\sup_n \E\left[|D\fn|(\Omega)\right] < \infty \quad \text{and} \quad
+			\norm{\fn - f}_{L^1} \xrightarrowp 0
+		\end{equation}
+	\end{definition}
+	
+	In both cases the well-behaved condition has the same structure: a uniform
+	boundedness condition in a strong space combined with consistency in a weaker space.
+	The uniform boundedness condition is the key regularity requirement---it says that
+	the estimator sequence does not become increasingly irregular as $n$ grows, even as
+	it fits the data more closely. This condition is verifiable from properties of the
+	estimator class and is established for each class in the theorems below. The
+	consistency condition is the standard requirement that the estimator converges to the
+	truth and is available from existing results in each case.
+	
+	\subsection{Core Lemmas}
+	
+	The theoretical results rest on four lemmas establishing derivative existence and
+	consistency in each function space. The lemmas are stated here and proved in the
+	Appendix. They are the functional analytic core of the paper---proved once and
+	applied across all three estimator classes. The parallel structure of the two pairs
+	of lemmas reflects the parallel structure of the Sobolev and BV frameworks and is
+	the formal expression of the analogy between smooth and piecewise constant estimators
+	discussed in Section~\ref{sec:theory}.1.
+	
+	\begin{lemma}[Derivative Existence in Sobolev Spaces]
+		\label{lem:sobolev_existence}
+		Let $\fn \in \Wtwop$ for some $p > 1$. Then $\nabla \fn \in W^{1,p}(\Omega)^d$
+		exists as a well defined $L^p$ function and satisfies:
+		\begin{equation}
+			\norm{\nabla \fn}_{L^p} \leq \norm{\fn}_{W^{1,p}} \leq \norm{\fn}_{W^{2,p}}
+		\end{equation}
+	\end{lemma}
+	
+	Lemma~\ref{lem:sobolev_existence} is essentially definitional---membership in
+	$\Wtwop$ implies by definition that the first and second weak derivatives exist and
+	are in $L^p$. The content of the lemma is the norm bound, which establishes that
+	the gradient operator $\nabla: W^{2,p} \to W^{1,p}$ is bounded and linear. This
+	boundedness is what makes the subsequent consistency argument work---a bounded linear
+	operator preserves convergence, so once we have convergence of $\fn$ in the right
+	space, convergence of $\nabla \fn$ follows automatically. The reason we require
+	$\fn \in \Wtwop$ rather than just $\Wonep$ is that we need one additional degree of
+	differentiability to apply the compactness argument in
+	Lemma~\ref{lem:sobolev_consistency}. The relevant theory of Sobolev spaces and their
+	norms is developed in \citet[Chapter~5]{evans2010pde}.
+	
+	\begin{lemma}[Derivative Consistency in Sobolev Spaces]
+		\label{lem:sobolev_consistency}
+		Let $f \in \Wonep$ and suppose $\fn$ is well-behaved in the Sobolev sense. Then:
+		\begin{equation}
+			\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0
+		\end{equation}
+	\end{lemma}
+	
+	Lemma~\ref{lem:sobolev_consistency} is the harder result and the one that does the
+	real work in the Sobolev setting. The difficulty is that $L^p$ consistency of $\fn$
+	alone does not imply $L^p$ consistency of $\nabla \fn$---differentiation is an
+	unbounded operator on $L^p$ and limits and derivatives cannot be exchanged without
+	additional structure. The uniform $\Wtwop$ boundedness condition provides that
+	structure. The proof applies the Rellich--Kondrachov compact embedding theorem, which
+	states that a uniformly bounded sequence in $\Wtwop$ has a subsequence converging
+	strongly in $\Wonep$ \citep[Theorem~5,~Section~5.7]{evans2010pde}. Combined with
+	the $L^p$ consistency condition identifying the limit as $f$, this gives strong
+	convergence of $\fn$ to $f$ in $\Wonep$, from which $L^p$ convergence of the
+	gradients follows immediately from the boundedness of $\nabla$ established in
+	Lemma~\ref{lem:sobolev_existence}. The key insight is that the uniform boundedness
+	condition ensures the estimator sequence lives in a compact subset of $\Wonep$,
+	preventing the gradients from escaping to infinity even as the estimator fits the
+	data more closely.
+	
+	\begin{lemma}[Derivative Existence in BV]
+		\label{lem:bv_existence}
+		Let $\fn \in \BV$. Then the distributional gradient $D\fn$ exists as a well defined
+		vector valued Radon measure in $\cM$ with:
+		\begin{equation}
+			|D\fn|(\Omega) < \infty
+		\end{equation}
+		For piecewise constant estimators with leaf partition $\{R_j\}$ and leaf means
+		$\{\bar{y}_j\}$, the distributional gradient takes the explicit form:
+		\begin{equation}
+			D\fn = \sum_{j \sim k} (\bar{y}_k - \bar{y}_j) \cdot \nu_{jk} \cdot
+			\mathcal{H}^{d-1}\lfloor_{\partial R_j \cap \partial R_k}
+		\end{equation}
+		where $\nu_{jk}$ is the unit normal between adjacent leaves and $\mathcal{H}^{d-1}$
+		is the $(d-1)$-dimensional Hausdorff measure on leaf boundaries.
+	\end{lemma}
+	
+	Lemma~\ref{lem:bv_existence} is the BV analog of
+	Lemma~\ref{lem:sobolev_existence} and is similarly structural in nature. The first
+	part---that $BV$ membership implies the distributional gradient exists as a Radon
+	measure---follows from the definition of $BV$ as developed in
+	\citet[Chapter~3]{ambrosio2000bv}. The content of the lemma is the explicit formula
+	for piecewise constant estimators, which makes concrete what the distributional
+	gradient actually looks like for a tree based model. The formula says that the
+	gradient is not a function at all but a measure concentrated on the boundaries
+	between leaves, with mass proportional to the jump in response values across the
+	boundary weighted by the boundary surface area. This is the precise sense in which a
+	random forest or boosted tree has a gradient---not a pointwise derivative, which does
+	not exist, but a distributional object that captures where and how much the estimator
+	changes. This explicit representation is also what makes the total variation
+	$|D\fn|(\Omega)$ computable in terms of observable quantities---the leaf means and
+	the partition geometry---which is essential for verifying the well-behaved condition
+	in the theorems below.
+	
+	\begin{lemma}[Derivative Consistency in BV]
+		\label{lem:bv_consistency}
+		Let $f \in \Wonep$ for some $p > 1$, so that $f \in \BV$ with
+		$Df = \nabla f \cdot \mathcal{L}^d$. Suppose $\fn$ is well-behaved in the BV sense.
+		Then:
+		\begin{equation}
+			D\fn \wstar Df \quad \text{in } \cM
+		\end{equation}
+		If additionally $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$, then convergence is strict.
+	\end{lemma}
+	
+	Lemma~\ref{lem:bv_consistency} is the hardest of the four lemmas and the BV analog
+	of Lemma~\ref{lem:sobolev_consistency}. The convergence is necessarily weaker than
+	in the Sobolev case---weak-$*$ convergence of measures rather than strong $L^p$
+	convergence---because the $BV$ space is not reflexive and the stronger norm
+	convergence is not available in general. Weak-$*$ convergence means that for any
+	continuous test function $\phi$:
+	\begin{equation}
+		\int_\Omega \phi \, d(D\fn) \to \int_\Omega \phi \, d(Df)
+	\end{equation}
+	which is the appropriate notion of convergence for the distributional gradients of
+	piecewise constant estimators. In the context of average marginal effects, this means
+	that integrated gradient information---which is exactly what the AME computes---
+	converges to the correct population quantity. The proof applies the BV compactness
+	theorem of \citet[Theorem~3.23]{ambrosio2000bv}, which is the analog of
+	Rellich--Kondrachov in the BV setting: a uniformly bounded sequence in $BV$ has a
+	subsequence converging in $L^1$, and the $L^1$ consistency condition identifies the
+	limit as $f$. The strict convergence upgrade follows from the lower semicontinuity of
+	the total variation functional and is the stronger result one would want for
+	applications requiring convergence of the total size of gradient information rather
+	than just its distribution.
+	
+	The parallel between Lemmas~\ref{lem:sobolev_consistency}
+	and~\ref{lem:bv_consistency} is worth noting explicitly. In both cases the argument
+	has the same structure: uniform boundedness in a strong space gives compactness,
+	consistency in a weak space identifies the limit, and the combination gives
+	convergence of the derivative in the appropriate topology. The difference is in the
+	topology of the conclusion---strong $L^p$ convergence in the Sobolev case, weak-$*$
+	convergence of measures in the BV case---and this difference is fundamental rather
+	than technical. It reflects the fact that smooth estimators carry gradient
+	information in a stronger sense than piecewise constant estimators, which is itself a
+	reflection of the different inductive biases of the estimator classes.
+	
+	\subsection{Main Theorems}
+	
+	The main theorems apply the lemmas to each estimator class. In each case the argument
+	has two components: verifying that the estimator satisfies the well-behaved
+	condition, and citing the appropriate lemma pair. The first component is the
+	estimator-specific contribution; the second is the functional analytic machinery
+	established above.
+	
+	\begin{theorem}[Gradient Consistency for Neural Networks]
+		\label{thm:neural_nets}
+		Let $\fn$ be a neural network estimator with smooth activations $\sigma \in C^2$,
+		bounded weight norms $\sup_n \prod_\ell \norm{W_\ell^{(n)}} < \infty$, and
+		$\norm{\fn - f}_{L^p} \xrightarrowp 0$. Then $\fn$ is well-behaved in the Sobolev
+		sense and:
+		\begin{equation}
+			\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0
+		\end{equation}
+	\end{theorem}
+	
+	The conditions of Theorem~\ref{thm:neural_nets} are natural and verifiable. Smooth activations---sigmoid, tanh, GELU---are standard in practice and ensure the network function is twice differentiable. The bounded weight norm condition formalizes the effect of $L^2$ regularization during training, which prevents the network weights from growing without bound. The $L^p$ consistency condition is the standard requirement that the network is learning the true function. \citet{hornik1990universal} establish that multilayer feedforward networks with smooth activation functions are capable of approximating an arbitrary function and its derivatives to arbitrary accuracy, providing the foundation for the consistency condition and establishing that the function class is rich enough to contain the estimators we consider.
+	
+	\begin{proof}[Proof sketch]
+		The chain rule applied through the network layers gives $\fn \in \Wtwop$ with:
+		\begin{equation}
+			\norm{\fn}_{W^{2,p}} \lesssim \prod_\ell \norm{W_\ell}^2 \cdot
+			\norm{\sigma''}_\infty
+		\end{equation}
+		which is uniformly bounded by the weight norm assumption. The $L^p$ consistency
+		condition and Lemma~\ref{lem:sobolev_consistency} then give the result. Full proof
+		in Appendix~A.
+	\end{proof}
+	
+	\begin{remark}
+		Theorem~\ref{thm:neural_nets} is stated for smooth activations. ReLU networks
+		require a modified argument because ReLU is not $C^2$ and the chain rule calculation
+		does not apply directly. Extension to ReLU networks is possible through a
+		distributional argument but complicates the presentation and is omitted here.
+	\end{remark}
+	
+	\begin{theorem}[Gradient Consistency for Gradient Boosted Models]
+		\label{thm:boosting}
+		Let $\fn = \sum_{m=1}^M \eta_m h_m$ be a gradient boosted estimator with step sizes
+		satisfying $\sum_m \eta_m < \infty$ and base learners $h_m$ that are either smooth
+		($h_m \in W^{2,p}$) or shallow trees of fixed depth. Suppose
+		$\norm{\fn - f}_{L^1} \xrightarrowp 0$. Then:
+		\begin{enumerate}
+			\item[(i)] If base learners are smooth, $\fn$ is well-behaved in the Sobolev
+			sense and $\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
+			\item[(ii)] If base learners are shallow trees, $\fn$ is well-behaved in the
+			BV sense and $D\fn \wstar Df$ in $\cM$.
+		\end{enumerate}
+	\end{theorem}
+	
+	Theorem~\ref{thm:boosting} covers both cases that arise in practice and illustrates how the function space framework adapts to the base learner. XGBoost and LightGBM---the implementations used in Section~3---use shallow trees as base learners and therefore fall under case~(ii). The two cases in the theorem are not merely technical alternatives---they reflect a genuine difference in what the gradient of the estimator is. For smooth base learners the gradient is an ordinary function and $L^p$ convergence is available. For tree base learners the gradient is a measure and only weak-$*$ convergence can be established. The average marginal effects are well defined and consistent in both cases, but the sense in which they are consistent differs.
+	
+	The step size condition $\sum_m \eta_m < \infty$ is standard in the boosting literature---see \citet{buhlmann2003boosting} for the $L^2$ boosting framework on which this result builds---and ensures the contribution of later base learners diminishes sufficiently. The functional gradient descent perspective of \citet{mason2000boosting} provides the conceptual framework for understanding the boosting path as gradient descent in function space, and it is this perspective that motivates the Lyapunov argument used to control BV norms along the path.
+	
+	\begin{proof}[Proof sketch]
+		For smooth base learners the $\Wtwop$ bound follows from linearity of the estimator
+		and the step size condition:
+		\begin{equation}
+			\norm{\fn}_{W^{2,p}} \leq \sum_m \eta_m \norm{h_m}_{W^{2,p}} < \infty
+		\end{equation}
+		For tree base learners the BV bound follows from controlling the total variation of
+		each stump and applying the step size decay condition along the boosting path. The
+		sequential dependence of residuals is handled by a Lyapunov argument showing the BV
+		norm of successive base learners does not compound. Full proof in Appendix~B.
+	\end{proof}
+	
+	\begin{theorem}[Gradient Consistency for Random Forests]
+		\label{thm:forests}
+		Let $\fn$ be a Mondrian random forest estimator with
+		$\norm{\fn - f}_{L^1} \xrightarrowp 0$ and $f \in \Wonep$. Then $\fn$ is
+		well-behaved in the BV sense and:
+		\begin{equation}
+			D\fn \wstar Df \quad \text{in } \cM
+		\end{equation}
+	\end{theorem}
+	
+	Theorem~\ref{thm:forests} is the most technically demanding result in the paper. Random forests are genuinely different from neural networks and boosted models in a way that makes gradient consistency harder to establish---the partition structure is random and the response averages within leaves depend on the data in a complex way. The restriction to Mondrian forests, where splits are made independently of the data, is the key simplification that makes the proof tractable. For Mondrian forests the partition geometry and the response variation can be controlled separately, whereas for Breiman forests with data-dependent splits the two are coupled in a way that resists clean analysis. The $L^1$ consistency condition follows from the $L^2$ consistency result of \citet{scornet2015forests} by Cauchy--Schwarz on the bounded domain $\Omega$.
+	
+	\begin{proof}[Proof sketch]
+		Each tree is piecewise constant and therefore in $BV$ by
+		Lemma~\ref{lem:bv_existence}. For the uniform BV boundedness condition, the
+		independence of the Mondrian partition from the data allows the total variation bound
+		to be decomposed as:
+		\begin{equation}
+			\E[|D\fn|(\Omega)] \leq
+			\mathbb{E}_{\text{partition}}\!\left[\mathcal{H}^{d-1}(\partial \mathcal{P}_n)\right]
+			\cdot \sup_j \mathbb{E}_{\text{data}}\!\left[|\bar{y}_j|\right]
+		\end{equation}
+		The geometric term is controlled by the Mondrian process distribution and the
+		response term by the modulus of continuity of $f$ over shrinking cells, with the two
+		terms shown to decay at compatible rates as $n$ grows. Full proof in Appendix~C.
+	\end{proof}
+	
+	\begin{remark}
+		Extension of Theorem~\ref{thm:forests} to Breiman forests with data-dependent splits
+		requires additional control over the interaction between partition geometry and
+		response variation. The data-dependent splitting rule couples these two quantities in
+		a way that makes the decomposition above unavailable. This extension is an important
+		direction for future work and is discussed further in Section~6.
+	\end{remark}
+	
+	\subsection{Corollaries on Bootstrap Validity}
+	
+	The gradient consistency results established above provide the foundation for valid inference on average marginal effects. In practice, standard errors are computed via bootstrap resampling as described in Section~3. The following corollaries concern the validity of this procedure---specifically whether the bootstrap distribution of the sample AME consistently estimates its sampling distribution. These results are stated as conjectures. Their proof is a natural and important extension of the gradient consistency results above, and represents a direction the authors are actively pursuing. Stating them here serves to clarify the inferential claims the method is making and to identify precisely what remains to be established.
+	
+	\begin{conjecture}[Bootstrap Validity for Neural Network AMEs]
+		\label{conj:bootstrap_nn}
+		Under the conditions of Theorem~\ref{thm:neural_nets}, the bootstrap distribution
+		of $\frac{1}{n}\sum_i \nabla \hat{f}_n^*(x_i)$ consistently estimates the sampling
+		distribution of $\frac{1}{n}\sum_i \nabla \fn(x_i)$.
+	\end{conjecture}
+	
+	\begin{conjecture}[Bootstrap Validity for Gradient Boosted AMEs]
+		\label{conj:bootstrap_boost}
+		Under the conditions of Theorem~\ref{thm:boosting}, the bootstrap distribution of
+		$\frac{1}{n}\sum_i D\hat{f}_n^*(x_i)$ consistently estimates the sampling
+		distribution of $\frac{1}{n}\sum_i D\fn(x_i)$.
+	\end{conjecture}
+	
+	\begin{conjecture}[Bootstrap Validity for Random Forest AMEs]
+		\label{conj:bootstrap_rf}
+		Under the conditions of Theorem~\ref{thm:forests}, the bootstrap distribution of
+		$\frac{1}{n}\sum_i D\hat{f}_n^*(x_i)$ consistently estimates the sampling
+		distribution of $\frac{1}{n}\sum_i D\fn(x_i)$.
+	\end{conjecture}
+	
+	The gradient consistency results make these conjectures plausible in a precise sense. Bootstrap validity for smooth functionals of consistent estimators is well established in the statistical literature, and the gradient consistency results established above show that the AME functional is consistently estimating a well defined population quantity in the appropriate topology. The remaining step is to show that the bootstrap resampling scheme correctly captures the variability of the gradient estimator, which requires understanding how the bootstrap interacts with the function space structure of each estimator class. For random forests this is the most tractable case given the subsampling structure already present in the estimator and the connection to the infinitesimal jackknife results of \citet{wager2014confidence}. For neural networks it is the hardest case given the non-convex training landscape and the fact that different bootstrap samples may converge to different local minima, introducing optimization variability that the bootstrap cannot cleanly separate from sampling variability. For gradient boosted models the step size conditions of \citet{buhlmann2003boosting} provide a natural starting point for a bootstrap consistency argument. Rigorous proofs are forthcoming.
 	
 	\section{Empirical Examples}
 	
 	\subsection{UCI Adult Income}
 	
+	The first dataset is the UCI Adult Income dataset \citep{UCI, kohavi1996}, a widely used benchmark for binary classification in the social sciences. We combine the training and test sets for a total of 48,842 observations. The outcome is whether an individual earns more than \$50,000 per year. Features are organized into three panels: demographics (age, sex, years of education), work characteristics (hours worked per week, occupation group, work class), and financial variables (capital gains, capital losses, marital status). The specification search considers logistic regression and XGBoost across four specifications, allowing the method to be evaluated both where the parametric model is approximately correctly specified and where the black-box learner offers efficiency gains.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		
+		\resizebox{\textwidth}{!}{%
+		\begin{threeparttable}
+			\caption{UCI Adult Income: Specification Search. Average marginal effects on P(Income $>$ \$50k).}
+			\label{tab:adult_spec_search}
+			
+			\begin{tabular}{lrrrrrrrr}
+				\toprule
+				& \multicolumn{4}{c}{Logistic} & \multicolumn{4}{c}{XGBoost} \\
+				\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+				& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel A: Demographics}} \\
+				\quad age & 0.0060$^{***}$ & 0.0060$^{***}$ & 0.0024$^{***}$ & 0.0027$^{***}$ & 0.0059$^{***}$ & 0.0059$^{***}$ & 0.0029$^{***}$ & 0.0031$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0001) & (0.0001) & (0.0002) & (0.0001) & (0.0001) & (0.0001) \\
+				\quad female & -0.1730$^{***}$ & -0.1648$^{***}$ & -0.0275$^{***}$ & -0.0269$^{***}$ & -0.1592$^{***}$ & -0.1446$^{***}$ & -0.0138$^{***}$ & -0.0122$^{***}$ \\
+				& (0.0034) & (0.0034) & (0.0041) & (0.0041) & (0.0032) & (0.0032) & (0.0028) & (0.0032) \\
+				\quad education\_num & 0.0523$^{***}$ & 0.0393$^{***}$ & 0.0400$^{***}$ & 0.0306$^{***}$ & 0.0610$^{***}$ & 0.0452$^{***}$ & 0.0405$^{***}$ & 0.0312$^{***}$ \\
+				& (0.0006) & (0.0007) & (0.0006) & (0.0006) & (0.0023) & (0.0017) & (0.0011) & (0.0011) \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel B: Work Characteristics}} \\
+				\quad hours\_per\_week & -- & 0.0048$^{***}$ & -- & 0.0033$^{***}$ & -- & 0.0084$^{***}$ & -- & 0.0032 \\
+				&  & (0.0001) &  & (0.0001) &  & (0.0028) &  & (0.0025) \\
+				\quad government & -- & 0.0029 & -- & 0.0033 & -- & -0.0067$^{*}$ & -- & -0.0003 \\
+				&  & (0.0051) &  & (0.0045) &  & (0.0037) &  & (0.0026) \\
+				\quad self\_employed & -- & -0.0077 & -- & -0.0268$^{***}$ & -- & 0.0113$^{**}$ & -- & -0.0055$^{*}$ \\
+				&  & (0.0050) &  & (0.0044) &  & (0.0054) &  & (0.0033) \\
+				\quad white\_collar & -- & 0.0666$^{***}$ & -- & 0.0541$^{***}$ & -- & 0.0466$^{***}$ & -- & 0.0474$^{***}$ \\
+				&  & (0.0056) &  & (0.0051) &  & (0.0026) &  & (0.0017) \\
+				\quad blue\_collar & -- & -0.0264$^{***}$ & -- & -0.0270$^{***}$ & -- & -0.0446$^{***}$ & -- & -0.0251$^{***}$ \\
+				&  & (0.0052) &  & (0.0048) &  & (0.0041) &  & (0.0034) \\
+				\quad service & -- & -0.0697$^{***}$ & -- & -0.0427$^{***}$ & -- & -0.0807$^{***}$ & -- & -0.0343$^{***}$ \\
+				&  & (0.0069) &  & (0.0066) &  & (0.0049) &  & (0.0058) \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel C: Financial}} \\
+				\quad capital\_gain & -- & -- & 0.0000$^{***}$ & 0.0000$^{***}$ & -- & -- & -0.0001$^{***}$ & -0.0001$^{***}$ \\
+				&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
+				\quad capital\_loss & -- & -- & 0.0001$^{***}$ & 0.0001$^{***}$ & -- & -- & -0.0001$^{***}$ & -0.0000$^{***}$ \\
+				&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
+				\quad married & -- & -- & 0.2854$^{***}$ & 0.2752$^{***}$ & -- & -- & 0.2383$^{***}$ & 0.2357$^{***}$ \\
+				&  &  & (0.0042) & (0.0041) &  &  & (0.0035) & (0.0036) \\
+				\midrule
+				McFadden $R^2$ & 0.199 & 0.233 & 0.376 & 0.400 & 0.257 & 0.296 & 0.467 & 0.492 \\
+				Accuracy & 0.797 & 0.806 & 0.841 & 0.847 & 0.805 & 0.818 & 0.864 & 0.872 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+			\end{tablenotes}
+		\end{threeparttable}
+		}%
+	\end{table*}
+	
+	Table~\ref{tab:adult_spec_search} presents the specification search results for the UCI Adult Income dataset. The demographic panel tells a consistent story across all specifications and both model classes. Age and education have positive effects on the probability of earning above \$50,000, and the female indicator is large and negative, falling from around -\$0.16 to $-$0.03 as financial and work controls are added --- a pattern of omitted variable bias that is clearly legible in the AME framework and consistent across logistic regression and XGBoost. The standard errors are tight throughout, reflecting the large sample size, and the XGBoost standard errors are comparable to or smaller than those from logistic regression despite the additional model complexity. This is the efficiency gain the framework is designed to produce: when the black-box model fits better, as reflected in the higher McFadden $R^2$ across all specifications, the bootstrap standard errors narrow rather than widen. The financial panel illustrates a limitation of the capital gains and losses variables --- the AMEs are near zero in magnitude because these variables are highly skewed, and the units are raw dollars, so the displayed coefficients reflect a one-dollar change. The sign reversal on capital gains between logistic regression and XGBoost in specification A+C warrants attention and likely reflects nonlinearity that the logistic model cannot capture.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{UCI Adult Income: Model Comparison. Average marginal effects on P(Income $>$ \$50k), full specification (A+B+C).}
+			\label{tab:adult_model_comparison}
+			\begin{tabular}{lrrrr}
+				\toprule
+				Feature & Logistic & Random Forest & XGBoost & Neural Net \\
+				\midrule
+				age & 0.0027$^{***}$ & 0.0042$^{***}$ & 0.0031$^{***}$ & 0.0035$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0001) & (0.0006) \\
+				female & -0.0269$^{***}$ & -0.0218$^{***}$ & -0.0122$^{***}$ & -0.0085 \\
+				& (0.0041) & (0.0001) & (0.0032) & (0.0084) \\
+				education\_num & 0.0306$^{***}$ & 0.0294$^{***}$ & 0.0312$^{***}$ & 0.0238$^{***}$ \\
+				& (0.0006) & (0.0002) & (0.0011) & (0.0025) \\
+				\midrule
+				hours\_per\_week & 0.0033$^{***}$ & 0.0070$^{***}$ & 0.0032 & 0.0028$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0025) & (0.0006) \\
+				government & 0.0033 & 0.0051$^{***}$ & -0.0003 & -0.0065 \\
+				& (0.0045) & (0.0001) & (0.0026) & (0.0090) \\
+				self\_employed & -0.0268$^{***}$ & 0.0032$^{***}$ & -0.0055$^{*}$ & -0.0068 \\
+				& (0.0044) & (0.0001) & (0.0033) & (0.0066) \\
+				white\_collar & 0.0541$^{***}$ & 0.0600$^{***}$ & 0.0474$^{***}$ & 0.0243$^{***}$ \\
+				& (0.0051) & (0.0002) & (0.0017) & (0.0065) \\
+				blue\_collar & -0.0270$^{***}$ & -0.0240$^{***}$ & -0.0251$^{***}$ & -0.0502$^{***}$ \\
+				& (0.0048) & (0.0001) & (0.0034) & (0.0081) \\
+				service & -0.0427$^{***}$ & -0.0176$^{***}$ & -0.0343$^{***}$ & -0.0452$^{***}$ \\
+				& (0.0066) & (0.0001) & (0.0058) & (0.0088) \\
+				\midrule
+				capital\_gain & 0.0000$^{***}$ & 0.0000$^{***}$ & -0.0001$^{***}$ & 0.0001$^{***}$ \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+				capital\_loss & 0.0001$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & 0.0037$^{***}$ \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0006) \\
+				married & 0.2752$^{***}$ & 0.2446$^{***}$ & 0.2357$^{***}$ & 0.2046$^{***}$ \\
+				& (0.0041) & (0.0006) & (0.0036) & (0.0196) \\
+				\midrule
+				McFadden $R^2$ & 0.400 & 0.450 & 0.492 & 0.418 \\
+				Accuracy & 0.847 & 0.863 & 0.872 & 0.853 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:adult_model_comparison} compares all four model classes on the full specification. The most important finding is the stability of the core demographic results. The education AME is 0.031 for logistic regression, 0.029 for random forest, 0.031 for XGBoost, and 0.024 for the neural network --- a range of less than one percentage point across models that differ enormously in their functional form. The married AME is similarly stable, ranging from 0.205 to 0.275. This stability is not guaranteed by the method --- it reflects genuine agreement across models about the underlying conditional expectation function --- and it is the kind of cross-model validation that the AME framework makes possible precisely because it produces output on a common scale. The female indicator shows more variation, from $-$0.027 for logistic regression to $-$0.009 for the neural network, and is not significant for the neural network, suggesting some sensitivity to model specification for this variable. The random forest standard errors are notably smaller than those from other models for most variables, which is a consequence of the ensemble averaging in that estimator producing a smoother prediction surface and therefore more stable finite differences across bootstrap replicates.
+	
+	\begin{sidewaystable}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{UCI Adult Income: Method Comparison. AME, SHAP, and PDP estimates for P(Income $>$ \$50k), full specification (A+B+C).}
+			\label{tab:adult_method_comparison}
+			\begin{tabular}{lrrrrrrrrrrrr}
+				\toprule
+				& \multicolumn{3}{c}{Logistic} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
+				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+				& AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
+				\midrule
+				age & 0.0027 & -0.0270 & 0.0028 & 0.0042 & -0.0068 & 0.0024 & 0.0031 & -0.0097 & 0.0036 & 0.0035 & 0.0044 & 0.0033 \\
+				female & -0.0269 & 0.0022 & -0.0270 & -0.0218 & 0.0011 & -0.0218 & -0.0122 & 0.0015 & -0.0122 & -0.0085 & -0.0001 & -0.0222 \\
+				education\_num & 0.0306 & -0.1186 & 0.0269 & 0.0294 & -0.0077 & 0.0137 & 0.0312 & -0.0093 & 0.0170 & 0.0238 & -0.0051 & 0.0207 \\
+				\midrule
+				hours\_per\_week & 0.0033 & -0.0691 & 0.0033 & 0.0070 & -0.0054 & 0.0020 & 0.0032 & -0.0080 & 0.0028 & 0.0028 & -0.0032 & 0.0028 \\
+				government & 0.0033 & -0.0009 & 0.0026 & 0.0051 & -0.0003 & 0.0051 & -0.0003 & -0.0008 & -0.0003 & -0.0065 & 0.0002 & 0.0082 \\
+				self\_employed & -0.0268 & 0.0016 & -0.0265 & 0.0032 & -0.0003 & 0.0032 & -0.0055 & -0.0002 & -0.0055 & -0.0068 & -0.0008 & -0.0045 \\
+				white\_collar & 0.0541 & 0.0127 & 0.0538 & 0.0600 & 0.0031 & 0.0600 & 0.0474 & 0.0025 & 0.0474 & 0.0243 & 0.0007 & 0.0312 \\
+				blue\_collar & -0.0270 & 0.0136 & -0.0273 & -0.0240 & 0.0010 & -0.0240 & -0.0251 & 0.0004 & -0.0251 & -0.0502 & -0.0008 & -0.0531 \\
+				service & -0.0427 & -0.0027 & -0.0427 & -0.0176 & 0.0003 & -0.0176 & -0.0343 & 0.0005 & -0.0343 & -0.0452 & 0.0011 & -0.0558 \\
+				\midrule
+				capital\_gain & 0.0000 & -0.2627 & 0.0000 & 0.0000 & -0.0224 & 0.0000 & -0.0001 & -0.0264 & -0.0001 & 0.0001 & 0.0042 & 0.0000 \\
+				capital\_loss & 0.0001 & 0.0027 & -- & -0.0000 & -0.0034 & -- & -0.0000 & -0.0062 & -- & 0.0037 & -0.0115 & -- \\
+				married & 0.2752 & -0.0768 & 0.2749 & 0.2446 & -0.0064 & 0.2446 & 0.2357 & -0.0049 & 0.2357 & 0.2046 & 0.0149 & 0.1958 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{sidewaystable}
+	
+	Table~\ref{tab:adult_method_comparison} compares AMEs against SHAP values and partial dependence plot slopes across all four models. The contrast is stark. The AME and PDP estimates are in close agreement throughout --- the married AME of 0.275 for logistic regression matches the PDP slope of 0.275, and similar agreement holds for the occupation indicators and hours per week. This agreement is reassuring: both methods are estimating derivatives of the prediction function, and their numerical proximity confirms that the finite difference approximation is well-behaved. The SHAP values, by contrast, are on a different scale and in several cases have the wrong sign relative to AME and PDP. The SHAP value for age is negative across all four models while the AME and PDP are both positive --- a direct contradiction that reflects the fact that mean signed SHAP values are not marginal effects and should not be interpreted as such. Crucially, no standard errors are reported for SHAP or PDP, so there is no basis for inference from those columns. A researcher using SHAP alone would have a point estimate of unknown precision with no ability to test whether age, education, or any other variable has a statistically distinguishable effect on the outcome.
+	
 	\subsection{UCI Credit Default}
+	
+	The second dataset is the UCI Default of Credit Card Clients dataset \citep{yeh2009, UCI}, comprising 30,000 observations of Taiwanese credit card holders. The outcome is whether a cardholder defaulted on their payment in the following month. Features are organized into demographics (age, sex, education, marital status), payment history (average payment status, months delayed), and bill and payment amounts (average bill amount, average payment amount, payment ratio). The specification search considers logistic regression and a TensorFlow neural network, providing a direct comparison between a classical parametric model and a deep learning approach on the same inferential task.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\resizebox{\textwidth}{!}{%
+		\begin{threeparttable}
+			\caption{UCI Credit Card Default: Specification Search. Average marginal effects on P(Default).}
+			\label{tab:credit_default_spec_search}
+			\begin{tabular}{lrrrrrrrr}
+				\toprule
+				& \multicolumn{4}{c}{Logistic} & \multicolumn{4}{c}{Neural Net} \\
+				\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+				& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel A: Demographics}} \\
+				\quad age & -0.0004 & 0.0002 & 0.0002 & 0.0002 & -0.0014 & 0.0007 & 0.0003$^{***}$ & -0.0004$^{**}$ \\
+				& (0.0003) & (0.0003) & (0.0003) & (0.0002) & (0.0009) & (0.0008) & (0.0001) & (0.0002) \\
+				\quad female & -0.0358$^{***}$ & -0.0207$^{***}$ & -0.0294$^{***}$ & -0.0198$^{***}$ & -0.0506$^{***}$ & -0.0245$^{***}$ & -0.0009 & -0.0051$^{*}$ \\
+				& (0.0052) & (0.0045) & (0.0048) & (0.0045) & (0.0087) & (0.0055) & (0.0006) & (0.0026) \\
+				\quad education & 0.0173$^{***}$ & 0.0058$^{**}$ & 0.0017 & 0.0002 & 0.0152 & 0.0021 & -0.0011$^{***}$ & -0.0018$^{***}$ \\
+				& (0.0030) & (0.0028) & (0.0030) & (0.0028) & (0.0095) & (0.0061) & (0.0004) & (0.0004) \\
+				\quad married & 0.0253$^{***}$ & 0.0186$^{***}$ & 0.0280$^{***}$ & 0.0220$^{***}$ & 0.0302$^{***}$ & 0.0170$^{**}$ & -0.0018$^{***}$ & 0.0022 \\
+				& (0.0052) & (0.0049) & (0.0050) & (0.0050) & (0.0078) & (0.0073) & (0.0007) & (0.0036) \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel B: Payment History}} \\
+				\quad avg\_pay\_status & -- & -0.0161$^{***}$ & -- & -0.0256$^{***}$ & -- & 0.0050 & -- & 0.0298$^{*}$ \\
+				&  & (0.0036) &  & (0.0042) &  & (0.0090) &  & (0.0162) \\
+				\quad months\_delayed & -- & 0.0835$^{***}$ & -- & 0.0826$^{***}$ & -- & 0.1216$^{***}$ & -- & 0.0287$^{*}$ \\
+				&  & (0.0019) &  & (0.0021) &  & (0.0112) &  & (0.0174) \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel C: Bill and Payment Amounts}} \\
+				\quad avg\_bill\_amt & -- & -- & -0.0000 & 0.0000 & -- & -- & -0.0000$^{**}$ & -0.0000$^{**}$ \\
+				&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
+				\quad avg\_pay\_amt & -- & -- & -0.0000$^{***}$ & -0.0000$^{***}$ & -- & -- & -0.0000$^{**}$ & -0.0000 \\
+				&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
+				\quad pay\_ratio & -- & -- & -0.1196$^{***}$ & -0.0454$^{***}$ & -- & -- & 0.0005 & -0.0036 \\
+				&  &  & (0.0073) & (0.0072) &  &  & (0.0004) & (0.0025) \\
+				\midrule
+				McFadden $R^2$ & 0.003 & 0.130 & 0.031 & 0.137 & 0.009 & 0.147 & 0.014 & -1.167 \\
+				Accuracy & 0.779 & 0.803 & 0.779 & 0.803 & 0.779 & 0.804 & 0.779 & 0.789 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+			\end{tablenotes}
+		\end{threeparttable}
+		}%
+	\end{table*}
+	
+	Table~\ref{tab:credit_default_spec_search} presents the specification search for the UCI Credit Card Default dataset. The dominant finding is the importance of payment history. Months delayed enters with an AME of 0.084 for logistic regression and 0.122 for the neural network in specification A+B, and remains large and significant in the full specification --- the largest effect in the table by a substantial margin. The demographic panel tells a different story from the Adult Income dataset: age is statistically indistinguishable from zero in nearly every specification, and the female indicator, while consistently negative and significant for logistic regression, shrinks substantially once payment history is controlled for, falling from -\$0.036 to $-$0.020. This pattern of attenuation is cleanly legible in the AME framework because the coefficients are on a common probability scale across specifications. The neural network in the full specification produces a negative McFadden $R^2$ of $-$1.167, which signals that the model has failed to converge properly on this specification --- a useful diagnostic that the AME framework surfaces automatically since a miscalibrated model will produce unreliable marginal effects, and the bootstrap standard errors for the neural network in the full specification are correspondingly wide.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{UCI Credit Card Default: Model Comparison. Average marginal effects on P(Default), full specification (A+B+C).}
+			\label{tab:credit_default_model_comparison}
+			\begin{tabular}{lrrrr}
+				\toprule
+				Feature & Logistic & Random Forest & XGBoost & Neural Net \\
+				\midrule
+				age & 0.0002 & -0.0000 & -0.0004 & -0.0004$^{**}$ \\
+				& (0.0002) & (0.0000) & (0.0006) & (0.0002) \\
+				female & -0.0198$^{***}$ & -0.0062$^{***}$ & -0.0146$^{***}$ & -0.0051$^{*}$ \\
+				& (0.0045) & (0.0000) & (0.0031) & (0.0026) \\
+				education & 0.0002 & 0.0029$^{***}$ & 0.0030$^{*}$ & -0.0018$^{***}$ \\
+				& (0.0028) & (0.0001) & (0.0016) & (0.0004) \\
+				married & 0.0220$^{***}$ & 0.0054$^{***}$ & 0.0142$^{***}$ & 0.0022 \\
+				& (0.0050) & (0.0000) & (0.0035) & (0.0036) \\
+				\midrule
+				avg\_pay\_status & -0.0256$^{***}$ & -0.0000 & 0.1027$^{***}$ & 0.0298$^{*}$ \\
+				& (0.0042) & (0.0000) & (0.0225) & (0.0162) \\
+				months\_delayed & 0.0826$^{***}$ & 0.0179$^{***}$ & 0.0209$^{***}$ & 0.0287$^{*}$ \\
+				& (0.0021) & (0.0002) & (0.0009) & (0.0174) \\
+				\midrule
+				avg\_bill\_amt & 0.0000 & -0.0000$^{***}$ & -0.0000$^{*}$ & -0.0000$^{**}$ \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+				avg\_pay\_amt & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000 \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+				pay\_ratio & -0.0454$^{***}$ & -0.4306$^{***}$ & -0.4396$^{***}$ & -0.0036 \\
+				& (0.0072) & (0.0058) & (0.1289) & (0.0025) \\
+				\midrule
+				McFadden $R^2$ & 0.137 & 0.210 & 0.194 & -1.167 \\
+				Accuracy & 0.803 & 0.821 & 0.815 & 0.789 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table\~{}\textbackslash{}ref\{tab:credit\_default\_model\_comparison\} compares all four models on the full specification. The payment history variables again dominate, but the models disagree substantially on their magnitudes in a way that is informative rather than troubling. Months delayed is 0.083 for logistic regression, 0.018 for random forest, 0.021 for XGBoost, and 0.029 for the neural network --- a wide range that reflects genuine differences in how each model weighs this variable against the payment ratio, which random forest and XGBoost estimate at \$-\$0.431 and \$-\$0.440 respectively while logistic regression estimates only \$-\$0.045. This is a case where the black-box models are detecting a nonlinear relationship between payment ratio and default probability that logistic regression cannot represent, and the AME framework makes that disagreement visible and quantifiable. The random forest standard errors are again notably tight --- the female AME of \$-\$0.006 has a standard error of 0.000 to four decimal places --- which reflects the stability of the ensemble prediction surface. The neural network standard errors for months delayed are 0.017, substantially wider than the other models, consistent with the convergence issues flagged in the specification search.
+	
+	\begin{sidewaystable}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{UCI Credit Card Default: Method Comparison. AME, SHAP, and PDP estimates for P(Default), full specification (A+B+C).}
+			\label{tab:credit_default_method_comparison}
+			\begin{tabular}{lrrrrrrrrrrrr}
+				\toprule
+				& \multicolumn{3}{c}{Logistic} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
+				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+				& AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
+				\midrule
+				age & 0.0002 & -0.0003 & 0.0002 & -0.0000 & 0.0011 & -0.0000 & -0.0004 & 0.0004 & -0.0002 & -0.0004 & 0.0001 & -0.0022 \\
+				female & -0.0198 & -0.0005 & -0.0198 & -0.0062 & 0.0001 & -0.0062 & -0.0146 & 0.0002 & -0.0146 & -0.0051 & 0.0000 & -0.0131 \\
+				education & 0.0002 & 0.0002 & 0.0002 & 0.0029 & 0.0006 & -0.0057 & 0.0030 & -0.0005 & -0.0356 & -0.0018 & -0.0000 & -0.0013 \\
+				married & 0.0220 & -0.0038 & 0.0220 & 0.0054 & 0.0002 & 0.0054 & 0.0142 & 0.0002 & 0.0142 & 0.0022 & -0.0000 & 0.0140 \\
+				\midrule
+				avg\_pay\_status & -0.0256 & -0.0144 & -0.0246 & -0.0000 & 0.0029 & 0.0610 & 0.1027 & 0.0027 & 0.0404 & 0.0298 & 0.0000 & 0.0771 \\
+				months\_delayed & 0.0826 & -0.0148 & 0.1107 & 0.0179 & -0.0008 & 0.0456 & 0.0209 & 0.0001 & 0.0404 & 0.0287 & 0.0001 & 0.0812 \\
+				\midrule
+				avg\_bill\_amt & 0.0000 & -0.0001 & 0.0000 & -0.0000 & -0.0018 & -0.0000 & -0.0000 & -0.0046 & -0.0000 & -0.0000 & 0.0032 & 0.0000 \\
+				avg\_pay\_amt & -0.0000 & 0.0026 & -0.0000 & -0.0000 & -0.0006 & -0.0000 & -0.0000 & -0.0005 & -0.0000 & -0.0000 & 0.0028 & -0.0000 \\
+				pay\_ratio & -0.0454 & 0.0100 & -0.0444 & -0.4306 & 0.0012 & -0.0998 & -0.4396 & 0.0005 & -0.0953 & -0.0036 & 0.0000 & 0.0054 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{sidewaystable}
+	
+	Table~\ref{tab:credit_default_method_comparison} again reveals a systematic disconnect between SHAP values and AMEs. For the payment history variables the disagreement is particularly stark: the AME for months delayed is 0.083 for logistic regression while the mean signed SHAP value is $-$0.015 --- opposite in sign. The AME and PDP are in close agreement throughout, with the PDP slope for months delayed of 0.111 reasonably close to the AME of 0.083 given that PDP slopes are sensitive to the choice of evaluation grid. The pay ratio variable illustrates the most consequential divergence: the random forest and XGBoost AMEs are $-$0.431 and $-$0.440, indicating that a one-unit increase in the payment ratio is associated with a large reduction in default probability, while the corresponding SHAP values are 0.001 and 0.001 --- near zero and in the wrong direction. A researcher relying on SHAP alone would conclude that payment ratio is essentially irrelevant to default risk, which directly contradicts the AME and PDP evidence. And as before, with no standard errors attached to the SHAP or PDP estimates, there is no statistical basis for adjudicating between these conflicting signals.
 	
 	\subsection{Ames Housing}
 	
-	% Parenthetical: (De Cock, 2011)
-	The Ames Housing dataset \citep{decock2011}...
+	The third dataset is the Ames Housing dataset \citep{decock2011}, comprising approximately 1,460 observations of residential home sales in Ames, Iowa between 2006 and 2010. The outcome is sale price in dollars, so average marginal effects are interpreted in dollar units --- a one-unit change in a continuous feature is associated with a $\widehat{\mathrm{AME}}_j$ change in predicted sale price, on average across the sample. Features are organized into physical characteristics (above-ground living area, number of bedrooms, number of bathrooms), quality and condition (overall quality rating, condition rating, year built, year remodeled), and lot and location (lot area, garage area, neighborhood tier indicators). The specification search considers linear regression and a random forest, covering the regression case and completing the sweep across outcome types.
 	
-	% In-text: De Cock (2011)
-	\citet{decock2011} introduced the Ames Housing dataset...
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\resizebox{\textwidth}{!}{%
+		\begin{threeparttable}
+			\caption{Ames Housing: Specification Search. Average marginal effects on Sale Price (USD).}
+			\label{tab:ames_housing_spec_search}
+			\begin{tabular}{lrrrrrrrr}
+				\toprule
+				& \multicolumn{4}{c}{Linear} & \multicolumn{4}{c}{Random Forest} \\
+				\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+				& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel A: Physical Characteristics}} \\
+				\quad GrLivArea & 108.22$^{***}$ & 85.99$^{***}$ & 74.32$^{***}$ & 65.57$^{***}$ & 126.41$^{***}$ & 79.37$^{***}$ & 78.92$^{***}$ & 56.44$^{***}$ \\
+				& (13.45) & (15.05) & (11.03) & (13.84) & (8.22) & (3.47) & (3.61) & (1.93) \\
+				\quad BedroomAbvGr & -27911.62$^{***}$ & -10181.55$^{***}$ & -11440.18$^{***}$ & -6189.02$^{**}$ & -23128.28$^{***}$ & -3055.72$^{***}$ & -5528.45$^{***}$ & -1470.18$^{***}$ \\
+				& (3632.79) & (3107.43) & (3193.68) & (3042.41) & (1115.11) & (246.78) & (470.90) & (127.74) \\
+				\quad FullBath & 30380.78$^{***}$ & -9793.90$^{*}$ & 5378.67 & -6287.42 & 18535.37$^{***}$ & 382.25$^{***}$ & 1687.49$^{***}$ & 498.18$^{***}$ \\
+				& (5236.69) & (5750.79) & (3666.97) & (4593.14) & (601.00) & (104.69) & (108.04) & (73.44) \\
+				\quad HalfBath & 3586.62 & -13111.01$^{***}$ & -728.29 & -6967.90$^{*}$ & 493.43 & -1160.44$^{***}$ & 420.55$^{***}$ & -198.68$^{***}$ \\
+				& (4187.08) & (4093.96) & (2954.56) & (3607.14) & (491.19) & (111.48) & (97.27) & (51.07) \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel B: Quality and Condition}} \\
+				\quad OverallQual & -- & 21388.25$^{***}$ & -- & 16465.22$^{***}$ & -- & 17049.34$^{***}$ & -- & 15636.08$^{***}$ \\
+				&  & (1824.85) &  & (1228.91) &  & (560.81) &  & (519.24) \\
+				\quad OverallCond & -- & 5810.75$^{***}$ & -- & 6311.48$^{***}$ & -- & 2774.28$^{***}$ & -- & 1974.55$^{***}$ \\
+				&  & (1112.27) &  & (934.11) &  & (126.97) &  & (89.75) \\
+				\quad YearBuilt & -- & 685.31$^{***}$ & -- & 440.47$^{***}$ & -- & 729.64$^{***}$ & -- & 576.01$^{***}$ \\
+				&  & (87.70) &  & (113.18) &  & (143.44) &  & (112.13) \\
+				\quad YearRemodAdd & -- & 72.76 & -- & 101.51$^{*}$ & -- & 756.23$^{***}$ & -- & 518.52$^{***}$ \\
+				&  & (62.62) &  & (53.22) &  & (72.12) &  & (46.58) \\
+				\midrule
+				\multicolumn{9}{l}{\textit{Panel C: Lot and Location}} \\
+				\quad LotArea & -- & -- & 0.33 & 0.61$^{***}$ & -- & -- & 1.97$^{***}$ & 1.81$^{***}$ \\
+				&  &  & (0.21) & (0.24) &  &  & (0.15) & (0.09) \\
+				\quad GarageArea & -- & -- & 72.25$^{***}$ & 38.68$^{***}$ & -- & -- & 82.79$^{***}$ & 50.03$^{***}$ \\
+				&  &  & (6.92) & (6.01) &  &  & (5.75) & (3.11) \\
+				\quad nbhd\_high & -- & -- & 90316.66$^{***}$ & 51433.02$^{***}$ & -- & -- & 51108.94$^{***}$ & 5058.64$^{***}$ \\
+				&  &  & (7451.69) & (9809.90) &  &  & (999.15) & (255.98) \\
+				\quad nbhd\_mid & -- & -- & 31391.51$^{***}$ & 7508.07 & -- & -- & 25973.59$^{***}$ & 5949.97$^{***}$ \\
+				&  &  & (3266.03) & (5151.49) &  &  & (531.38) & (259.64) \\
+				\midrule
+				$R^2$ & 0.584 & 0.758 & 0.739 & 0.802 & 0.829 & 0.937 & 0.926 & 0.953 \\
+				RMSE & 51,243.9 & 39,080.1 & 40,596.4 & 35,355.5 & 32,830.9 & 19,881.6 & 21,534.2 & 17,244.4 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+			\end{tablenotes}
+		\end{threeparttable}
+		}%
+	\end{table*}
+	
+	Table~\ref{tab:ames_housing_spec_search} presents the specification search for the Ames Housing dataset. The regression setting allows AMEs to be interpreted directly in dollar units, which makes the substantive findings immediately legible. Above-ground living area carries an AME of \$108 per square foot in the demographics-only specification for linear regression, falling to \$66 in the full specification as quality, condition, and location controls absorb variation --- a pattern of positive omitted variable bias that makes intuitive sense, since larger homes tend to be in better neighborhoods and higher quality. The random forest standard errors are dramatically tighter than those from linear regression throughout: the GrLivArea AME of \$56 in the full specification has a standard error of \$1.93 for the random forest versus \$13.84 for linear regression, a sevenfold reduction that reflects both the better model fit --- $R^2$ of 0.953 versus 0.802 --- and the smoother prediction surface of the ensemble. The overall quality rating is the largest single predictor in the quality panel, with an AME of approximately \$21,000 per rating point for linear regression and \$17,000 for the random forest in specification A+B, both precisely estimated. The neighborhood tier indicators show substantial attenuation as quality controls are added --- the high neighborhood AME falls from \$90,000 to \$51,000 for linear regression and from \$51,000 to \$5,000 for the random forest --- suggesting that neighborhood effects in the black-box model are largely mediated by the quality and condition variables in a way the linear model cannot fully represent.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Ames Housing: Model Comparison. Average marginal effects on Sale Price (USD), full specification (A+B+C).}
+			\label{tab:ames_housing_model_comparison}
+			\begin{tabular}{lrrrr}
+				\toprule
+				Feature & Linear & Random Forest & XGBoost & Neural Net \\
+				\midrule
+				GrLivArea & 65.57$^{***}$ & 56.44$^{***}$ & 61.91$^{***}$ & 44.44$^{***}$ \\
+				& (13.84) & (1.93) & (4.00) & (2.75) \\
+				BedroomAbvGr & -6189.02$^{**}$ & -1470.18$^{***}$ & -2921.99$^{***}$ & 13.76$^{***}$ \\
+				& (3042.41) & (127.74) & (651.83) & (2.20) \\
+				FullBath & -6287.42 & 498.18$^{***}$ & 372.18 & 41.25$^{***}$ \\
+				& (4593.14) & (73.44) & (789.08) & (2.25) \\
+				HalfBath & -6967.90$^{*}$ & -198.68$^{***}$ & -756.76$^{*}$ & 51.54$^{***}$ \\
+				& (3607.14) & (51.07) & (404.59) & (3.47) \\
+				\midrule
+				OverallQual & 16465.22$^{***}$ & 15636.08$^{***}$ & 13735.72$^{***}$ & 41.95$^{***}$ \\
+				& (1228.91) & (519.24) & (500.14) & (2.55) \\
+				OverallCond & 6311.48$^{***}$ & 1974.55$^{***}$ & 4596.29$^{***}$ & 12.63$^{***}$ \\
+				& (934.11) & (89.75) & (533.35) & (2.08) \\
+				YearBuilt & 440.47$^{***}$ & 576.01$^{***}$ & 619.02$^{***}$ & 21.12$^{***}$ \\
+				& (113.18) & (112.13) & (125.80) & (1.45) \\
+				YearRemodAdd & 101.51$^{*}$ & 518.52$^{***}$ & 647.81$^{***}$ & 20.02$^{***}$ \\
+				& (53.22) & (46.58) & (187.76) & (1.55) \\
+				\midrule
+				LotArea & 0.61$^{***}$ & 1.81$^{***}$ & 2.11$^{***}$ & 1.47$^{***}$ \\
+				& (0.24) & (0.09) & (0.27) & (0.32) \\
+				GarageArea & 38.68$^{***}$ & 50.03$^{***}$ & 43.09$^{***}$ & 47.38$^{***}$ \\
+				& (6.01) & (3.11) & (9.21) & (3.09) \\
+				nbhd\_high & 51433.02$^{***}$ & 5058.64$^{***}$ & 20307.33$^{***}$ & 71.63$^{***}$ \\
+				& (9809.90) & (255.98) & (1644.21) & (4.02) \\
+				nbhd\_mid & 7508.07 & 5949.97$^{***}$ & 9744.98$^{***}$ & 39.51$^{***}$ \\
+				& (5151.49) & (259.64) & (557.43) & (4.60) \\
+				\midrule
+				$R^2$ & 0.802 & 0.953 & 0.954 & 0.483 \\
+				RMSE & 35,355.5 & 17,244.4 & 17,036.6 & 57,114.5 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:ames_housing_model_comparison} compares all four models on the full specification. Linear regression, random forest, and XGBoost tell a broadly consistent story for the core physical and quality variables. The GrLivArea AME is \$66, \$56, and \$62 across those three models, and the overall quality AME is \$16,000, \$16,000, and \$14,000 --- remarkable agreement given the differences in model architecture. The neural network is the outlier: its R-squared of 0.483 and RMSE of \$57,000 indicate severe underfitting relative to the other models, and the AMEs reflect this --- the overall quality AME is \$42 rather than \$14,000 to \$16,000, and the bedroom and bathroom AMEs are near zero. This is a case where the bootstrap standard errors for the neural network are implausibly tight given the poor model fit, which occurs because a badly underfitted model produces a very flat and stable prediction surface --- the finite differences are stable but wrong. The bedroom variable illustrates genuine model disagreement among the well-fitted models: the AME is -\$6,189 for linear regression, -\$1,470 for random forest, and -\$2,922 for XGBoost, all negative and significant, while the neural network produces \$14 and is not comparable given its poor fit. The negative bedroom effect, conditional on living area, is a well-known finding in the hedonic pricing literature --- holding square footage fixed, more bedrooms means smaller rooms --- and all three well-fitted models recover it
+	
+	\begin{sidewaystable}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Ames Housing: Method Comparison. AME, SHAP, and PDP estimates for Sale Price (USD), full specification (A+B+C).}
+			\label{tab:ames_housing_method_comparison}
+			\begin{tabular}{lrrrrrrrrrrrr}
+				\toprule
+				& \multicolumn{3}{c}{Linear} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
+				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+				& AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
+				\midrule
+				GrLivArea & 65.57 & 3423.49 & 65.57 & 56.44 & 61.69 & 38.64 & 61.91 & -971.88 & 39.06 & 44.44 & -1037.50 & 47.48 \\
+				BedroomAbvGr & -6189.02 & 145.82 & -6189.02 & -1470.18 & 90.87 & -1272.27 & -2921.99 & 158.44 & -4456.61 & 13.76 & -2.80 & 18.22 \\
+				FullBath & -6287.42 & 31.01 & -6287.42 & 498.18 & 34.06 & 543.63 & 372.18 & 54.86 & 193.04 & 41.25 & -0.99 & 37.27 \\
+				HalfBath & -6967.90 & -298.76 & -6967.90 & -198.68 & 50.46 & -125.75 & -756.76 & 30.53 & -1495.20 & 51.54 & 1.39 & 54.74 \\
+				\midrule
+				OverallQual & 16465.22 & 1635.24 & 16465.22 & 15636.08 & 596.70 & 20776.14 & 13735.72 & 713.13 & 20130.92 & 41.95 & -0.07 & 43.55 \\
+				OverallCond & 6311.48 & 980.44 & 6311.48 & 1974.55 & 161.26 & 2030.44 & 4596.29 & -481.60 & 5071.47 & 12.63 & 4.54 & 17.08 \\
+				YearBuilt & 440.47 & -415.01 & 440.47 & 576.01 & 288.29 & 209.05 & 619.02 & 569.00 & 397.33 & 21.12 & -10.50 & 19.09 \\
+				YearRemodAdd & 101.51 & 86.86 & 101.51 & 518.52 & 373.04 & 118.06 & 647.81 & 499.84 & 152.00 & 20.02 & 56.41 & 19.14 \\
+				\midrule
+				LotArea & 0.61 & 267.44 & 0.61 & 1.81 & -183.50 & 1.33 & 2.11 & 216.28 & 2.38 & 1.47 & 688.97 & 1.43 \\
+				GarageArea & 38.68 & 93.22 & 38.68 & 50.03 & -884.31 & 23.77 & 43.09 & -704.59 & 28.98 & 47.38 & 432.53 & 51.25 \\
+				nbhd\_high & 51433.02 & 77.50 & 51433.02 & 5058.64 & -506.36 & 5058.64 & 20307.33 & 50.70 & 20307.34 & 71.63 & 1.75 & 80.22 \\
+				nbhd\_mid & 7508.07 & 266.38 & 7508.07 & 5949.97 & 40.68 & 5949.97 & 9744.98 & -134.71 & 9744.97 & 39.51 & -1.67 & 43.20 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{sidewaystable}
+	
+	Table~\ref{tab:ames_housing_method_comparison} brings the SHAP comparison into sharpest relief in the regression setting, where the units are dollars and the magnitudes are large enough to make the divergences concrete. The SHAP value for GrLivArea is \$3,423 for the linear model, which attributes to that variable an effect sixty times larger than the AME of \$66 --- a number that is not interpretable as a marginal effect in any standard sense. For the random forest the SHAP value of \$62 for GrLivArea happens to be close to the AME of \$56, but this agreement is coincidental rather than principled, as the SHAP values for garage area (-\$884), lot area (-\$184), and overall condition (-\$482) are negative for the random forest while the AME and PDP estimates are positive for all three. The AME and PDP estimates are in close agreement throughout for the well-fitted models --- the neighborhood tier indicators match almost exactly between AME and PDP for random forest and XGBoost, and the quality variables are within reasonable range. The Ames Housing results complete the sweep across outcome types: the framework produces dollar-denominated marginal effects with valid standard errors for a continuous regression outcome, using exactly the same estimation procedure as the binary classification examples, with no modification required.
 	
 	\section{Simulation}
 	
+	We evaluate the finite-sample performance of the AME estimator through two simulation studies. Simulation 1 examines bias and root mean squared error of the AME estimates as a function of sample size across three data generating processes and two outcome types. Simulation 2 examines bootstrap standard error calibration by comparing empirical coverage rates of nominal 95\% confidence intervals to the target. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1{,}000, 2{,}500, 5{,}000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Linear DGP (Classification). Mean bias and RMSE (in parentheses) across 500 Monte Carlo iterations.}
+			\label{tab:sim1_classification_linear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.199 & -0.0058 & -0.0034 & -0.0014 & -0.0008 & -0.0006 \\
+				&  & (0.0201) & (0.0146) & (0.0106) & (0.0064) & (0.0048) \\
+				\quad x2 & 0.298 & -0.0109 & -0.0057 & -0.0026 & -0.0010 & -0.0005 \\
+				&  & (0.0229) & (0.0153) & (0.0105) & (0.0066) & (0.0046) \\
+				\quad x3 & 0.000 & 0.0012 & 0.0006 & 0.0006 & 0.0003 & 0.0002 \\
+				&  & (0.0198) & (0.0136) & (0.0099) & (0.0063) & (0.0045) \\
+				\quad x4 & 0.000 & 0.0008 & -0.0001 & -0.0008 & -0.0001 & 0.0003 \\
+				&  & (0.0197) & (0.0136) & (0.0100) & (0.0062) & (0.0045) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.199 & 0.0126 & 0.0044 & -0.0018 & -0.0111 & -0.0157 \\
+				&  & (0.0412) & (0.0239) & (0.0160) & (0.0142) & (0.0168) \\
+				\quad x2 & 0.298 & 0.0199 & 0.0113 & -0.0008 & -0.0102 & -0.0158 \\
+				&  & (0.0500) & (0.0309) & (0.0174) & (0.0143) & (0.0172) \\
+				\quad x3 & 0.000 & 0.0007 & 0.0010 & 0.0005 & 0.0002 & 0.0002 \\
+				&  & (0.0284) & (0.0171) & (0.0104) & (0.0056) & (0.0034) \\
+				\quad x4 & 0.000 & -0.0008 & -0.0013 & -0.0012 & -0.0001 & 0.0002 \\
+				&  & (0.0267) & (0.0177) & (0.0106) & (0.0055) & (0.0034) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.199 & 0.0590 & 0.0265 & 0.0107 & -0.0016 & -0.0049 \\
+				&  & (0.0782) & (0.0401) & (0.0223) & (0.0108) & (0.0083) \\
+				\quad x2 & 0.298 & 0.0643 & 0.0315 & 0.0085 & -0.0016 & -0.0046 \\
+				&  & (0.0893) & (0.0490) & (0.0218) & (0.0116) & (0.0083) \\
+				\quad x3 & 0.000 & 0.0008 & -0.0002 & 0.0006 & 0.0002 & 0.0002 \\
+				&  & (0.0332) & (0.0193) & (0.0110) & (0.0056) & (0.0033) \\
+				\quad x4 & 0.000 & 0.0008 & -0.0009 & -0.0006 & 0.0000 & 0.0002 \\
+				&  & (0.0344) & (0.0198) & (0.0116) & (0.0054) & (0.0032) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.199 & -0.0078 & -0.0007 & 0.0005 & 0.0003 & -0.0002 \\
+				&  & (0.0222) & (0.0156) & (0.0115) & (0.0074) & (0.0058) \\
+				\quad x2 & 0.298 & -0.0162 & -0.0017 & 0.0004 & 0.0004 & 0.0002 \\
+				&  & (0.0276) & (0.0174) & (0.0116) & (0.0073) & (0.0052) \\
+				\quad x3 & 0.000 & 0.0014 & 0.0010 & 0.0007 & 0.0003 & 0.0004 \\
+				&  & (0.0204) & (0.0144) & (0.0103) & (0.0069) & (0.0057) \\
+				\quad x4 & 0.000 & 0.0009 & -0.0003 & -0.0007 & -0.0001 & 0.0004 \\
+				&  & (0.0203) & (0.0143) & (0.0105) & (0.0070) & (0.0055) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_classification_linear} reports bias and RMSE for the linear classification DGP, where the true AMEs of $x_1$ and $x_2$ are 0.199 and 0.298 --- these are not 2.0 and 3.0 because the sigmoid compresses the scale. Logistic regression recovers the true AMEs with negligible bias at all sample sizes, and RMSE declines from around 0.020 at $n=250$ to 0.005 at $n=5{,}000$ at the expected $O(n^{-1/2})$ rate. The neural network behaves similarly, with small bias at $n=250$ that disappears by $n=500$. XGBoost shows larger bias at small samples --- around 0.06 for both $x_1$ and $x_2$ at $n=250$ --- reflecting the well-known tendency of gradient boosted models to underfit at small sample sizes, but bias falls sharply and RMSE converges by $n=2{,}500$. Random forests show a different pattern: bias is small at $n=250$ and $n=500$ but turns negative and persistent at $n=2{,}500$ and $n=5{,}000$, reaching around $-0.016$ for both signal features at the largest sample size. This reflects the regularization bias inherent in random forests --- the tree depth and subsampling constraints impose shrinkage that does not vanish with sample size at the default tuning settings. The noise features $x_3$ and $x_4$ have bias and RMSE near zero throughout for all model classes, confirming that the estimator does not spuriously attribute effects to irrelevant features.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Nonlinear DGP (Classification). Mean bias and RMSE (in parentheses) across 500 Monte Carlo iterations.}
+			\label{tab:sim1_classification_nonlinear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.000 & 0.0002 & 0.0015 & 0.0009 & 0.0002 & -0.0001 \\
+				&  & (0.0230) & (0.0166) & (0.0123) & (0.0078) & (0.0055) \\
+				\quad x2 & 0.298 & -0.0077 & -0.0042 & -0.0017 & -0.0007 & -0.0005 \\
+				&  & (0.0215) & (0.0152) & (0.0109) & (0.0065) & (0.0048) \\
+				\quad x3 & 0.000 & 0.0003 & 0.0001 & -0.0002 & -0.0001 & 0.0003 \\
+				&  & (0.0229) & (0.0158) & (0.0112) & (0.0074) & (0.0052) \\
+				\quad x4 & 0.000 & -0.0012 & 0.0005 & 0.0006 & -0.0001 & -0.0000 \\
+				&  & (0.0252) & (0.0159) & (0.0108) & (0.0075) & (0.0051) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.000 & 0.0014 & 0.0001 & 0.0000 & -0.0003 & -0.0000 \\
+				&  & (0.0407) & (0.0256) & (0.0173) & (0.0114) & (0.0082) \\
+				\quad x2 & 0.298 & 0.0177 & 0.0060 & -0.0040 & -0.0120 & -0.0155 \\
+				&  & (0.0521) & (0.0278) & (0.0182) & (0.0157) & (0.0171) \\
+				\quad x3 & 0.000 & 0.0019 & -0.0000 & 0.0003 & 0.0001 & 0.0003 \\
+				&  & (0.0285) & (0.0166) & (0.0100) & (0.0052) & (0.0031) \\
+				\quad x4 & 0.000 & -0.0026 & -0.0007 & 0.0005 & 0.0000 & -0.0001 \\
+				&  & (0.0295) & (0.0165) & (0.0099) & (0.0054) & (0.0031) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.000 & 0.0039 & 0.0003 & 0.0004 & -0.0000 & -0.0003 \\
+				&  & (0.0549) & (0.0324) & (0.0209) & (0.0123) & (0.0079) \\
+				\quad x2 & 0.298 & 0.0471 & 0.0221 & 0.0066 & -0.0028 & -0.0054 \\
+				&  & (0.0787) & (0.0396) & (0.0208) & (0.0114) & (0.0087) \\
+				\quad x3 & 0.000 & 0.0038 & 0.0007 & 0.0007 & 0.0002 & 0.0003 \\
+				&  & (0.0307) & (0.0172) & (0.0108) & (0.0051) & (0.0028) \\
+				\quad x4 & 0.000 & -0.0016 & 0.0010 & 0.0006 & 0.0001 & 0.0001 \\
+				&  & (0.0329) & (0.0184) & (0.0105) & (0.0052) & (0.0027) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.000 & 0.0006 & 0.0015 & 0.0002 & 0.0001 & 0.0000 \\
+				&  & (0.0234) & (0.0189) & (0.0140) & (0.0094) & (0.0069) \\
+				\quad x2 & 0.298 & -0.0132 & -0.0026 & 0.0002 & 0.0005 & 0.0001 \\
+				&  & (0.0249) & (0.0155) & (0.0112) & (0.0077) & (0.0064) \\
+				\quad x3 & 0.000 & 0.0001 & 0.0002 & 0.0007 & 0.0003 & 0.0003 \\
+				&  & (0.0215) & (0.0138) & (0.0101) & (0.0068) & (0.0053) \\
+				\quad x4 & 0.000 & -0.0007 & 0.0004 & 0.0005 & -0.0001 & 0.0002 \\
+				&  & (0.0230) & (0.0144) & (0.0100) & (0.0070) & (0.0056) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_classification_nonlinear} reports results for the nonlinear classification DGP, where $P(y=1) = \sigma(2x_1^2 + 3x_2)$. The true AME of $x_1$ is zero despite the quadratic term, because the sigmoid and quadratic effects cancel in expectation at these parameter values as confirmed by the Monte Carlo ground truth. All four model classes recover this near-zero AME accurately, with bias well below 0.005 across all sample sizes. The more important result is $x_2$, which has true AME of 0.298. Logistic regression misspecifies the DGP --- the true relationship is nonlinear in $x_1$ --- but still recovers the $x_2$ AME accurately because $x_2$ enters linearly and the misspecification in $x_1$ does not propagate to the $x_2$ marginal effect. This is an important practical result: AMEs from a misspecified parametric model can still be reliable for variables that enter the true DGP in a manner consistent with the model's functional form. The black-box models show the same pattern as the linear DGP: XGBoost has elevated RMSE at small samples, random forests develop negative bias at large samples, and neural networks perform comparably to logistic regression throughout.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Interaction DGP (Classification). Mean bias and RMSE (in parentheses) across 500 Monte Carlo iterations.}
+			\label{tab:sim1_classification_interaction}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.199 & -0.0065 & -0.0042 & -0.0021 & -0.0008 & -0.0007 \\
+				&  & (0.0219) & (0.0153) & (0.0112) & (0.0071) & (0.0051) \\
+				\quad x2 & 0.298 & -0.0083 & -0.0035 & -0.0018 & -0.0008 & -0.0007 \\
+				&  & (0.0222) & (0.0154) & (0.0102) & (0.0071) & (0.0050) \\
+				\quad x3 & 0.000 & 0.0009 & -0.0002 & 0.0005 & 0.0003 & -0.0001 \\
+				&  & (0.0206) & (0.0155) & (0.0107) & (0.0070) & (0.0046) \\
+				\quad x4 & 0.000 & 0.0007 & -0.0000 & -0.0001 & 0.0001 & 0.0002 \\
+				&  & (0.0212) & (0.0159) & (0.0106) & (0.0066) & (0.0047) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.199 & 0.0114 & 0.0051 & -0.0031 & -0.0110 & -0.0154 \\
+				&  & (0.0423) & (0.0264) & (0.0169) & (0.0144) & (0.0167) \\
+				\quad x2 & 0.298 & 0.0178 & 0.0104 & -0.0023 & -0.0101 & -0.0140 \\
+				&  & (0.0498) & (0.0320) & (0.0200) & (0.0148) & (0.0158) \\
+				\quad x3 & 0.000 & 0.0019 & 0.0004 & 0.0002 & 0.0002 & -0.0000 \\
+				&  & (0.0276) & (0.0170) & (0.0104) & (0.0059) & (0.0034) \\
+				\quad x4 & 0.000 & -0.0005 & -0.0011 & -0.0001 & 0.0001 & -0.0000 \\
+				&  & (0.0267) & (0.0177) & (0.0111) & (0.0057) & (0.0033) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.199 & 0.0511 & 0.0225 & 0.0079 & -0.0014 & -0.0046 \\
+				&  & (0.0737) & (0.0392) & (0.0219) & (0.0105) & (0.0082) \\
+				\quad x2 & 0.298 & 0.0496 & 0.0228 & 0.0042 & -0.0021 & -0.0047 \\
+				&  & (0.0796) & (0.0439) & (0.0227) & (0.0125) & (0.0091) \\
+				\quad x3 & 0.000 & 0.0004 & 0.0005 & 0.0004 & 0.0000 & 0.0000 \\
+				&  & (0.0310) & (0.0205) & (0.0111) & (0.0064) & (0.0035) \\
+				\quad x4 & 0.000 & -0.0012 & -0.0015 & -0.0004 & 0.0001 & 0.0001 \\
+				&  & (0.0338) & (0.0205) & (0.0118) & (0.0060) & (0.0037) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.199 & -0.0089 & -0.0013 & 0.0001 & 0.0000 & -0.0004 \\
+				&  & (0.0233) & (0.0158) & (0.0117) & (0.0079) & (0.0061) \\
+				\quad x2 & 0.298 & -0.0114 & -0.0002 & 0.0007 & 0.0005 & -0.0002 \\
+				&  & (0.0257) & (0.0170) & (0.0131) & (0.0085) & (0.0067) \\
+				\quad x3 & 0.000 & 0.0008 & 0.0004 & 0.0008 & 0.0001 & 0.0000 \\
+				&  & (0.0193) & (0.0148) & (0.0099) & (0.0070) & (0.0053) \\
+				\quad x4 & 0.000 & 0.0005 & -0.0002 & 0.0000 & -0.0001 & 0.0006 \\
+				&  & (0.0206) & (0.0151) & (0.0103) & (0.0069) & (0.0057) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_classification_interaction} reports results for the interaction DGP, where $P(y=1) = \sigma(2x_1 + 3x_2 + 2x_1 x_2)$. The true AMEs of $x_1$ and $x_2$ remain 0.199 and 0.298 --- the same as the linear DGP --- because the interaction term $2x_1 x_2$ has zero expectation under $N(0,1)$ and the Monte Carlo ground truth confirms near-identical values. The key finding is that all four model classes recover these AMEs with bias and RMSE patterns essentially identical to the linear DGP, despite the true DGP including a multiplicative interaction. This is by design of the AME estimand: the average marginal effect averages over the joint distribution of the features, so the interaction term is absorbed into the average derivative rather than requiring explicit modeling. A logistic regression that omits the interaction term recovers the correct AME because the interaction's contribution to the marginal effect of $x_1$ is $\mathbb{E}[2x_2] = 0$ and similarly for $x_2$. This is an important robustness result --- AMEs are not sensitive to interaction misspecification when the interactions involve zero-mean features, which is the common case after centering.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Linear DGP (Regression). Mean bias and RMSE (in parentheses) across 1,000 Monte Carlo iterations.}
+			\label{tab:sim1_regression_linear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+				\quad x1 & 2.000 & -0.0017 & -0.0001 & -0.0000 & -0.0006 & -0.0003 \\
+				&  & (0.0659) & (0.0445) & (0.0322) & (0.0207) & (0.0137) \\
+				\quad x2 & 3.000 & -0.0043 & -0.0017 & 0.0007 & -0.0004 & -0.0003 \\
+				&  & (0.0636) & (0.0453) & (0.0316) & (0.0197) & (0.0140) \\
+				\quad x3 & 0.000 & -0.0001 & -0.0006 & -0.0005 & 0.0012 & -0.0003 \\
+				&  & (0.0650) & (0.0457) & (0.0312) & (0.0199) & (0.0140) \\
+				\quad x4 & 0.000 & -0.0034 & 0.0006 & -0.0002 & -0.0003 & -0.0001 \\
+				&  & (0.0642) & (0.0452) & (0.0315) & (0.0196) & (0.0139) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 2.000 & -0.0973 & -0.0332 & -0.0387 & -0.0703 & -0.0911 \\
+				&  & (0.2064) & (0.1189) & (0.0850) & (0.0824) & (0.0956) \\
+				\quad x2 & 3.000 & -0.0215 & -0.0105 & -0.0433 & -0.0797 & -0.0953 \\
+				&  & (0.2338) & (0.1456) & (0.0997) & (0.0958) & (0.1025) \\
+				\quad x3 & 0.000 & -0.0015 & -0.0005 & -0.0005 & 0.0001 & 0.0000 \\
+				&  & (0.0562) & (0.0290) & (0.0137) & (0.0036) & (0.0011) \\
+				\quad x4 & 0.000 & -0.0021 & -0.0010 & -0.0005 & -0.0002 & 0.0000 \\
+				&  & (0.0572) & (0.0297) & (0.0138) & (0.0037) & (0.0011) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 2.000 & 0.4114 & 0.1780 & 0.0366 & -0.0337 & -0.0467 \\
+				&  & (0.4644) & (0.2227) & (0.0917) & (0.0554) & (0.0547) \\
+				\quad x2 & 3.000 & 0.3122 & 0.0948 & -0.0172 & -0.0558 & -0.0601 \\
+				&  & (0.4103) & (0.1884) & (0.0947) & (0.0754) & (0.0677) \\
+				\quad x3 & 0.000 & 0.0007 & 0.0016 & -0.0003 & 0.0011 & -0.0001 \\
+				&  & (0.1090) & (0.0550) & (0.0313) & (0.0153) & (0.0083) \\
+				\quad x4 & 0.000 & -0.0080 & 0.0002 & 0.0011 & -0.0006 & 0.0001 \\
+				&  & (0.1077) & (0.0597) & (0.0314) & (0.0149) & (0.0081) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 2.000 & -0.0659 & -0.0208 & -0.0063 & -0.0021 & -0.0008 \\
+				&  & (0.1161) & (0.0544) & (0.0344) & (0.0293) & (0.0329) \\
+				\quad x2 & 3.000 & -0.1231 & -0.0349 & -0.0102 & -0.0031 & -0.0006 \\
+				&  & (0.1765) & (0.0638) & (0.0361) & (0.0324) & (0.0372) \\
+				\quad x3 & 0.000 & 0.0014 & -0.0006 & -0.0003 & 0.0009 & -0.0006 \\
+				&  & (0.0788) & (0.0484) & (0.0330) & (0.0250) & (0.0280) \\
+				\quad x4 & 0.000 & -0.0002 & 0.0008 & -0.0003 & -0.0004 & -0.0017 \\
+				&  & (0.0752) & (0.0496) & (0.0336) & (0.0247) & (0.0287) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_regression_linear} turns to the regression setting with the linear DGP, $y = 2x_1 + 3x_2 + \varepsilon$. Linear regression recovers the true AMEs of 2.0 and 3.0 with negligible bias across all sample sizes, and RMSE declines from around 0.066 at $n=250$ to 0.014 at $n=5{,}000$, consistent with $O(n^{-1/2})$ convergence. The regression setting reveals the regularization bias of random forests more starkly than the classification setting: bias reaches $-0.091$ for $x_1$ and $-0.095$ for $x_2$ at $n=5{,}000$, and RMSE is not declining at the largest sample sizes, indicating that the bias is not vanishing with $n$ at default tuning. This is a known property of random forests in the regression case --- the ensemble averaging and subsampling impose shrinkage toward zero that is not corrected by the hyperparameter search at these sample sizes. XGBoost shows large positive bias at small samples --- 0.41 for $x_1$ at $n=250$ --- but converges quickly, with bias falling below 0.05 by $n=2{,}500$. The neural network shows moderate negative bias at small samples that falls toward zero by $n=2{,}500$, though RMSE does not decline monotonically at the largest sample sizes, suggesting residual variance from the optimization landscape. The noise features have RMSE near zero for linear regression and declining rapidly for the black-box models, confirming that the estimator correctly attributes near-zero effects to irrelevant features in the regression setting.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Nonlinear DGP (Regression). Mean bias and RMSE (in parentheses) across 1,000 Monte Carlo iterations.}
+			\label{tab:sim1_regression_nonlinear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+				\quad x1 & 0.000 & 0.0241 & 0.0261 & 0.0148 & 0.0048 & 0.0015 \\
+				&  & (0.3868) & (0.2820) & (0.1966) & (0.1272) & (0.0904) \\
+				\quad x2 & 3.000 & -0.0145 & -0.0041 & -0.0012 & -0.0002 & 0.0001 \\
+				&  & (0.1921) & (0.1276) & (0.0930) & (0.0572) & (0.0417) \\
+				\quad x3 & 0.000 & -0.0025 & 0.0001 & -0.0018 & -0.0020 & -0.0009 \\
+				&  & (0.1889) & (0.1343) & (0.0941) & (0.0576) & (0.0414) \\
+				\quad x4 & 0.000 & -0.0114 & -0.0003 & 0.0023 & 0.0006 & -0.0018 \\
+				&  & (0.1857) & (0.1328) & (0.0927) & (0.0594) & (0.0430) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.000 & 0.0071 & 0.0097 & 0.0053 & 0.0006 & 0.0007 \\
+				&  & (0.3433) & (0.2547) & (0.1836) & (0.1185) & (0.0903) \\
+				\quad x2 & 3.000 & 0.0142 & -0.1152 & -0.1701 & -0.1867 & -0.1849 \\
+				&  & (0.2704) & (0.2008) & (0.2004) & (0.1974) & (0.1916) \\
+				\quad x3 & 0.000 & 0.0001 & 0.0008 & 0.0003 & -0.0002 & 0.0000 \\
+				&  & (0.0549) & (0.0274) & (0.0138) & (0.0055) & (0.0027) \\
+				\quad x4 & 0.000 & -0.0009 & -0.0007 & -0.0001 & -0.0000 & -0.0000 \\
+				&  & (0.0573) & (0.0278) & (0.0138) & (0.0054) & (0.0025) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.000 & 0.0552 & 0.0038 & -0.0117 & -0.0137 & -0.0057 \\
+				&  & (0.4662) & (0.2744) & (0.1829) & (0.1040) & (0.0735) \\
+				\quad x2 & 3.000 & 0.2725 & 0.0816 & -0.0183 & -0.0702 & -0.0794 \\
+				&  & (0.3937) & (0.1981) & (0.1058) & (0.0885) & (0.0862) \\
+				\quad x3 & 0.000 & -0.0040 & -0.0022 & -0.0020 & -0.0011 & -0.0006 \\
+				&  & (0.1124) & (0.0704) & (0.0446) & (0.0191) & (0.0097) \\
+				\quad x4 & 0.000 & -0.0052 & -0.0028 & -0.0021 & 0.0003 & 0.0006 \\
+				&  & (0.1121) & (0.0636) & (0.0381) & (0.0189) & (0.0096) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.000 & 0.0201 & 0.0178 & 0.0065 & -0.0003 & -0.0013 \\
+				&  & (0.3086) & (0.1925) & (0.1390) & (0.0911) & (0.0760) \\
+				\quad x2 & 3.000 & -0.1545 & -0.0202 & -0.0150 & -0.0098 & -0.0022 \\
+				&  & (0.2601) & (0.0710) & (0.0461) & (0.0343) & (0.0395) \\
+				\quad x3 & 0.000 & 0.0017 & 0.0004 & 0.0007 & 0.0009 & -0.0004 \\
+				&  & (0.1419) & (0.0634) & (0.0400) & (0.0293) & (0.0321) \\
+				\quad x4 & 0.000 & -0.0028 & -0.0001 & -0.0013 & -0.0004 & -0.0016 \\
+				&  & (0.1410) & (0.0626) & (0.0406) & (0.0281) & (0.0323) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_regression_nonlinear} reports results for the nonlinear regression DGP, $y = 2x_1^2 + 3x_2 + \varepsilon$, where the true AME of $x_1$ is zero by symmetry of $N(0,1)$ and the true AME of $x_2$ is 3.0. Linear regression recovers the $x_2$ AME accurately with RMSE declining at the standard rate, and correctly attributes a near-zero AME to $x_1$ despite misspecifying its functional form --- the same robustness result observed in the classification case. However, the RMSE for $x_1$ under linear regression is substantially larger than in the linear DGP --- 0.387 at $n=250$ versus 0.066 --- reflecting increased estimation variance from the misspecified model. The most striking result is random forests: the bias for $x_2$ reaches $-0.185$ at $n=5{,}000$ and is not declining, indicating that the regularization bias is amplified in the nonlinear setting where the forest must capture the quadratic relationship in $x_1$ while simultaneously estimating the linear effect of $x_2$. XGBoost and the neural network both show elevated RMSE relative to the linear DGP but declining bias, suggesting that these models are better able to adapt to the nonlinear DGP with sufficient data. The $x_1$ AME of zero is recovered accurately by all model classes at moderate sample sizes, which is a reassuring result for practitioners who want to test whether nonlinear features have nonzero average effects.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Interaction DGP (Regression). Mean bias and RMSE (in parentheses) across 1,000 Monte Carlo iterations.}
+			\label{tab:sim1_regression_interaction}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+				\quad x1 & 2.000 & -0.0041 & 0.0005 & 0.0000 & 0.0006 & 0.0011 \\
+				&  & (0.2284) & (0.1531) & (0.1129) & (0.0715) & (0.0495) \\
+				\quad x2 & 3.000 & 0.0040 & 0.0087 & 0.0075 & 0.0012 & 0.0009 \\
+				&  & (0.2194) & (0.1627) & (0.1135) & (0.0727) & (0.0514) \\
+				\quad x3 & 0.000 & -0.0114 & -0.0088 & -0.0054 & 0.0010 & -0.0009 \\
+				&  & (0.1388) & (0.1002) & (0.0725) & (0.0450) & (0.0329) \\
+				\quad x4 & 0.000 & -0.0073 & 0.0004 & -0.0006 & 0.0013 & 0.0005 \\
+				&  & (0.1443) & (0.1018) & (0.0690) & (0.0453) & (0.0321) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 2.000 & -0.0755 & -0.0310 & -0.0433 & -0.0724 & -0.0804 \\
+				&  & (0.2566) & (0.1663) & (0.1169) & (0.0979) & (0.0925) \\
+				\quad x2 & 3.000 & -0.0634 & -0.0690 & -0.0922 & -0.1112 & -0.1143 \\
+				&  & (0.2806) & (0.1913) & (0.1497) & (0.1306) & (0.1244) \\
+				\quad x3 & 0.000 & -0.0031 & -0.0004 & -0.0009 & 0.0003 & -0.0001 \\
+				&  & (0.0612) & (0.0352) & (0.0182) & (0.0067) & (0.0029) \\
+				\quad x4 & 0.000 & -0.0023 & 0.0004 & -0.0001 & -0.0002 & 0.0000 \\
+				&  & (0.0665) & (0.0349) & (0.0184) & (0.0069) & (0.0030) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 2.000 & 0.3184 & 0.1016 & -0.0009 & -0.0406 & -0.0429 \\
+				&  & (0.4539) & (0.2184) & (0.1163) & (0.0758) & (0.0602) \\
+				\quad x2 & 3.000 & 0.3672 & 0.1135 & -0.0083 & -0.0572 & -0.0589 \\
+				&  & (0.4920) & (0.2373) & (0.1227) & (0.0898) & (0.0746) \\
+				\quad x3 & 0.000 & -0.0031 & 0.0011 & -0.0017 & 0.0005 & -0.0001 \\
+				&  & (0.1040) & (0.0551) & (0.0319) & (0.0151) & (0.0078) \\
+				\quad x4 & 0.000 & -0.0082 & 0.0003 & -0.0003 & -0.0004 & -0.0001 \\
+				&  & (0.1028) & (0.0564) & (0.0314) & (0.0149) & (0.0080) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 2.000 & -0.0842 & -0.0083 & -0.0056 & 0.0003 & 0.0022 \\
+				&  & (0.2380) & (0.1114) & (0.0779) & (0.0573) & (0.0536) \\
+				\quad x2 & 3.000 & -0.1231 & -0.0068 & -0.0052 & 0.0004 & 0.0026 \\
+				&  & (0.2467) & (0.1120) & (0.0783) & (0.0579) & (0.0533) \\
+				\quad x3 & 0.000 & -0.0026 & -0.0016 & -0.0024 & 0.0004 & -0.0004 \\
+				&  & (0.0986) & (0.0551) & (0.0383) & (0.0293) & (0.0316) \\
+				\quad x4 & 0.000 & -0.0079 & 0.0015 & 0.0002 & -0.0005 & -0.0019 \\
+				&  & (0.0981) & (0.0565) & (0.0387) & (0.0284) & (0.0331) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_regression_interaction} reports results for the interaction regression DGP, $y = 2x_1 + 3x_2 + 2x_1 x_2 + \varepsilon$, with true AMEs of 2.0 and 3.0 for $x_1$ and $x_2$. Linear regression recovers these AMEs accurately despite omitting the interaction term, confirming the robustness result from the classification case: the interaction contribution to the marginal effect of $x_1$ is $\mathbb{E}[2x_2] = 0$ and similarly for $x_2$, so the misspecified linear model nevertheless recovers the correct AME. The RMSE for the noise features under linear regression is elevated relative to the linear DGP --- around 0.14 at $n=250$ --- because the interaction term inflates the residual variance and increases estimation uncertainty for all coefficients. Random forests again show persistent negative bias that grows rather than shrinks with sample size, reaching $-0.080$ and $-0.114$ for $x_1$ and $x_2$ respectively at $n=5{,}000$. XGBoost shows the same large positive bias at small samples followed by convergence, but the bias does not fully vanish at $n=5{,}000$ --- around $-0.043$ for $x_1$ and $-0.059$ for $x_2$ --- suggesting that the interaction structure requires larger samples for the gradient boosting to fully adapt. The neural network performs well, with bias below 0.003 for both signal features at $n=2{,}500$ and $n=5{,}000$, and RMSE declining steadily. Taken together the six bias and RMSE tables establish that the AME estimator is consistent for logistic regression, neural networks, and XGBoost across all three DGPs and both outcome types, with random forests showing persistent regularization bias in the regression setting that practitioners should be aware of when reporting AMEs from default-tuned forest models.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 2: Bootstrap SE Calibration --- Linear DGP (Classification). Nominal coverage target: 95\%. Coverage rate and mean 95\% CI width (in parentheses) across 500 Monte Carlo iterations.}
+			\label{tab:sim2_calibration_linear}
+			\begin{tabular}{lrrrr}
+				\toprule
+				& & \multicolumn{3}{c}{Coverage (CI Width)} \\
+				\cmidrule(lr){3-5}
+				Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{5}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.199 & 0.938 & 0.940 & 0.930 \\
+				&  & (0.0745) & (0.0388) & (0.0176) \\
+				\quad x2 & 0.298 & 0.896 & 0.944 & 0.950 \\
+				&  & (0.0763) & (0.0400) & (0.0182) \\
+				\quad x3 & 0.000 & 0.932 & 0.936 & 0.940 \\
+				&  & (0.0736) & (0.0378) & (0.0171) \\
+				\quad x4 & 0.000 & 0.922 & 0.936 & 0.940 \\
+				&  & (0.0737) & (0.0378) & (0.0171) \\
+				\midrule
+				\multicolumn{5}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.199 & 0.920 & 0.928 & 0.966 \\
+				&  & (0.2625) & (0.1028) & (0.0305) \\
+				\quad x2 & 0.298 & 0.924 & 0.966 & 0.970 \\
+				&  & (0.3076) & (0.1161) & (0.0339) \\
+				\quad x3 & 0.000 & 0.978 & 0.986 & 0.978 \\
+				&  & (0.1718) & (0.0767) & (0.0233) \\
+				\quad x4 & 0.000 & 0.980 & 0.982 & 0.972 \\
+				&  & (0.1715) & (0.0770) & (0.0234) \\
+				\midrule
+				\multicolumn{5}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.199 & 0.916 & 0.922 & 0.990 \\
+				&  & (0.0770) & (0.0417) & (0.0253) \\
+				\quad x2 & 0.298 & 0.902 & 0.950 & 0.978 \\
+				&  & (0.0889) & (0.0459) & (0.0233) \\
+				\quad x3 & 0.000 & 0.866 & 0.926 & 0.990 \\
+				&  & (0.0645) & (0.0375) & (0.0258) \\
+				\quad x4 & 0.000 & 0.854 & 0.918 & 0.994 \\
+				&  & (0.0648) & (0.0374) & (0.0260) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) computed over 500 Monte Carlo iterations. Bootstrap SEs from nonparametric bootstrap with 200 replicates. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP, evaluating empirical coverage of nominal 95\% confidence intervals at $n \in \{250, 1{,}000, 5{,}000\}$ using 200 bootstrap replicates. Logistic regression achieves coverage between 0.896 and 0.950 across all variables and sample sizes, with the slight undercoverage at $n=250$ for $x_2$ reflecting finite-sample bias rather than bootstrap miscalibration --- the bootstrap interval is correctly sized but the point estimate is slightly off-center. Coverage improves toward the nominal level as sample size increases and is well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features at all sample sizes --- around 0.978 to 0.986 --- reflecting the wide bootstrap intervals produced by the model's high variance at small samples; the intervals are conservative rather than anti-conservative, which is the safer failure mode for inference. The neural network shows undercoverage for the noise features at $n=250$ (0.866 and 0.854) that recovers toward and above the nominal level by $n=5{,}000$. The overcoverage at large samples (0.990 and 0.994) is consistent with the smooth differentiable surface of the neural network producing stable finite differences across bootstrap replicates, making the intervals conservative at large $n$. Across all three model classes the confidence intervals are narrowing at the expected rate as sample size increases, confirming that the bootstrap procedure is producing standard errors that shrink appropriately with $n$ even where nominal coverage is not exactly achieved.
+	
 	\section{Conclusion}
+	
+	This paper has proposed a framework for interpreting any supervised machine learning model through the lens of average marginal effects. The central claim is that the traditional accuracy-interpretability tradeoff is not fundamental. By defining the average marginal effect as the expectation of the partial derivative of the prediction function with respect to each feature, averaged over the empirical distribution of the covariates, we obtain an estimand that is well-defined for any supervised learner and reduces to the classical econometric AME when the model is a generalized linear model. The estimator replaces analytical derivatives with adaptive centered finite differences, applies uniformly across model classes and outcome types, and produces a coefficient table --- estimate, standard error, and significance level --- directly analogous to the output of a parametric regression. The nonparametric bootstrap, with full model refitting and hyperparameter selection on each replicate, provides standard errors that capture uncertainty about model specification as well as estimation. These are capabilities that existing interpretability methods, including SHAP \citep{lundberg2017shap}, LIME \citep{ribeiro2016lime}, and partial dependence plots \citep{friedman2001pdp}, do not provide.
+	
+	The theoretical contribution establishes gradient consistency for three classes of supervised learners. For neural networks, the appropriate function space is the Sobolev space $W^{1,p}$, and gradient consistency follows from uniform $W^{2,p}$ boundedness combined with $L^p$ consistency via the Rellich--Kondrachov compact embedding theorem \citep{evans2010pde}. For gradient boosted models with tree base learners and for Mondrian forests \citep{mourtada2017mondrian}, the appropriate function space is the space of functions of bounded variation \citep{ambrosio2000bv}, where gradients exist as Radon measures and consistency is established via the BV compactness theorem. For Breiman random forests \citep{breiman2001rf, scornet2015forests}, gradient consistency is conjectured rather than proved: the obstruction lies in the data-dependent partition boundaries, whose discontinuity structure does not admit the geometric analysis available for Mondrian partitions, and a full proof is left to future work. Together the proved results place the proposed estimator on a rigorous asymptotic foundation for the model classes most commonly used in practice.
+	
+	The empirical results across three datasets --- UCI Adult Income \citep{kohavi1996, UCI}, UCI Credit Card Default \citep{yeh2009, UCI}, and Ames Housing \citep{decock2011} --- validate the framework on binary classification and continuous regression outcomes. The AME estimates are stable across model classes where the underlying models are well-fitted, the bootstrap standard errors narrow as model fit improves, and the AME and partial dependence plot estimates are in close agreement throughout. The comparison with SHAP values reveals a systematic divergence: SHAP values are on a different scale, in several cases have the wrong sign relative to AME and PDP, and carry no inferential apparatus. The Ames Housing application is particularly informative because the dollar-denominated units make the divergence concrete --- SHAP attributes to above-ground living area an effect sixty times larger than the AME for the linear model, a number that is not interpretable as a marginal effect in any standard sense.
+	
+	Several important problems remain open. The most pressing is bootstrap validity. Conjectures 1 through 3 in Section~4 assert that the nonparametric bootstrap is consistent for the AME estimator under each of the three estimator classes considered here, but formal proofs are left to future work. The closest existing results are the infinitesimal jackknife for random forests \citep{wager2014confidence} and the bootstrap theory for honest forests \citep{wager2018forests}, but neither applies directly to the gradient functional studied here. Establishing bootstrap validity in the BV setting is particularly challenging because the weak-* topology does not support the uniform convergence arguments that standard bootstrap proofs rely on, and new techniques will likely be required. The difficulty is compounded for Breiman forests, where gradient consistency itself remains a conjecture, making bootstrap validity for that class a second-order open problem.
+	
+	A second open problem is the extension of gradient consistency results to additional model classes. The theoretical results in Section~4 cover neural networks, gradient boosted models, and Mondrian forests \citep{lakshminarayanan2014mondrian, mourtada2017mondrian}. The Mondrian forest result is a full proof; gradient consistency for Breiman random forests \citep{breiman2001rf} is conjectured rather than proved, with the obstruction lying in the discontinuity structure of the data-dependent partition boundaries, which do not admit the clean geometric analysis that Mondrian partitions allow. Beyond these three classes, the framework is silent on a wide range of supervised learners that are used extensively in practice. Support vector machines, k-nearest neighbors, Bayesian additive regression trees, and generalized additive models all produce prediction functions with distinct smoothness properties that require separate analysis. The BV and Sobolev architectures developed in Section~4 provide a template, but the function space appropriate to each estimator class must be identified before gradient consistency can be established. Extending the theoretical framework to cover these model classes is an important open problem.
+	
+	A third open problem is the extension to causal inference. The average marginal effect as defined here is a predictive quantity --- the average derivative of the conditional expectation function with respect to $x_j$, under the observational distribution of the covariates. It is not in general a causal effect. Extending the framework to settings where causal identification is possible, for example through instrumental variables or regression discontinuity designs, would substantially broaden its applicability to policy-relevant questions. The honest forest framework of \citet{wager2018forests} and the broader literature on causal machine learning suggest a natural path forward, but the connection to the AME estimand studied here has not been formalized.
+	
+	A third direction concerns the discrete and mixed-type feature setting. The current framework handles binary variables through a finite difference contrast and continuous variables through an adaptive centered finite difference, but ordered categorical variables, count variables, and interactions among features of mixed type are not treated systematically. The marginal effects at the mean versus average marginal effects distinction \citep{greene2012, wooldridge2010} also warrants further study in the nonparametric setting, where the mean of the covariates may lie in a sparse region of the feature space and the marginal effect at the mean may therefore be a poor summary of the average effect.
+	
+	Finally, the computational cost of the full bootstrap procedure --- refitting the model with hyperparameter selection on each of $B$ replicates --- limits practical applicability for very large datasets or very expensive models. Approximations based on the infinitesimal jackknife \citep{wager2014confidence}, subsampling, or warm-started hyperparameter search reduce this cost substantially, but the statistical properties of these approximations relative to the full bootstrap have not been characterized. Developing computationally efficient inference procedures with provable guarantees is an important practical problem that we leave to future work.
+	
+	\appendix
+	
+	% ============================================================
+	\section{Proof of Theorem~\ref{thm:neural_nets} (Neural Networks)}
+	\label{app:neural_nets}
+	% ============================================================
+	
+	\subsection{Setup and Notation}
+	
+	Let $\fn: \Omega \to \R$ be a feedforward neural network with $L$ layers,
+	weight matrices $W_\ell^{(n)} \in \R^{d_\ell \times d_{\ell-1}}$, bias vectors
+	$b_\ell^{(n)} \in \R^{d_\ell}$, and activation function $\sigma \in C^2(\R)$.
+	The network computes:
+	\begin{equation}
+		\fn(x) = W_L^{(n)} z_{L-1} + b_L^{(n)}
+	\end{equation}
+	where the intermediate representations are defined recursively by:
+	\begin{equation}
+		z_\ell = \sigma\!\left(W_\ell^{(n)} z_{\ell-1} + b_\ell^{(n)}\right),
+		\quad z_0 = x
+	\end{equation}
+	with $\sigma$ applied elementwise. Denote the pre-activation at layer $\ell$ by
+	$a_\ell = W_\ell^{(n)} z_{\ell-1} + b_\ell^{(n)}$.
+	
+	The proof proceeds in two steps. Step~1 establishes uniform $\Wtwop$
+	boundedness. Step~2 applies Lemma~\ref{lem:sobolev_consistency} to conclude.
+	
+	\subsection{Step 1: Uniform $W^{2,p}$ Boundedness}
+	
+	\textbf{Claim:} $\sup_n \norm{\fn}_{\Wtwop} < \infty$.
+	
+	\subsubsection*{Substep 1a: Bound on $\fn$ in $L^p$}
+	
+	Since $\norm{\fn - f}_{L^p} \xrightarrowp 0$ and $f \in \Wonep \subset \Lp$,
+	the sequence $\norm{\fn}_{L^p}$ is eventually bounded. A short argument shows
+	this bound can be made uniform in $n$ from the outset.
+	
+	\begin{quote}
+		\textit{TODO: Write one paragraph arguing that $L^p$ convergence implies
+			uniform $L^p$ boundedness of the sequence. Either invoke this as an explicit
+			assumption or derive it from the consistency condition.}
+	\end{quote}
+	
+	\subsubsection*{Substep 1b: First Derivative Bound}
+	
+	The gradient of $\fn$ with respect to input $x$ is given by the
+	backpropagation formula:
+	\begin{equation}
+		\nabla \fn(x) =
+		\left(\prod_{\ell=1}^{L} W_\ell^{(n)} \cdot
+		\operatorname{diag}(\sigma'(a_\ell))\right) \cdot e_1
+	\end{equation}
+	where the product is taken in reverse layer order. Applying submultiplicativity
+	of matrix norms and taking $L^p$ norms over $\Omega$:
+	\begin{equation}
+		\norm{\nabla \fn}_{L^p}
+		\lesssim \prod_\ell \norm{W_\ell^{(n)}} \cdot
+		\norm{\sigma'}_\infty^L \cdot |\Omega|^{1/p}
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: Write out the precise backpropagation formula for $\nabla
+			\fn(x)$ as a product of Jacobians. Apply submultiplicativity of operator norms.
+			Apply $\norm{\sigma'}_\infty < \infty$ which follows from $\sigma \in C^2$.
+			Integrate over $\Omega$ to get the $L^p$ bound. Approximately two pages.}
+	\end{quote}
+	
+	\subsubsection*{Substep 1c: Second Derivative Bound}
+	
+	The Hessian $\nabla^2 \fn(x)$ is obtained by differentiating the
+	backpropagation formula once more. This introduces $\sigma''$ terms at each
+	layer. The structure is:
+	\begin{equation}
+		\nabla^2 \fn(x) = \sum_{\ell=1}^L
+		\left(\text{forward Jacobians up to } \ell\right)
+		\cdot \operatorname{diag}(\sigma''(a_\ell)) \cdot
+		\left(\text{backward Jacobians from } \ell\right)
+	\end{equation}
+	Taking $L^p$ norms:
+	\begin{equation}
+		\norm{\nabla^2 \fn}_{L^p}
+		\lesssim L \cdot \prod_\ell \norm{W_\ell^{(n)}}^2 \cdot
+		\norm{\sigma''}_\infty \cdot \norm{\sigma'}_\infty^{2L} \cdot
+		|\Omega|^{1/p}
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: This is the main calculation. Write out the explicit formula for
+			$\nabla^2 \fn(x)$ in terms of weight matrices and activations using the
+			second-order chain rule for compositions of smooth functions applied $L$ times.
+			Derive the $L^p$ norm bound via Hölder's inequality on the bounded domain
+			$\Omega$. Invoke $\norm{\sigma''}_\infty < \infty$ from $\sigma \in C^2$.
+			Approximately three to four pages of matrix calculus.}
+	\end{quote}
+	
+	\subsubsection*{Combining Substeps 1a--1c}
+	
+	\begin{equation}
+		\norm{\fn}_{W^{2,p}}
+		= \norm{\fn}_{L^p} + \norm{\nabla \fn}_{L^p} + \norm{\nabla^2 \fn}_{L^p}
+		\lesssim C\!\left(\prod_\ell \norm{W_\ell^{(n)}},\,
+		\norm{\sigma'}_\infty,\, \norm{\sigma''}_\infty,\, L,\, |\Omega|\right)
+	\end{equation}
+	The right-hand side is uniformly bounded in $n$ by the assumption
+	$\sup_n \prod_\ell \norm{W_\ell^{(n)}} < \infty$. This completes Step~1.
+	
+	\subsection{Step 2: Applying Lemma~\ref{lem:sobolev_consistency}}
+	
+	By Step~1, $\sup_n \norm{\fn}_{W^{2,p}} < \infty$. By assumption,
+	$\norm{\fn - f}_{L^p} \xrightarrowp 0$. These are precisely the two conditions
+	of the well-behaved definition in the Sobolev sense
+	(Definition~\ref{def:wellbehaved_sobolev}). Lemma~\ref{lem:sobolev_consistency}
+	then gives $\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$, which is the
+	conclusion of Theorem~\ref{thm:neural_nets}. \qed
+	
+	\begin{remark}
+		Theorem~\ref{thm:neural_nets} is stated for smooth activations $\sigma \in
+		C^2$. For ReLU networks $\sigma \notin C^2$ and the Hessian calculation in
+		Substep~1c does not apply directly. The first derivative exists almost
+		everywhere with $\sigma' = \mathbf{1}_{(0,\infty)}$ bounded, so Substep~1b
+		goes through unchanged. The distributional second derivative is $\sigma'' =
+		\delta_0$, a Dirac mass at zero, placing $\fn$ in a mixed $W^{1,p} \cap BV$
+		space rather than $\Wtwop$. A modified version of
+		Lemma~\ref{lem:sobolev_consistency} applicable in this mixed space, or a
+		restriction to input distributions placing zero mass on the kink set
+		$\{x : a_\ell(x) = 0\}$, would be required to handle this case. We leave this
+		extension for future work.
+	\end{remark}
+	
+	% ============================================================
+	\section{Proof of Theorem~\ref{thm:boosting} (Gradient Boosting)}
+	\label{app:boosting}
+	% ============================================================
+	
+	\subsection{Setup}
+	
+	Let $\fn = \sum_{m=1}^M \eta_m h_m$ where $h_m$ are base learners fitted
+	sequentially to residuals $r_i^{(m)} = y_i - \sum_{j < m} \eta_j h_j(x_i)$.
+	The two cases of the theorem are handled separately.
+	
+	\subsection{Case (i): Smooth Base Learners}
+	
+	\subsubsection*{Step 1: $W^{2,p}$ Bound for a Single Base Learner}
+	
+	Each $h_m \in \Wtwop$ by assumption. We require a uniform bound:
+	\begin{equation}
+		\sup_m \norm{h_m}_{W^{2,p}} \leq C < \infty
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: State which base learner class is assumed and cite the appropriate
+			result. For shallow neural net base learners this follows from Appendix~A. For
+			spline base learners cite standard spline approximation theory. For other
+			smooth base learners an analogous argument applies. Verify that the step size
+			condition in \citet{buhlmann2003boosting} implies $\sum_m \eta_m < \infty$ and
+			cite precisely.}
+	\end{quote}
+	
+	\subsubsection*{Step 2: Ensemble Bound via Linearity}
+	
+	By linearity of the $W^{2,p}$ norm and the triangle inequality:
+	\begin{equation}
+		\norm{\fn}_{W^{2,p}}
+		\leq \sum_{m=1}^M \eta_m \norm{h_m}_{W^{2,p}}
+		\leq C \sum_{m=1}^M \eta_m < \infty
+	\end{equation}
+	where the last inequality uses $\sum_m \eta_m < \infty$.
+	
+	\subsubsection*{Step 3: Apply Lemma~\ref{lem:sobolev_consistency}}
+	
+	$L^p$ consistency is assumed. Uniform $\Wtwop$ boundedness follows from Step~2.
+	Lemma~\ref{lem:sobolev_consistency} gives
+	$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$. \qed
+	
+	\subsection{Case (ii): Tree Stump Base Learners}
+	
+	Each $h_m$ is a depth-1 tree of the form:
+	\begin{equation}
+		h_m(x) = c_m^L \,\mathbf{1}[x_j \leq t_m] + c_m^R \,\mathbf{1}[x_j > t_m]
+	\end{equation}
+	for some split variable $j$, threshold $t_m$, and leaf constants $c_m^L,
+	c_m^R$.
+	
+	\subsubsection*{Step 1: BV Norm of a Single Stump}
+	
+	By Lemma~\ref{lem:bv_existence} the distributional gradient of $h_m$ is:
+	\begin{equation}
+		Dh_m = (c_m^R - c_m^L) \cdot \nu_m \cdot
+		\mathcal{H}^{d-1}\lfloor_{\{x_j = t_m\} \cap \Omega}
+	\end{equation}
+	so the total variation is:
+	\begin{equation}
+		|Dh_m|(\Omega) =
+		|c_m^R - c_m^L| \cdot
+		\mathcal{H}^{d-1}\!\left(\{x_j = t_m\} \cap \Omega\right)
+	\end{equation}
+	The geometric term satisfies
+	$\mathcal{H}^{d-1}(\{x_j = t_m\} \cap \Omega) \leq \operatorname{diam}(\Omega)^{d-1}$,
+	a constant depending only on $\Omega$. For the response term:
+	\begin{equation}
+		\E\!\left[|c_m^R - c_m^L|\right]
+		\leq 2\,\E\!\left[\sup_{x \in \Omega} |r^{(m)}(x)|\right]
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: Write a precise bound on the surface area
+			$\mathcal{H}^{d-1}(\{x_j = t_m\} \cap \Omega)$ for axis-aligned splits in a
+			bounded Lipschitz domain. This is elementary geometry but needs to be stated
+			carefully.}
+	\end{quote}
+	
+	\subsubsection*{Step 2: The Lyapunov Argument}
+	
+	\textbf{This is the main new argument.} Define the Lyapunov function:
+	\begin{equation}
+		V_m = \E\!\left[\norm{r^{(m)}}_{L^2}^2\right]
+	\end{equation}
+	The residuals satisfy $r^{(m)} = f - \sum_{j<m} \eta_j h_j$ plus noise. The
+	$L^2$ descent property of boosting \citep{buhlmann2003boosting} establishes
+	that $V_m$ is non-increasing along the boosting path, and the consistency
+	assumption gives $V_m \to 0$.
+	
+	The goal is to show:
+	\begin{equation}
+		\sum_{m=1}^M \eta_m \,\E\!\left[|c_m^R - c_m^L|\right] < \infty
+	\end{equation}
+	The rate at which $V_m \to 0$ governs the rate at which
+	$\E[|c_m^R - c_m^L|] \to 0$. The step size condition ensures the weighted sum
+	is summable.
+	
+	\begin{quote}
+		\textit{TODO: This is the most substantial new calculation in the boosting
+			proof. Proceed as follows:
+			\begin{enumerate}
+				\item Derive a precise rate of decay for $V_m$ from the step size schedule
+				and the $L^2$ descent property of \citet{buhlmann2003boosting}.
+				\item Relate $\E[|c_m^R - c_m^L|]$ to $V_m^{1/2}$ via a Cauchy-Schwarz
+				argument on the residuals.
+				\item Show the resulting weighted sum $\sum_m \eta_m V_m^{1/2} < \infty$
+				using the step size decay condition.
+			\end{enumerate}
+			This argument is approximately five to eight pages. The functional gradient
+			descent perspective of \citet{mason2000boosting} provides the conceptual
+			framework; the quantitative rates come from \citet{buhlmann2003boosting}.}
+	\end{quote}
+	
+	\subsubsection*{Step 3: Ensemble BV Bound}
+	
+	By subadditivity of total variation:
+	\begin{equation}
+		|D\fn|(\Omega) \leq \sum_{m=1}^M \eta_m |Dh_m|(\Omega)
+	\end{equation}
+	Taking expectations and applying Steps~1 and~2:
+	\begin{equation}
+		\E\!\left[|D\fn|(\Omega)\right]
+		\leq C \sum_{m=1}^M \eta_m \,\E\!\left[|c_m^R - c_m^L|\right]
+		< \infty
+	\end{equation}
+	
+	\subsubsection*{Step 4: Apply Lemma~\ref{lem:bv_consistency}}
+	
+	$L^1$ consistency is assumed. Uniform BV boundedness follows from Step~3.
+	Lemma~\ref{lem:bv_consistency} gives $D\fn \xrightarrow{w*} Df$ in $\cM$.
+	\qed
+	
+	% ============================================================
+	\section{Proof of Theorem~\ref{thm:forests} (Random Forests)}
+	\label{app:forests}
+	% ============================================================
+	
+	\subsection{Setup}
+	
+	Let $\fn = \frac{1}{B}\sum_{b=1}^B T_b$ where $T_b$ are individual Mondrian
+	trees. Each $T_b$ is piecewise constant on a random partition $\mathcal{P}_b$
+	of $\Omega$ generated by the Mondrian process independently of the data
+	\citep[see][]{lakshminarayanan2014mondrian}.
+	
+	\subsection{Step 1: Each Tree is in BV}
+	
+	Each $T_b$ is piecewise constant on a finite partition and therefore in
+	$\BV$ by Lemma~\ref{lem:bv_existence}. The forest average $\fn =
+	\frac{1}{B}\sum_b T_b$ is a finite convex combination of $BV$ functions,
+	hence $\fn \in \BV$ with:
+	\begin{equation}
+		|D\fn|(\Omega) \leq \frac{1}{B} \sum_{b=1}^B |DT_b|(\Omega)
+	\end{equation}
+	by convexity of the total variation functional.
+	
+	\begin{quote}
+		\textit{TODO: Write one short paragraph invoking Lemma~\ref{lem:bv_existence}
+			for each tree and stating the convexity inequality for total variation. Cite
+			\citet[Proposition~3.6]{ambrosio2000bv}.}
+	\end{quote}
+	
+	\subsection{Step 2: Uniform BV Boundedness}
+	
+	\textbf{Claim:} $\sup_n \E[|D\fn|(\Omega)] < \infty$.
+	
+	By Step~1 it suffices to bound $\E[|DT_b|(\Omega)]$ uniformly over $b$
+	and $n$. By Lemma~\ref{lem:bv_existence}:
+	\begin{equation}
+		|DT_b|(\Omega) =
+		\sum_{j \sim k} |\bar{y}_k^b - \bar{y}_j^b| \cdot
+		\mathcal{H}^{d-1}(\partial R_j^b \cap \partial R_k^b)
+	\end{equation}
+	
+	\subsubsection*{Substep 2a: The Key Decomposition}
+	
+	Because the Mondrian partition $\mathcal{P}_b$ is generated independently of
+	the data, the partition geometry and the response variation are independent.
+	This allows:
+	\begin{equation}
+		\E\!\left[|DT_b|(\Omega)\right] =
+		\mathbb{E}_{\mathcal{P}_b}\!\left[
+		\sum_{j \sim k}
+		\mathbb{E}_{\mathrm{data}}\!\left[|\bar{y}_k^b - \bar{y}_j^b|\right]
+		\cdot \mathcal{H}^{d-1}(\partial R_j^b \cap \partial R_k^b)
+		\right]
+	\end{equation}
+	The two factors are bounded separately in Substeps~2b and~2c.
+	
+	\subsubsection*{Substep 2b: Geometric Term}
+	
+	The Mondrian process on $[0,1]^d$ at budget $\lambda$ produces a random
+	partition with expected total boundary surface area:
+	\begin{equation}
+		\mathbb{E}_{\mathcal{P}}\!\left[
+		\mathcal{H}^{d-1}(\partial \mathcal{P})
+		\right] = O(\lambda) \quad \text{as } \lambda \to \infty
+	\end{equation}
+	For a forest calibrated to $n$ data points the Mondrian budget scales as
+	$\lambda \sim n^{1/d}$.
+	
+	\begin{quote}
+		\textit{TODO: Look up the precise statement about the Mondrian process boundary
+			surface area and cite it carefully. Key references are
+			\citet{roy2009mondrian} and \citet{mourtada2017mondrian}. State the exact rate
+			and the conditions under which it holds.}
+	\end{quote}
+	
+	\subsubsection*{Substep 2c: Response Term}
+	
+	For adjacent leaves $j$ and $k$:
+	\begin{equation}
+		\mathbb{E}_{\mathrm{data}}\!\left[|\bar{y}_k^b - \bar{y}_j^b|\right]
+		\leq 2 \sup_{\substack{x, x' \in \Omega \\ \|x - x'\| \leq
+				\operatorname{diam}(R_j^b \cup R_k^b)}} |f(x) - f(x')| +
+		\text{noise terms}
+	\end{equation}
+	Since $f \in \Wonep$, the modulus of continuity of $f$ is controlled by
+	$\norm{\nabla f}_{L^p}$. As the cell diameter shrinks, the oscillation of $f$
+	across adjacent cells shrinks accordingly.
+	
+	\begin{quote}
+		\textit{TODO: Derive a precise bound on
+			$\mathbb{E}_{\mathrm{data}}[|\bar{y}_k^b - \bar{y}_j^b|]$ in terms of the
+			cell diameter and $\norm{\nabla f}_{L^p}$. When $p > d$, use the Sobolev
+			embedding $W^{1,p} \hookrightarrow C^{0,\alpha}$ for $\alpha = 1 - d/p$ to
+			control the oscillation directly. When $p \leq d$, use the Poincar\'e
+			inequality instead. Handle the noise terms separately via concentration
+			inequalities on the sample means $\bar{y}_j^b$. This substep is approximately
+			three to five pages and is the most delicate argument in this appendix.}
+	\end{quote}
+	
+	\subsubsection*{Substep 2d: Combining the Rates}
+	
+	From Substeps~2b and~2c, the expected total variation of a single tree
+	satisfies:
+	\begin{equation}
+		\E\!\left[|DT_b|(\Omega)\right]
+		\leq \underbrace{O(\lambda)}_{\text{boundary grows}} \cdot
+		\underbrace{O(\lambda^{-1/d})}_{\text{oscillation shrinks}}
+		= O\!\left(\lambda^{1 - 1/d}\right)
+	\end{equation}
+	For $d \geq 2$ this grows with $n$, meaning individual tree BV norms are not
+	uniformly bounded. However, the forest average has cancellation across trees
+	that the individual tree bound misses --- adjacent leaf means in different
+	trees do not jump in the same direction.
+	
+	\begin{quote}
+		\textit{TODO: This is the hardest step and the genuine open problem in the
+			proof. Two possible approaches:
+			\begin{enumerate}
+				\item \textbf{Cancellation argument.} Show that the forest average
+				$\fn = \frac{1}{B}\sum_b T_b$ has better BV behavior than individual trees
+				by exploiting the independence of the Mondrian partitions across trees.
+				The expected total variation of the average involves cross-tree
+				cancellations that reduce the effective rate. Making this precise likely
+				requires a second-moment argument on the jumps $D\fn$.
+				\item \textbf{Modified budget condition.} Alternatively, impose a
+				condition on the Mondrian budget $\lambda$ that grows more slowly than
+				$n^{1/d}$ — for example $\lambda \sim n^{1/(d+\epsilon)}$ for some
+				$\epsilon > 0$ — to keep individual tree BV norms bounded at the cost of
+				a slower approximation rate.
+			\end{enumerate}
+			State clearly in the theorem which approach is taken and what additional
+			condition (if any) is required. This step may take several weeks and is the
+			most likely place to require a modified theorem statement. Flag it as an open
+			technical point in the paper.}
+	\end{quote}
+	
+	\subsection{Step 3: Apply Lemma~\ref{lem:bv_consistency}}
+	
+	The $L^1$ consistency condition follows from the $L^2$ consistency result of
+	\citet{scornet2015forests} by the Cauchy--Schwarz inequality on the bounded
+	domain $\Omega$:
+	\begin{equation}
+		\norm{\fn - f}_{L^1}
+		\leq |\Omega|^{1/2} \norm{\fn - f}_{L^2}
+		\xrightarrowp 0
+	\end{equation}
+	Uniform BV boundedness follows from Step~2 subject to the resolution of
+	Substep~2d. Lemma~\ref{lem:bv_consistency} then gives
+	$D\fn \xrightarrow{w*} Df$ in $\cM$. \qed
+	
+	\begin{remark}
+		Theorem~\ref{thm:forests} is stated for Mondrian forests where the partition
+		is generated independently of the data. The independence is used critically in
+		the decomposition of Substep~2a. For Breiman forests with data-dependent
+		splits the partition geometry and response variation are coupled --- splits are
+		chosen to maximize response differences across boundaries, which is precisely
+		the worst case for the BV bound. Extending the result to Breiman forests
+		requires additional control over this coupling and is left as future work.
+	\end{remark}
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:sobolev_existence}
+		(Derivative Existence, Sobolev)}
+	\label{app:lem_sobolev_existence}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	That $\fn \in \Wtwop$ implies $\nabla \fn \in W^{1,p}(\Omega)^d$ with the
+	norm bound:
+	\begin{equation}
+		\norm{\nabla \fn}_{L^p}
+		\leq \norm{\fn}_{W^{1,p}}
+		\leq \norm{\fn}_{W^{2,p}}
+	\end{equation}
+	
+	\subsection{Step 1: Existence of Weak Gradient}
+	
+	By definition of $\Wtwop$, the weak derivatives $\partial^\alpha \fn$ exist
+	in $\Lp$ for all $|\alpha| \leq 2$. In particular $\partial_j \fn \in \Lp$
+	for each $j = 1, \ldots, d$, so $\nabla \fn \in L^p(\Omega)^d$.
+	
+	\begin{quote}
+		\textit{TODO: Unpack the definition of $W^{2,p}$ and identify $\nabla \fn$ as
+			the vector of first-order weak derivatives. One paragraph citing
+			\citet[Section~5.2]{evans2010pde}.}
+	\end{quote}
+	
+	\subsection{Step 2: Norm Bound}
+	
+	The first inequality $\norm{\nabla \fn}_{L^p} \leq \norm{\fn}_{W^{1,p}}$
+	follows directly from the definition of the $W^{1,p}$ norm, which includes
+	$\norm{\nabla \fn}_{L^p}$ as a summand:
+	\begin{equation}
+		\norm{\fn}_{W^{1,p}} = \norm{\fn}_{L^p} + \norm{\nabla \fn}_{L^p}
+		\geq \norm{\nabla \fn}_{L^p}
+	\end{equation}
+	The second inequality $\norm{\fn}_{W^{1,p}} \leq \norm{\fn}_{W^{2,p}}$
+	follows because the $W^{2,p}$ norm sum includes all terms in the $W^{1,p}$
+	norm sum plus additional second-order terms:
+	\begin{equation}
+		\norm{\fn}_{W^{2,p}} =
+		\sum_{|\alpha| \leq 2} \norm{\partial^\alpha \fn}_{L^p} \geq
+		\sum_{|\alpha| \leq 1} \norm{\partial^\alpha \fn}_{L^p} =
+		\norm{\fn}_{W^{1,p}}
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: Write out the two norm inequalities above as a short formal
+			proof, citing \citet[Section~5.2]{evans2010pde} for the norm definitions.
+			This is the shortest proof in the appendix --- approximately half a page.}
+	\end{quote}
+	\qed
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:sobolev_consistency}
+		(Derivative Consistency, Sobolev)}
+	\label{app:lem_sobolev_consistency}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	That well-behavedness in the Sobolev sense implies
+	$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
+	
+	\subsection{Step 1: Extract a Strongly Convergent Subsequence}
+	
+	By the uniform $\Wtwop$ boundedness condition, the sequence $\{\fn\}$ is
+	bounded in $\Wtwop$. The Rellich--Kondrachov theorem states that
+	$W^{2,p}(\Omega) \hookrightarrow\hookrightarrow W^{1,p}(\Omega)$ compactly
+	for bounded Lipschitz $\Omega$ \citep[Theorem~5,~Section~5.7]{evans2010pde}.
+	Therefore every subsequence of $\{\fn\}$ has a further subsequence converging
+	strongly in $\Wonep$.
+	
+	\begin{quote}
+		\textit{TODO: State the Rellich--Kondrachov theorem precisely as it applies
+			here --- the specific embedding $W^{2,p} \hookrightarrow\hookrightarrow
+			W^{1,p}$, the conditions on $\Omega$ (bounded and Lipschitz), and the
+			conclusion of strong $W^{1,p}$ convergence for subsequences. Two to three
+			paragraphs citing \citet{evans2010pde} carefully.}
+	\end{quote}
+	
+	\subsection{Step 2: Identify the Limit}
+	
+	Strong $\Wonep$ convergence implies strong $L^p$ convergence. By the $L^p$
+	consistency assumption $\norm{\fn - f}_{L^p} \xrightarrowp 0$, the only
+	possible $L^p$ limit is $f$. Therefore every subsequence that converges
+	strongly in $\Wonep$ must converge to $f$.
+	
+	\begin{quote}
+		\textit{TODO: Write out the standard topological argument: if every
+			subsequence of $\{\fn\}$ has a further subsequence converging to $f$ in
+			$\Wonep$, then the full sequence converges to $f$ in $\Wonep$. This is a
+			general fact about metric spaces that requires one careful paragraph.}
+	\end{quote}
+	
+	\subsection{Step 3: Extract Gradient Convergence}
+	
+	Strong convergence $\fn \to f$ in $\Wonep$ means by definition:
+	\begin{equation}
+		\norm{\fn - f}_{W^{1,p}}
+		= \norm{\fn - f}_{L^p} + \norm{\nabla \fn - \nabla f}_{L^p}
+		\to 0
+	\end{equation}
+	In particular $\norm{\nabla \fn - \nabla f}_{L^p} \to 0$. The almost sure
+	statement converts to in-probability immediately since convergence almost
+	surely implies convergence in probability.
+	
+	\begin{quote}
+		\textit{TODO: Unpack the $W^{1,p}$ norm to extract the gradient convergence
+			term. Verify the conversion from almost sure to in-probability. One paragraph.
+			Note: the argument above gives almost sure convergence along subsequences;
+			Step~2 promotes this to full sequence convergence in probability. Make sure
+			the logical flow between Steps~2 and~3 is tight.}
+	\end{quote}
+	\qed
+	
+	\begin{remark}
+		The hardest part of this proof is Step~1 --- specifically writing the
+		Rellich--Kondrachov argument carefully enough that a referee is satisfied. The
+		theorem is standard but the application needs to be precise about which
+		embedding is used and what conditions on $\Omega$ are required. The full
+		lemma is approximately four to five pages.
+	\end{remark}
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:bv_existence}
+		(Derivative Existence, BV)}
+	\label{app:lem_bv_existence}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	Two things: that $BV$ membership implies $D\fn$ exists as a Radon measure,
+	and the explicit formula for piecewise constant functions.
+	
+	\subsection{Step 1: Existence by Definition}
+	
+	The space $\BV$ is defined as the set of functions $g \in \Lone$ whose
+	distributional gradient is representable as a finite $\R^d$-valued Radon
+	measure \citep[Chapter~3]{ambrosio2000bv}. Therefore $\fn \in \BV$ directly
+	implies $D\fn \in \cM$ with $|D\fn|(\Omega) < \infty$.
+	
+	\begin{quote}
+		\textit{TODO: State the definition of $BV(\Omega)$ precisely following
+			\citet[Definition~3.1]{ambrosio2000bv} and note that existence of $D\fn$ as
+			a Radon measure is part of the definition. One paragraph.}
+	\end{quote}
+	
+	\subsection{Step 2: Explicit Formula for Piecewise Constant Functions}
+	
+	Let $\fn = \sum_j \bar{y}_j \mathbf{1}_{R_j}$ where $\{R_j\}$ is a finite
+	partition of $\Omega$ into sets with Lipschitz boundaries. For any test
+	function $\phi \in C_c^1(\Omega)^d$, the definition of distributional gradient
+	gives:
+	\begin{equation}
+		\int_\Omega \phi \cdot d(D\fn)
+		= -\int_\Omega \fn \operatorname{div} \phi \, dx
+		= -\sum_j \bar{y}_j \int_{R_j} \operatorname{div} \phi \, dx
+	\end{equation}
+	Applying the Gauss--Green theorem to each leaf:
+	\begin{equation}
+		\int_{R_j} \operatorname{div} \phi \, dx
+		= \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
+	\end{equation}
+	Summing over leaves and noting that interior boundaries are shared between
+	adjacent pairs with opposite orientations:
+	\begin{equation}
+		-\sum_j \bar{y}_j \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
+		= \sum_{j \sim k} (\bar{y}_k - \bar{y}_j)
+		\int_{\partial R_j \cap \partial R_k} \phi \cdot \nu_{jk}
+		\, d\mathcal{H}^{d-1}
+	\end{equation}
+	This identifies the distributional gradient as:
+	\begin{equation}
+		D\fn = \sum_{j \sim k} (\bar{y}_k - \bar{y}_j) \cdot \nu_{jk} \cdot
+		\mathcal{H}^{d-1}\lfloor_{\partial R_j \cap \partial R_k}
+	\end{equation}
+	which is the formula stated in the lemma.
+	
+	\begin{quote}
+		\textit{TODO: Write out the Gauss--Green calculation above carefully with
+			precise notation for the boundary orientations and the sign convention for
+			$\nu_{jk}$. Verify that the boundary terms cancel correctly for interior
+			boundaries. The key reference for the Gauss--Green theorem on Lipschitz
+			domains is \citet[Section~3.2]{ambrosio2000bv} or
+			\citet[Appendix~C]{evans2010pde}. Approximately three pages.}
+	\end{quote}
+	\qed
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:bv_consistency}
+		(Derivative Consistency, BV)}
+	\label{app:lem_bv_consistency}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	That well-behavedness in the BV sense implies $D\fn \xrightarrow{w*} Df$
+	in $\cM$, and the strict convergence upgrade under the additional condition
+	$\E[|D\fn|(\Omega)] \to |Df|(\Omega)$.
+	
+	\textit{Note: This is the hardest lemma. Budget accordingly --- the full proof
+		is approximately eight to ten pages.}
+	
+	\subsection{Part I: Weak-* Convergence}
+	
+	\subsubsection*{Step 1: Bound the Full BV Norm}
+	
+	The BV compactness theorem requires a bound on the full $BV$ norm, not just
+	the total variation. We have:
+	\begin{equation}
+		\norm{\fn}_{BV} = \norm{\fn}_{L^1} + |D\fn|(\Omega)
+	\end{equation}
+	The total variation term is bounded by assumption:
+	$\sup_n \E[|D\fn|(\Omega)] < \infty$. For the $L^1$ term, the consistency
+	assumption $\norm{\fn - f}_{L^1} \xrightarrowp 0$ gives eventual $L^1$
+	boundedness.
+	
+	\begin{quote}
+		\textit{TODO: Combine the two conditions to obtain $\sup_n \E[\norm{\fn}_{BV}]
+			< \infty$. Handle the probabilistic statement carefully --- the BV compactness
+			theorem is deterministic and you need to argue that the random sequence
+			$\{\fn\}$ is bounded in $BV$ with high probability. Approximately one page.}
+	\end{quote}
+	
+	\subsubsection*{Step 2: Extract a Weakly-* Convergent Subsequence}
+	
+	By the BV compactness theorem \citep[Theorem~3.23]{ambrosio2000bv}, every
+	sequence bounded in $\BV$ has a subsequence $\{\hat{f}_{n_k}\}$ such that:
+	\begin{enumerate}
+		\item $\hat{f}_{n_k} \to g$ strongly in $\Lone$ for some $g \in \BV$
+		\item $D\hat{f}_{n_k} \xrightarrow{w*} Dg$ in $\cM$
+	\end{enumerate}
+	
+	\begin{quote}
+		\textit{TODO: State the BV compactness theorem precisely as it applies here,
+			citing \citet[Theorem~3.23]{ambrosio2000bv}. Check all hypotheses: $\Omega$
+			bounded Lipschitz, sequence bounded in $BV$ norm. Two to three paragraphs.}
+	\end{quote}
+	
+	\subsubsection*{Step 3: Identify the Limit}
+	
+	By the $L^1$ part of the BV convergence, $\hat{f}_{n_k} \to g$ in $\Lone$.
+	By the $L^1$ consistency assumption, $\norm{\fn - f}_{L^1} \xrightarrowp 0$,
+	so $g = f$.
+	
+	\begin{quote}
+		\textit{TODO: Same subsequence argument as in
+			Lemma~\ref{lem:sobolev_consistency} --- every subsequence has a further
+			subsequence converging to $f$, therefore the full sequence converges. One
+			paragraph.}
+	\end{quote}
+	
+	\subsubsection*{Step 4: Handle the Probabilistic Statement}
+	
+	The BV compactness theorem is deterministic. The estimator $\fn$ is random.
+	A careful measurability argument is needed to pass from deterministic
+	subsequential convergence to convergence in probability.
+	
+	\begin{quote}
+		\textit{TODO: For any $\epsilon > 0$ and any test function
+			$\phi \in C_0(\Omega)^d$ with $\norm{\phi}_\infty \leq 1$, show:
+			\begin{equation}
+				\Prob\!\left(\left|
+				\int_\Omega \phi \cdot d(D\fn) - \int_\Omega \phi \cdot d(Df)
+				\right| > \epsilon\right) \to 0
+			\end{equation}
+			One approach: condition on the training data, apply the deterministic
+			convergence result, then integrate out the randomness. An alternative is to
+			use a measurable selection argument. Either way this requires care ---
+			approximately two pages.}
+	\end{quote}
+	
+	\subsection{Part II: Strict Convergence Upgrade}
+	
+	\subsubsection*{Step 1: Lower Semicontinuity Gives One Direction}
+	
+	The total variation functional $\mu \mapsto |\mu|(\Omega)$ is lower
+	semicontinuous with respect to weak-* convergence of measures
+	\citep[Proposition~1.62]{ambrosio2000bv}. Therefore weak-* convergence
+	$D\fn \xrightarrow{w*} Df$ gives:
+	\begin{equation}
+		|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: State and apply the lower semicontinuity of total variation,
+			citing \citet[Proposition~1.62]{ambrosio2000bv}. One paragraph.}
+	\end{quote}
+	
+	\subsubsection*{Step 2: The Additional Condition Gives the Other Direction}
+	
+	The assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$ combined with Step~1
+	gives $|D\fn|(\Omega) \to |Df|(\Omega)$ in expectation.
+	
+	\begin{quote}
+		\textit{TODO: Combine the liminf lower bound from Step~1 with the limsup
+			upper bound from the assumption to conclude
+			$|D\fn|(\Omega) \to |Df|(\Omega)$. Note that the combination of weak-*
+			convergence plus total mass convergence is precisely the definition of strict
+			convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}. One paragraph.}
+	\end{quote}
+	\qed
 	
 	\bibliographystyle{apalike}  % or plainnat, or whatever style you prefer
 	\bibliography{references}

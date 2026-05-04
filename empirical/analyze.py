@@ -107,6 +107,7 @@ def fit_model(
         model.fit(X, y)
         return model
 
+
     elif model_name == 'tensorflow':
         import os
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -116,26 +117,84 @@ def fit_model(
         if outcome_type == 'classification':
             output_activation = 'sigmoid'
             loss = 'binary_crossentropy'
+            y_fit = y
+            y_mean = 0.0
+            y_scale = 1.0
         else:
             output_activation = None
             loss = 'mse'
+            y_mean = float(np.mean(y))
+            y_scale = float(np.std(y))
+            y_fit = (y - y_mean) / y_scale
 
-        model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64, activation='relu',
-                                  input_shape=(X.shape[1],)),
-            tf.keras.layers.Dense(32, activation='relu'),
-            tf.keras.layers.Dense(1, activation=output_activation),
-        ])
+        if outcome_type == 'regression':
+            normalizer = tf.keras.layers.Normalization(axis=-1)
+            normalizer.adapt(X.astype(np.float32))
+            layers = [
+                normalizer,
+                tf.keras.layers.Dense(64, activation='relu'),
+                tf.keras.layers.Dense(32, activation='relu'),
+                tf.keras.layers.Dense(1, activation=output_activation),
+            ]
+        else:
+            layers = [
+                tf.keras.layers.Dense(64, activation='relu',
+                                      input_shape=(X.shape[1],)),
+                tf.keras.layers.Dense(32, activation='relu'),
+                tf.keras.layers.Dense(1, activation=output_activation),
+            ]
+
+        model = tf.keras.Sequential(layers)
         model.compile(
             optimizer=tf.keras.optimizers.Adam(learning_rate=float(1e-3)),
             loss=loss,
         )
-        model.fit(X, y, epochs=50, batch_size=64, verbose=0)
+        model.fit(X.astype(np.float32), y_fit.astype(np.float32),
+                  epochs=500, batch_size=32, verbose=0,
+                  validation_split=0.1,
+                  callbacks=[tf.keras.callbacks.EarlyStopping(
+                      patience=20, restore_best_weights=True,
+                      monitor='val_loss'
+                  )])
+
+        if outcome_type == 'regression':
+            y_mean_val = y_mean
+            y_scale_val = y_scale
+            inner_model = model
+
+            class UnscaledModel(tf.keras.Model):
+                def __init__(self):
+                    super().__init__()
+                    self._inner = inner_model
+                    self._mean = y_mean_val
+                    self._scale = y_scale_val
+                    self.compile(
+                        optimizer=tf.keras.optimizers.Adam(learning_rate=float(1e-3)),
+                        loss='mse'
+                    )
+
+                def call(self, X, training=False):
+                    return self._inner(
+                        tf.cast(X, dtype=tf.float32),
+                        training=training
+                    ) * self._scale + self._mean
+
+                def get_weights(self):
+                    return self._inner.get_weights()
+
+                def get_config(self):
+                    return self._inner.get_config()
+
+            unscaled = UnscaledModel()
+            test_pred = unscaled(X[:5].astype(np.float32), training=False).numpy()
+            print(f"Sample predictions: {test_pred.squeeze()}")
+            print(f"Sample actuals: {y[:5]}")
+            return unscaled
+
         return model
 
     else:
         raise ValueError(f"Unknown model: '{model_name}'")
-
 
 # ---------------------------------------------------------------------------
 # AME computation across specifications

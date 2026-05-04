@@ -1,0 +1,49 @@
+\begin{table*}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{Simulation 2: Bootstrap SE Calibration --- Linear DGP (Classification). Nominal coverage target: 95\%. Coverage rate and mean 95\% CI width (in parentheses) across 500 Monte Carlo iterations.}
+\label{tab:sim2_calibration_linear}
+\begin{tabular}{lrrrr}
+\toprule
+ & & \multicolumn{3}{c}{Coverage (CI Width)} \\
+\cmidrule(lr){3-5}
+Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ \\
+\midrule
+\multicolumn{5}{l}{\textit{Panel: Logistic}} \\
+\quad x1 & 0.199 & 0.938 & 0.940 & 0.930 \\
+ &  & (0.0745) & (0.0388) & (0.0176) \\
+\quad x2 & 0.298 & 0.896 & 0.944 & 0.950 \\
+ &  & (0.0763) & (0.0400) & (0.0182) \\
+\quad x3 & 0.000 & 0.932 & 0.936 & 0.940 \\
+ &  & (0.0736) & (0.0378) & (0.0171) \\
+\quad x4 & 0.000 & 0.922 & 0.936 & 0.940 \\
+ &  & (0.0737) & (0.0378) & (0.0171) \\
+\midrule
+\multicolumn{5}{l}{\textit{Panel: XGBoost}} \\
+\quad x1 & 0.199 & 0.920 & 0.928 & 0.966 \\
+ &  & (0.2625) & (0.1028) & (0.0305) \\
+\quad x2 & 0.298 & 0.924 & 0.966 & 0.970 \\
+ &  & (0.3076) & (0.1161) & (0.0339) \\
+\quad x3 & 0.000 & 0.978 & 0.986 & 0.978 \\
+ &  & (0.1718) & (0.0767) & (0.0233) \\
+\quad x4 & 0.000 & 0.980 & 0.982 & 0.972 \\
+ &  & (0.1715) & (0.0770) & (0.0234) \\
+\midrule
+\multicolumn{5}{l}{\textit{Panel: Neural Net}} \\
+\quad x1 & 0.199 & 0.916 & 0.922 & 0.990 \\
+ &  & (0.0770) & (0.0417) & (0.0253) \\
+\quad x2 & 0.298 & 0.902 & 0.950 & 0.978 \\
+ &  & (0.0889) & (0.0459) & (0.0233) \\
+\quad x3 & 0.000 & 0.866 & 0.926 & 0.990 \\
+ &  & (0.0645) & (0.0375) & (0.0258) \\
+\quad x4 & 0.000 & 0.854 & 0.918 & 0.994 \\
+ &  & (0.0648) & (0.0374) & (0.0260) \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) computed over 500 Monte Carlo iterations. Bootstrap SEs from nonparametric bootstrap with 200 replicates. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

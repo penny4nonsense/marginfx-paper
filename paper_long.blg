@@ -3,44 +3,126 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: paper_long.aux
 The style file: apalike.bst
 Database file #1: references.bib
-You've used 1 entry,
+Repeated entry---line 423 of file references.bib
+ : @article{decock2011
+ :                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 443 of file references.bib
+ : @misc{kohavi1996
+ :                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 457 of file references.bib
+ : @misc{UCI
+ :          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 473 of file references.bib
+ : @misc{yeh2009
+ :              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 489 of file references.bib
+ : @book{ambrosio2000bv
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 509 of file references.bib
+ : @article{buhlmann2003boosting
+ :                              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 531 of file references.bib
+ : @book{evans2010pde
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 575 of file references.bib
+ : @article{hornik1990universal
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 619 of file references.bib
+ : @inproceedings{mason2000boosting
+ :                                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 639 of file references.bib
+ : @article{scornet2015forests
+ :                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 661 of file references.bib
+ : @article{wager2014confidence
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 681 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 703 of file references.bib
+ : @inproceedings{lakshminarayanan2014mondrian
+ :                                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 721 of file references.bib
+ : @inproceedings{roy2009mondrian
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 739 of file references.bib
+ : @inproceedings{mourtada2017mondrian
+ :                                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 757 of file references.bib
+ : @book{greene2012
+ :                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 775 of file references.bib
+ : @book{wooldridge2010
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 793 of file references.bib
+ : @manual{leeper2021
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 807 of file references.bib
+ : @article{efron1979
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 829 of file references.bib
+ : @book{efrontibshirani1993
+ :                          ,
+I'm skipping whatever remains of this entry
+Warning--empty publisher in molnar2025
+You've used 31 entries,
             1935 wiz_defined-function locations,
-            477 strings with 3833 characters,
-and the built_in function-call counts, 296 in all, are:
-= -- 27
-> -- 7
-< -- 1
-+ -- 2
-- -- 2
-* -- 21
-:= -- 60
-add.period$ -- 3
-call.type$ -- 1
-change.case$ -- 6
-chr.to.int$ -- 1
-cite$ -- 1
-duplicate$ -- 13
-empty$ -- 22
-format.name$ -- 3
-if$ -- 54
-int.to.chr$ -- 1
+            649 strings with 8124 characters,
+and the built_in function-call counts, 12009 in all, are:
+= -- 1220
+> -- 396
+< -- 33
++ -- 137
+- -- 126
+* -- 955
+:= -- 2025
+add.period$ -- 94
+call.type$ -- 31
+change.case$ -- 215
+chr.to.int$ -- 30
+cite$ -- 32
+duplicate$ -- 503
+empty$ -- 876
+format.name$ -- 175
+if$ -- 2411
+int.to.chr$ -- 2
 int.to.str$ -- 0
-missing$ -- 1
-newline$ -- 8
-num.names$ -- 3
-pop$ -- 3
+missing$ -- 32
+newline$ -- 156
+num.names$ -- 93
+pop$ -- 197
 preamble$ -- 1
-purify$ -- 6
+purify$ -- 218
 quote$ -- 0
-skip$ -- 13
+skip$ -- 396
 stack$ -- 0
-substring$ -- 12
-swap$ -- 1
-text.length$ -- 0
+substring$ -- 868
+swap$ -- 96
+text.length$ -- 12
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 6
-warning$ -- 0
-while$ -- 2
+type$ -- 172
+warning$ -- 1
+while$ -- 100
 width$ -- 0
-write$ -- 15
+write$ -- 406
+(There were 20 error messages)

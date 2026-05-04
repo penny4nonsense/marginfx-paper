@@ -1,9 +1,178 @@
 \begin{thebibliography}{}
 
+\bibitem[Ambrosio et~al., 2000]{ambrosio2000bv}
+Ambrosio, L., Fusco, N., and Pallara, D. (2000).
+\newblock {\em Functions of Bounded Variation and Free Discontinuity Problems}.
+\newblock Oxford Mathematical Monographs. Oxford University Press, Oxford.
+
+\bibitem[Beste and Bethmann, 2019]{beste2019mlame}
+Beste, J. and Bethmann, A. (2019).
+\newblock mlame: Estimate average marginal effects for machine learning
+  algorithms.
+\newblock R package, version 0.0.0.9000.
+
+\bibitem[Breiman, 2001a]{breiman2001rf}
+Breiman, L. (2001a).
+\newblock Random forests.
+\newblock {\em Machine Learning}, 45(1):5--32.
+
+\bibitem[Breiman, 2001b]{breiman2001cultures}
+Breiman, L. (2001b).
+\newblock Statistical modeling: The two cultures (with comments and a rejoinder
+  by the author).
+\newblock {\em Statistical Science}, 16(3):199--231.
+
+\bibitem[B{\"u}hlmann and Yu, 2003]{buhlmann2003boosting}
+B{\"u}hlmann, P. and Yu, B. (2003).
+\newblock Boosting with the {$L^2$} loss: Regression and classification.
+\newblock {\em Journal of the American Statistical Association},
+  98(462):324--339.
+
+\bibitem[Chen and Guestrin, 2016]{chen2016xgboost}
+Chen, T. and Guestrin, C. (2016).
+\newblock {XGBoost}: A scalable tree boosting system.
+\newblock In {\em Proceedings of the 22nd ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining}, pages 785--794.
+
 \bibitem[De~Cock, 2011]{decock2011}
 De~Cock, D. (2011).
 \newblock Ames, iowa: Alternative to the boston housing data as an end of
   semester regression project.
 \newblock {\em Journal of Statistics Education}, 19(3).
+
+\bibitem[Doshi-Velez and Kim, 2017]{doshivelez2017interpretability}
+Doshi-Velez, F. and Kim, B. (2017).
+\newblock Towards a rigorous science of interpretable machine learning.
+
+\bibitem[Dua and Graff, 2019]{UCI}
+Dua, D. and Graff, C. (2019).
+\newblock {UCI} machine learning repository.
+
+\bibitem[Efron, 1979]{efron1979}
+Efron, B. (1979).
+\newblock Bootstrap methods: Another look at the jackknife.
+\newblock {\em Annals of Statistics}, 7(1):1--26.
+
+\bibitem[Efron and Tibshirani, 1993]{efrontibshirani1993}
+Efron, B. and Tibshirani, R.~J. (1993).
+\newblock {\em An Introduction to the Bootstrap}.
+\newblock Chapman and Hall, New York.
+
+\bibitem[Evans, 2010]{evans2010pde}
+Evans, L.~C. (2010).
+\newblock {\em Partial Differential Equations}, volume~19 of {\em Graduate
+  Studies in Mathematics}.
+\newblock American Mathematical Society, Providence, RI, 2nd edition.
+
+\bibitem[Friedman, 2001]{friedman2001pdp}
+Friedman, J.~H. (2001).
+\newblock Greedy function approximation: A gradient boosting machine.
+\newblock {\em Annals of Statistics}, 29(5):1189--1232.
+
+\bibitem[Greene, 2012]{greene2012}
+Greene, W.~H. (2012).
+\newblock {\em Econometric Analysis}.
+\newblock Prentice Hall, Upper Saddle River, NJ, 7 edition.
+
+\bibitem[Hastie et~al., 2009]{hastie2009esl}
+Hastie, T., Tibshirani, R., and Friedman, J. (2009).
+\newblock {\em The Elements of Statistical Learning: Data Mining, Inference,
+  and Prediction}.
+\newblock Springer, New York, 2nd edition.
+
+\bibitem[Hornik et~al., 1990]{hornik1990universal}
+Hornik, K., Stinchcombe, M., and White, H. (1990).
+\newblock Universal approximation of an unknown mapping and its derivatives
+  using multilayer feedforward networks.
+\newblock {\em Neural Networks}, 3(5):551--560.
+
+\bibitem[Kohavi, 1996]{kohavi1996}
+Kohavi, R. (1996).
+\newblock Scaling up the accuracy of naive-bayes classifiers: A decision-tree
+  hybrid.
+\newblock Proceedings of the Second International Conference on Knowledge
+  Discovery and Data Mining.
+
+\bibitem[Lakshminarayanan et~al., 2014]{lakshminarayanan2014mondrian}
+Lakshminarayanan, B., Roy, D.~M., and Teh, Y.~W. (2014).
+\newblock Mondrian forests: Efficient online random forests.
+\newblock In {\em Advances in Neural Information Processing Systems},
+  volume~27, pages 3140--3148.
+
+\bibitem[Leeper, 2021]{leeper2021}
+Leeper, T.~J. (2021).
+\newblock {\em margins: Marginal Effects for Model Objects}.
+\newblock R package version 0.3.26.
+
+\bibitem[Lundberg and Lee, 2017]{lundberg2017shap}
+Lundberg, S.~M. and Lee, S.-I. (2017).
+\newblock A unified approach to interpreting model predictions.
+\newblock In {\em Advances in Neural Information Processing Systems},
+  volume~30. Curran Associates, Inc.
+
+\bibitem[Mason et~al., 2000]{mason2000boosting}
+Mason, L., Baxter, J., Bartlett, P., and Frean, M. (2000).
+\newblock Boosting algorithms as gradient descent.
+\newblock In {\em Advances in Neural Information Processing Systems},
+  volume~12, pages 512--518. MIT Press.
+
+\bibitem[Molnar, 2025]{molnar2025}
+Molnar, C. (2025).
+\newblock {\em Interpretable Machine Learning: A Guide for Making Black Box
+  Models Explainable}.
+\newblock 3rd edition.
+
+\bibitem[Mourtada et~al., 2017]{mourtada2017mondrian}
+Mourtada, J., Gaiffas, S., and Scornet, E. (2017).
+\newblock Universal consistency and minimax rates for online mondrian forests.
+\newblock In {\em Advances in Neural Information Processing Systems},
+  volume~30, pages 3758--3767.
+
+\bibitem[Ribeiro et~al., 2016]{ribeiro2016lime}
+Ribeiro, M.~T., Singh, S., and Guestrin, C. (2016).
+\newblock {``Why Should {I} Trust You?''}:\ explaining the predictions of any
+  classifier.
+\newblock In {\em Proceedings of the 22nd ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining}, pages 1135--1144.
+
+\bibitem[Roy and Teh, 2009]{roy2009mondrian}
+Roy, D.~M. and Teh, Y.~W. (2009).
+\newblock The mondrian process.
+\newblock In {\em Advances in Neural Information Processing Systems},
+  volume~21, pages 1377--1384.
+
+\bibitem[Scholbeck et~al., 2024]{scholbeck2024fme}
+Scholbeck, C.~A., Casalicchio, G., Molnar, C., Bischl, B., and Heumann, C.
+  (2024).
+\newblock Marginal effects for non-linear prediction functions.
+\newblock {\em Data Mining and Knowledge Discovery}, 38(5):2997--3042.
+
+\bibitem[Scornet et~al., 2015]{scornet2015forests}
+Scornet, E., Biau, G., and Vert, J.-P. (2015).
+\newblock Consistency of random forests.
+\newblock {\em The Annals of Statistics}, 43(4):1716--1741.
+
+\bibitem[Wager and Athey, 2018]{wager2018forests}
+Wager, S. and Athey, S. (2018).
+\newblock Estimation and inference of heterogeneous treatment effects using
+  random forests.
+\newblock {\em Journal of the American Statistical Association},
+  113(523):1228--1242.
+
+\bibitem[Wager et~al., 2014]{wager2014confidence}
+Wager, S., Hastie, T., and Efron, B. (2014).
+\newblock Confidence intervals for random forests: The jackknife and the
+  infinitesimal jackknife.
+\newblock {\em Journal of Machine Learning Research}, 15(1):1625--1651.
+
+\bibitem[Wooldridge, 2010]{wooldridge2010}
+Wooldridge, J.~M. (2010).
+\newblock {\em Econometric Analysis of Cross Section and Panel Data}.
+\newblock MIT Press, Cambridge, MA, 2 edition.
+
+\bibitem[Yeh, 2009]{yeh2009}
+Yeh, I.-C. (2009).
+\newblock The default of credit card clients dataset.
+\newblock UCI Machine Learning Repository.
 
 \end{thebibliography}
