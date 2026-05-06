@@ -35,12 +35,12 @@
 \usepackage{rotating}
 
 % Theorem environments
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{conjecture}[theorem]{Conjecture}
-\newtheorem{remark}[theorem]{Remark}
-\newtheorem{definition}[theorem]{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
 
 % Custom commands for asymptotic theory section
 \newcommand{\norm}[1]{\left\| #1 \right\|}
@@ -67,13 +67,14 @@
 	\thispagestyle{fancy}
 	
 	\begin{abstract}
+		\noindent We propose a framework for interpreting any supervised machine learning model through the lens of average marginal effects, a standard tool in the econometrics of nonlinear models. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether the prediction function is a neural network, a gradient boosted model, a random forest, or any other supervised learner. Marginal effects are estimated via adaptive centered finite differences and averaged over the empirical distribution of the covariates, producing a coefficient table directly analogous to the output of a parametric regression. Standard errors are obtained via a nonparametric bootstrap with full model refitting on each replicate, capturing uncertainty about model specification as well as estimation. The framework nests the classical generalized linear model result as a special case. We establish gradient consistency for neural networks, gradient boosted models, and Mondrian forests, providing the asymptotic foundation for the proposed estimator. Empirical validation on three datasets demonstrates that average marginal effects are stable across model classes, that bootstrap standard errors narrow as model fit improves, and that existing interpretability methods including SHAP lack the inferential apparatus the proposed framework provides.
 	\end{abstract}
 	
 	\section{Introduction}
 	
 	The rise of flexible machine learning methods has created a persistent tension in empirical research. Models such as random forests \citep{breiman2001rf}, gradient boosted trees \citep{chen2016xgboost}, and deep neural networks \citep{hastie2009esl} routinely achieve predictive accuracy that parametric models cannot match. Yet the standard tools of statistical inference --- coefficient estimates, standard errors, hypothesis tests --- apply naturally only to parametric models whose functional form is specified in advance. \citet{breiman2001cultures} framed this as a conflict between two cultures of statistical modeling: one oriented toward interpretable data-generating models, the other toward accurate algorithmic prediction. The conventional resolution has been to treat accuracy and interpretability as opposing ends of a spectrum, accepting reduced interpretability as the price of improved prediction. This paper argues that the tradeoff is not fundamental. It is an artifact of requiring parametric assumptions to make interpretation rigorous, and it disappears once that requirement is dropped.
 	
-	The machine learning literature has produced a rich set of post-hoc interpretability methods that attempt to explain black-box model predictions without parametric assumptions. Partial dependence plots \citep{friedman2001pdp} visualize the marginal relationship between a feature and the predicted outcome by averaging over the empirical distribution of other features. LIME \citep{ribeiro2016lime} fits a local linear approximation to the prediction function in the neighborhood of individual observations. SHAP \citep{lundberg2017shap} assigns each feature a contribution to each prediction based on Shapley values from cooperative game theory, providing a unified framework that nests several earlier methods. These tools are widely used in practice and are surveyed comprehensively in \citet{molnar2025} and \citet{doshivelez2017interpretability}. However, they share a fundamental limitation: they produce point estimates with no associated sampling distributions. A SHAP value, a PDP slope, and a LIME coefficient are numbers, but they are not statistics in the inferential sense --- there is no standard error, no confidence interval, and no basis for a hypothesis test. A researcher cannot determine whether a SHAP value is statistically distinguishable from zero, or whether two features have significantly different effects, or whether the effect of a variable differs across model specifications. For applied researchers who need to draw defensible conclusions from their models, this is a serious constraint.
+	The machine learning literature has produced a rich set of post-hoc interpretability methods that attempt to explain black-box model predictions without parametric assumptions. Partial dependence plots \citep{friedman2001pdp} visualize the marginal relationship between a feature and the predicted outcome by averaging over the empirical distribution of other features. LIME \citep{ribeiro2016lime} fits a local linear approximation to the prediction function in the neighborhood of individual observations. SHAP \citep{lundberg2017shap} assigns each feature a contribution to each prediction based on Shapley values from cooperative game theory, providing a unified framework that nests several earlier methods. These tools are widely used in practice and are surveyed comprehensively in \citet{molnar2025} and \citet{doshivelez2017interpretability}. However, they share a fundamental limitation: they produce point estimates with no associated sampling distributions. However, they share a fundamental limitation: they produce point estimates with no associated sampling distributions. A SHAP value, a PDP slope, and a LIME coefficient are descriptive quantities --- there is no standard error, no confidence interval, and no basis for a hypothesis test. A researcher cannot determine whether a SHAP value is statistically distinguishable from zero, or whether two features have significantly different effects, or whether the effect of a variable differs across model specifications. For applied researchers who need to draw defensible conclusions from their models, this is a serious constraint.
 	
 	Two prior contributions are closest in spirit to the present paper. \citet{scholbeck2024fme} propose forward marginal effects for nonlinear prediction functions as a model-agnostic interpretability method, establishing a general framework for computing feature effects for any supervised learner. Their framework is descriptive rather than inferential: it characterizes how feature effects vary across the covariate space but does not provide standard errors, confidence intervals, or hypothesis tests, and it explicitly argues against summarizing feature effects in a single metric such as the average marginal effect. The present paper takes the opposite position: we argue that the average marginal effect is precisely the right summary quantity, that it has a rigorous population-level interpretation inherited from the econometric literature, and that valid inference is achievable via a nonparametric bootstrap with full model refitting. \citet{beste2019mlame} implement average marginal effects with bootstrap standard errors for machine learning algorithms in the \texttt{mlame} R package, demonstrating the practical feasibility of the approach. However, that implementation is an unpublished software package without theoretical justification --- no asymptotic results, no gradient consistency guarantees, and no formal analysis of bootstrap validity. The present paper provides the theoretical foundation that \citet{beste2019mlame} leave implicit and extends the inferential framework to include hyperparameter uncertainty.
 	
@@ -85,7 +86,7 @@
 	
 	We validate the framework empirically on three datasets spanning binary classification in social science, binary classification in finance, and continuous regression: the UCI Adult Income dataset \citep{kohavi1996, UCI}, the UCI Credit Card Default dataset \citep{yeh2009, UCI}, and the Ames Housing dataset \citep{decock2011}. Across all three applications we compare AMEs from logistic regression, random forests \citep{breiman2001rf}, XGBoost \citep{chen2016xgboost}, and neural networks against SHAP values \citep{lundberg2017shap} and partial dependence plot slopes \citep{friedman2001pdp}. The AME and PDP estimates are in close agreement throughout, while SHAP values are on a different scale and in several cases have the wrong sign --- a systematic divergence that is most visible in the regression setting where units are dollars and the magnitudes are large enough to make the discrepancy concrete. Because AMEs come with standard errors and SHAP values do not, the AME framework supports conclusions that the SHAP framework cannot.
 	
-	The remainder of the paper is organized as follows. Section~2 defines the estimand, presents the estimator, and establishes its relationship to classical average marginal effects for the GLM family. Section~3 describes the nonparametric bootstrap inference procedure. Section~4 establishes gradient consistency for neural networks, gradient boosted models, and Mondrian forests, and states conjectures on gradient consistency for Breiman forests and bootstrap validity for all three estimator classes. Section~5 presents simulation evidence on finite-sample performance. Section~6 presents the three empirical applications. Section~7 concludes.
+	The remainder of the paper is organized as follows. Section~2 defines the estimand, presents the estimator, and establishes its relationship to classical average marginal effects for the GLM family. Section~3 establishes gradient consistency for neural networks, gradient boosted models, and Mondrian forests, and states conjectures on gradient consistency for Breiman forests and bootstrap validity for all three estimator classes. Section~4 presents the three empirical applications. Section~5 presents simulation evidence on finite-sample performance. Section~6 concludes.
 	
 	\section{Method}
 	
@@ -268,6 +269,7 @@
 	We make this assumption throughout.
 	
 	\begin{definition}[Well-Behaved Estimator, Sobolev Sense]
+		\label{def:wellbehaved_sobolev}
 		We say that $\fn$ is \emph{well-behaved in the Sobolev sense} if:
 		\begin{equation}
 			\sup_n \norm{\fn}_{W^{2,p}} < \infty \quad \text{and} \quad
@@ -276,6 +278,7 @@
 	\end{definition}
 	
 	\begin{definition}[Well-Behaved Estimator, BV Sense]
+		\label{def:wellbehaved_bv}
 		We say that $\fn$ is \emph{well-behaved in the BV sense} if:
 		\begin{equation}
 			\sup_n \E\left[|D\fn|(\Omega)\right] < \infty \quad \text{and} \quad
@@ -804,7 +807,7 @@
 		\end{threeparttable}
 	\end{table*}
 	
-	Table\~{}\textbackslash{}ref\{tab:credit\_default\_model\_comparison\} compares all four models on the full specification. The payment history variables again dominate, but the models disagree substantially on their magnitudes in a way that is informative rather than troubling. Months delayed is 0.083 for logistic regression, 0.018 for random forest, 0.021 for XGBoost, and 0.029 for the neural network --- a wide range that reflects genuine differences in how each model weighs this variable against the payment ratio, which random forest and XGBoost estimate at \$-\$0.431 and \$-\$0.440 respectively while logistic regression estimates only \$-\$0.045. This is a case where the black-box models are detecting a nonlinear relationship between payment ratio and default probability that logistic regression cannot represent, and the AME framework makes that disagreement visible and quantifiable. The random forest standard errors are again notably tight --- the female AME of \$-\$0.006 has a standard error of 0.000 to four decimal places --- which reflects the stability of the ensemble prediction surface. The neural network standard errors for months delayed are 0.017, substantially wider than the other models, consistent with the convergence issues flagged in the specification search.
+	Table~\ref{tab:credit_default_model_comparison} compares all four models on the full specification. The payment history variables again dominate, but the models disagree substantially on their magnitudes in a way that is informative rather than troubling. Months delayed is 0.083 for logistic regression, 0.018 for random forest, 0.021 for XGBoost, and 0.029 for the neural network --- a wide range that reflects genuine differences in how each model weighs this variable against the payment ratio, which random forest and XGBoost estimate at \$-\$0.431 and \$-\$0.440 respectively while logistic regression estimates only \$-\$0.045. This is a case where the black-box models are detecting a nonlinear relationship between payment ratio and default probability that logistic regression cannot represent, and the AME framework makes that disagreement visible and quantifiable. The random forest standard errors are again notably tight --- the female AME of \$-\$0.006 has a standard error of 0.000 to four decimal places --- which reflects the stability of the ensemble prediction surface. The neural network standard errors for months delayed are 0.017, substantially wider than the other models, consistent with the convergence issues flagged in the specification search.
 	
 	\begin{sidewaystable}[htbp]
 		\centering
@@ -990,7 +993,7 @@
 	
 	\section{Simulation}
 	
-	We evaluate the finite-sample performance of the AME estimator through two simulation studies. Simulation 1 examines bias and root mean squared error of the AME estimates as a function of sample size across three data generating processes and two outcome types. Simulation 2 examines bootstrap standard error calibration by comparing empirical coverage rates of nominal 95\% confidence intervals to the target. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1{,}000, 2{,}500, 5{,}000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
+	We evaluate the finite-sample performance of the AME estimator through two simulation studies. Simulation 1 examines bias and root mean squared error of the AME estimates as a function of sample size across three data generating processes and two outcome types. Simulation 2 examines bootstrap standard error calibration by comparing empirical coverage rates of nominal 95\% confidence intervals to the target. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1\,000, 2\,500, 5\,000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1414,7 +1417,7 @@
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP, evaluating empirical coverage of nominal 95\% confidence intervals at $n \in \{250, 1{,}000, 5{,}000\}$ using 200 bootstrap replicates. Logistic regression achieves coverage between 0.896 and 0.950 across all variables and sample sizes, with the slight undercoverage at $n=250$ for $x_2$ reflecting finite-sample bias rather than bootstrap miscalibration --- the bootstrap interval is correctly sized but the point estimate is slightly off-center. Coverage improves toward the nominal level as sample size increases and is well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features at all sample sizes --- around 0.978 to 0.986 --- reflecting the wide bootstrap intervals produced by the model's high variance at small samples; the intervals are conservative rather than anti-conservative, which is the safer failure mode for inference. The neural network shows undercoverage for the noise features at $n=250$ (0.866 and 0.854) that recovers toward and above the nominal level by $n=5{,}000$. The overcoverage at large samples (0.990 and 0.994) is consistent with the smooth differentiable surface of the neural network producing stable finite differences across bootstrap replicates, making the intervals conservative at large $n$. Across all three model classes the confidence intervals are narrowing at the expected rate as sample size increases, confirming that the bootstrap procedure is producing standard errors that shrink appropriately with $n$ even where nominal coverage is not exactly achieved.
+	Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP, evaluating empirical coverage of nominal 95\% confidence intervals at $n \in \{250, 1\,000, 5\,000\}$ using 200 bootstrap replicates. Logistic regression achieves coverage between 0.896 and 0.950 across all variables and sample sizes, with the slight undercoverage at $n=250$ for $x_2$ reflecting finite-sample bias rather than bootstrap miscalibration --- the bootstrap interval is correctly sized but the point estimate is slightly off-center. Coverage improves toward the nominal level as sample size increases and is well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features at all sample sizes --- around 0.978 to 0.986 --- reflecting the wide bootstrap intervals produced by the model's high variance at small samples; the intervals are conservative rather than anti-conservative, which is the safer failure mode for inference. The neural network shows undercoverage for the noise features at $n=250$ (0.866 and 0.854) that recovers toward and above the nominal level by $n=5{,}000$. The overcoverage at large samples (0.990 and 0.994) is consistent with the smooth differentiable surface of the neural network producing stable finite differences across bootstrap replicates, making the intervals conservative at large $n$. Across all three model classes the confidence intervals are narrowing at the expected rate as sample size increases, confirming that the bootstrap procedure is producing standard errors that shrink appropriately with $n$ even where nominal coverage is not exactly achieved.
 	
 	\section{Conclusion}
 	
@@ -1435,6 +1438,310 @@
 	Finally, the computational cost of the full bootstrap procedure --- refitting the model with hyperparameter selection on each of $B$ replicates --- limits practical applicability for very large datasets or very expensive models. Approximations based on the infinitesimal jackknife \citep{wager2014confidence}, subsampling, or warm-started hyperparameter search reduce this cost substantially, but the statistical properties of these approximations relative to the full bootstrap have not been characterized. Developing computationally efficient inference procedures with provable guarantees is an important practical problem that we leave to future work.
 	
 	\appendix
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:sobolev_existence}
+		(Derivative Existence, Sobolev)}
+	\label{app:lem_sobolev_existence}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	That $\fn \in \Wtwop$ implies $\nabla \fn \in W^{1,p}(\Omega)^d$ with the
+	norm bound:
+	\begin{equation}
+		\norm{\nabla \fn}_{L^p}
+		\leq \norm{\fn}_{W^{1,p}}
+		\leq \norm{\fn}_{W^{2,p}}
+	\end{equation}
+	
+	\subsection{Step 1: Existence of Weak Gradient}
+	
+	By definition of $\Wtwop$, the weak derivatives $\partial^\alpha \fn$ exist
+	in $\Lp$ for all $|\alpha| \leq 2$. In particular $\partial_j \fn \in \Lp$
+	for each $j = 1, \ldots, d$, so $\nabla \fn \in L^p(\Omega)^d$.
+	
+	\begin{quote}
+		\textit{TODO: Unpack the definition of $W^{2,p}$ and identify $\nabla \fn$ as
+			the vector of first-order weak derivatives. One paragraph citing
+			\citet[Section~5.2]{evans2010pde}.}
+	\end{quote}
+	
+	\subsection{Step 2: Norm Bound}
+	
+	The first inequality $\norm{\nabla \fn}_{L^p} \leq \norm{\fn}_{W^{1,p}}$
+	follows directly from the definition of the $W^{1,p}$ norm, which includes
+	$\norm{\nabla \fn}_{L^p}$ as a summand:
+	\begin{equation}
+		\norm{\fn}_{W^{1,p}} = \norm{\fn}_{L^p} + \norm{\nabla \fn}_{L^p}
+		\geq \norm{\nabla \fn}_{L^p}
+	\end{equation}
+	The second inequality $\norm{\fn}_{W^{1,p}} \leq \norm{\fn}_{W^{2,p}}$
+	follows because the $W^{2,p}$ norm sum includes all terms in the $W^{1,p}$
+	norm sum plus additional second-order terms:
+	\begin{equation}
+		\norm{\fn}_{W^{2,p}} =
+		\sum_{|\alpha| \leq 2} \norm{\partial^\alpha \fn}_{L^p} \geq
+		\sum_{|\alpha| \leq 1} \norm{\partial^\alpha \fn}_{L^p} =
+		\norm{\fn}_{W^{1,p}}
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: Write out the two norm inequalities above as a short formal
+			proof, citing \citet[Section~5.2]{evans2010pde} for the norm definitions.
+			This is the shortest proof in the appendix --- approximately half a page.}
+	\end{quote}
+	\qed
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:sobolev_consistency}
+		(Derivative Consistency, Sobolev)}
+	\label{app:lem_sobolev_consistency}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	That well-behavedness in the Sobolev sense implies
+	$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
+	
+	\subsection{Step 1: Extract a Strongly Convergent Subsequence}
+	
+	By the uniform $\Wtwop$ boundedness condition, the sequence $\{\fn\}$ is
+	bounded in $\Wtwop$. The Rellich--Kondrachov theorem states that
+	$W^{2,p}(\Omega) \hookrightarrow\hookrightarrow W^{1,p}(\Omega)$ compactly
+	for bounded Lipschitz $\Omega$ \citep[Theorem~5,~Section~5.7]{evans2010pde}.
+	Therefore every subsequence of $\{\fn\}$ has a further subsequence converging
+	strongly in $\Wonep$.
+	
+	\begin{quote}
+		\textit{TODO: State the Rellich--Kondrachov theorem precisely as it applies
+			here --- the specific embedding $W^{2,p} \hookrightarrow\hookrightarrow
+			W^{1,p}$, the conditions on $\Omega$ (bounded and Lipschitz), and the
+			conclusion of strong $W^{1,p}$ convergence for subsequences. Two to three
+			paragraphs citing \citet{evans2010pde} carefully.}
+	\end{quote}
+	
+	\subsection{Step 2: Identify the Limit}
+	
+	Strong $\Wonep$ convergence implies strong $L^p$ convergence. By the $L^p$
+	consistency assumption $\norm{\fn - f}_{L^p} \xrightarrowp 0$, the only
+	possible $L^p$ limit is $f$. Therefore every subsequence that converges
+	strongly in $\Wonep$ must converge to $f$.
+	
+	\begin{quote}
+		\textit{TODO: Write out the standard topological argument: if every
+			subsequence of $\{\fn\}$ has a further subsequence converging to $f$ in
+			$\Wonep$, then the full sequence converges to $f$ in $\Wonep$. This is a
+			general fact about metric spaces that requires one careful paragraph.}
+	\end{quote}
+	
+	\subsection{Step 3: Extract Gradient Convergence}
+	
+	Strong convergence $\fn \to f$ in $\Wonep$ means by definition:
+	\begin{equation}
+		\norm{\fn - f}_{W^{1,p}}
+		= \norm{\fn - f}_{L^p} + \norm{\nabla \fn - \nabla f}_{L^p}
+		\to 0
+	\end{equation}
+	In particular $\norm{\nabla \fn - \nabla f}_{L^p} \to 0$. The almost sure
+	statement converts to in-probability immediately since convergence almost
+	surely implies convergence in probability.
+	
+	\begin{quote}
+		\textit{TODO: Unpack the $W^{1,p}$ norm to extract the gradient convergence
+			term. Verify the conversion from almost sure to in-probability. One paragraph.
+			Note: the argument above gives almost sure convergence along subsequences;
+			Step~2 promotes this to full sequence convergence in probability. Make sure
+			the logical flow between Steps~2 and~3 is tight.}
+	\end{quote}
+	\qed
+	
+	\begin{remark}
+		The hardest part of this proof is Step~1 --- specifically writing the
+		Rellich--Kondrachov argument carefully enough that a referee is satisfied. The
+		theorem is standard but the application needs to be precise about which
+		embedding is used and what conditions on $\Omega$ are required. The full
+		lemma is approximately four to five pages.
+	\end{remark}
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:bv_existence}
+		(Derivative Existence, BV)}
+	\label{app:lem_bv_existence}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	Two things: that $BV$ membership implies $D\fn$ exists as a Radon measure,
+	and the explicit formula for piecewise constant functions.
+	
+	\subsection{Step 1: Existence by Definition}
+	
+	The space $\BV$ is defined as the set of functions $g \in \Lone$ whose
+	distributional gradient is representable as a finite $\R^d$-valued Radon
+	measure \citep[Chapter~3]{ambrosio2000bv}. Therefore $\fn \in \BV$ directly
+	implies $D\fn \in \cM$ with $|D\fn|(\Omega) < \infty$.
+	
+	\begin{quote}
+		\textit{TODO: State the definition of $BV(\Omega)$ precisely following
+			\citet[Definition~3.1]{ambrosio2000bv} and note that existence of $D\fn$ as
+			a Radon measure is part of the definition. One paragraph.}
+	\end{quote}
+	
+	\subsection{Step 2: Explicit Formula for Piecewise Constant Functions}
+	
+	Let $\fn = \sum_j \bar{y}_j \mathbf{1}_{R_j}$ where $\{R_j\}$ is a finite
+	partition of $\Omega$ into sets with Lipschitz boundaries. For any test
+	function $\phi \in C_c^1(\Omega)^d$, the definition of distributional gradient
+	gives:
+	\begin{equation}
+		\int_\Omega \phi \cdot d(D\fn)
+		= -\int_\Omega \fn \operatorname{div} \phi \, dx
+		= -\sum_j \bar{y}_j \int_{R_j} \operatorname{div} \phi \, dx
+	\end{equation}
+	Applying the Gauss--Green theorem to each leaf:
+	\begin{equation}
+		\int_{R_j} \operatorname{div} \phi \, dx
+		= \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
+	\end{equation}
+	Summing over leaves and noting that interior boundaries are shared between
+	adjacent pairs with opposite orientations:
+	\begin{equation}
+		-\sum_j \bar{y}_j \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
+		= \sum_{j \sim k} (\bar{y}_k - \bar{y}_j)
+		\int_{\partial R_j \cap \partial R_k} \phi \cdot \nu_{jk}
+		\, d\mathcal{H}^{d-1}
+	\end{equation}
+	This identifies the distributional gradient as:
+	\begin{equation}
+		D\fn = \sum_{j \sim k} (\bar{y}_k - \bar{y}_j) \cdot \nu_{jk} \cdot
+		\mathcal{H}^{d-1}\lfloor_{\partial R_j \cap \partial R_k}
+	\end{equation}
+	which is the formula stated in the lemma.
+	
+	\begin{quote}
+		\textit{TODO: Write out the Gauss--Green calculation above carefully with
+			precise notation for the boundary orientations and the sign convention for
+			$\nu_{jk}$. Verify that the boundary terms cancel correctly for interior
+			boundaries. The key reference for the Gauss--Green theorem on Lipschitz
+			domains is \citet[Section~3.2]{ambrosio2000bv} or
+			\citet[Appendix~C]{evans2010pde}. Approximately three pages.}
+	\end{quote}
+	\qed
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:bv_consistency}
+		(Derivative Consistency, BV)}
+	\label{app:lem_bv_consistency}
+	% ============================================================
+	
+	\subsection{What Needs to Be Shown}
+	
+	That well-behavedness in the BV sense implies $D\fn \xrightarrow{w*} Df$
+	in $\cM$, and the strict convergence upgrade under the additional condition
+	$\E[|D\fn|(\Omega)] \to |Df|(\Omega)$.
+	
+	\textit{Note: This is the hardest lemma. Budget accordingly --- the full proof
+		is approximately eight to ten pages.}
+	
+	\subsection{Part I: Weak-* Convergence}
+	
+	\subsubsection*{Step 1: Bound the Full BV Norm}
+	
+	The BV compactness theorem requires a bound on the full $BV$ norm, not just
+	the total variation. We have:
+	\begin{equation}
+		\norm{\fn}_{BV} = \norm{\fn}_{L^1} + |D\fn|(\Omega)
+	\end{equation}
+	The total variation term is bounded by assumption:
+	$\sup_n \E[|D\fn|(\Omega)] < \infty$. For the $L^1$ term, the consistency
+	assumption $\norm{\fn - f}_{L^1} \xrightarrowp 0$ gives eventual $L^1$
+	boundedness.
+	
+	\begin{quote}
+		\textit{TODO: Combine the two conditions to obtain $\sup_n \E[\norm{\fn}_{BV}]
+			< \infty$. Handle the probabilistic statement carefully --- the BV compactness
+			theorem is deterministic and you need to argue that the random sequence
+			$\{\fn\}$ is bounded in $BV$ with high probability. Approximately one page.}
+	\end{quote}
+	
+	\subsubsection*{Step 2: Extract a Weakly-* Convergent Subsequence}
+	
+	By the BV compactness theorem \citep[Theorem~3.23]{ambrosio2000bv}, every
+	sequence bounded in $\BV$ has a subsequence $\{\hat{f}_{n_k}\}$ such that:
+	\begin{enumerate}
+		\item $\hat{f}_{n_k} \to g$ strongly in $\Lone$ for some $g \in \BV$
+		\item $D\hat{f}_{n_k} \xrightarrow{w*} Dg$ in $\cM$
+	\end{enumerate}
+	
+	\begin{quote}
+		\textit{TODO: State the BV compactness theorem precisely as it applies here,
+			citing \citet[Theorem~3.23]{ambrosio2000bv}. Check all hypotheses: $\Omega$
+			bounded Lipschitz, sequence bounded in $BV$ norm. Two to three paragraphs.}
+	\end{quote}
+	
+	\subsubsection*{Step 3: Identify the Limit}
+	
+	By the $L^1$ part of the BV convergence, $\hat{f}_{n_k} \to g$ in $\Lone$.
+	By the $L^1$ consistency assumption, $\norm{\fn - f}_{L^1} \xrightarrowp 0$,
+	so $g = f$.
+	
+	\begin{quote}
+		\textit{TODO: Same subsequence argument as in
+			Lemma~\ref{lem:sobolev_consistency} --- every subsequence has a further
+			subsequence converging to $f$, therefore the full sequence converges. One
+			paragraph.}
+	\end{quote}
+	
+	\subsubsection*{Step 4: Handle the Probabilistic Statement}
+	
+	The BV compactness theorem is deterministic. The estimator $\fn$ is random.
+	A careful measurability argument is needed to pass from deterministic
+	subsequential convergence to convergence in probability.
+	
+	\begin{quote}
+		\textit{TODO: For any $\epsilon > 0$ and any test function
+			$\phi \in C_0(\Omega)^d$ with $\norm{\phi}_\infty \leq 1$, show:
+			\begin{equation}
+				\mathbb{P}\!\left(\left|
+				\int_\Omega \phi \cdot d(D\fn) - \int_\Omega \phi \cdot d(Df)
+				\right| > \epsilon\right) \to 0
+			\end{equation}
+			One approach: condition on the training data, apply the deterministic
+			convergence result, then integrate out the randomness. An alternative is to
+			use a measurable selection argument. Either way this requires care ---
+			approximately two pages.}
+	\end{quote}
+	
+	\subsection{Part II: Strict Convergence Upgrade}
+	
+	\subsubsection*{Step 1: Lower Semicontinuity Gives One Direction}
+	
+	The total variation functional $\mu \mapsto |\mu|(\Omega)$ is lower
+	semicontinuous with respect to weak-* convergence of measures
+	\citep[Proposition~1.62]{ambrosio2000bv}. Therefore weak-* convergence
+	$D\fn \xrightarrow{w*} Df$ gives:
+	\begin{equation}
+		|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)
+	\end{equation}
+	
+	\begin{quote}
+		\textit{TODO: State and apply the lower semicontinuity of total variation,
+			citing \citet[Proposition~1.62]{ambrosio2000bv}. One paragraph.}
+	\end{quote}
+	
+	\subsubsection*{Step 2: The Additional Condition Gives the Other Direction}
+	
+	The assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$ combined with Step~1
+	gives $|D\fn|(\Omega) \to |Df|(\Omega)$ in expectation.
+	
+	\begin{quote}
+		\textit{TODO: Combine the liminf lower bound from Step~1 with the limsup
+			upper bound from the assumption to conclude
+			$|D\fn|(\Omega) \to |Df|(\Omega)$. Note that the combination of weak-*
+			convergence plus total mass convergence is precisely the definition of strict
+			convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}. One paragraph.}
+	\end{quote}
+	\qed
 	
 	% ============================================================
 	\section{Proof of Theorem~\ref{thm:neural_nets} (Neural Networks)}
@@ -1858,311 +2165,6 @@
 		the worst case for the BV bound. Extending the result to Breiman forests
 		requires additional control over this coupling and is left as future work.
 	\end{remark}
-	
-	% ============================================================
-	\section{Proof of Lemma~\ref{lem:sobolev_existence}
-		(Derivative Existence, Sobolev)}
-	\label{app:lem_sobolev_existence}
-	% ============================================================
-	
-	\subsection{What Needs to Be Shown}
-	
-	That $\fn \in \Wtwop$ implies $\nabla \fn \in W^{1,p}(\Omega)^d$ with the
-	norm bound:
-	\begin{equation}
-		\norm{\nabla \fn}_{L^p}
-		\leq \norm{\fn}_{W^{1,p}}
-		\leq \norm{\fn}_{W^{2,p}}
-	\end{equation}
-	
-	\subsection{Step 1: Existence of Weak Gradient}
-	
-	By definition of $\Wtwop$, the weak derivatives $\partial^\alpha \fn$ exist
-	in $\Lp$ for all $|\alpha| \leq 2$. In particular $\partial_j \fn \in \Lp$
-	for each $j = 1, \ldots, d$, so $\nabla \fn \in L^p(\Omega)^d$.
-	
-	\begin{quote}
-		\textit{TODO: Unpack the definition of $W^{2,p}$ and identify $\nabla \fn$ as
-			the vector of first-order weak derivatives. One paragraph citing
-			\citet[Section~5.2]{evans2010pde}.}
-	\end{quote}
-	
-	\subsection{Step 2: Norm Bound}
-	
-	The first inequality $\norm{\nabla \fn}_{L^p} \leq \norm{\fn}_{W^{1,p}}$
-	follows directly from the definition of the $W^{1,p}$ norm, which includes
-	$\norm{\nabla \fn}_{L^p}$ as a summand:
-	\begin{equation}
-		\norm{\fn}_{W^{1,p}} = \norm{\fn}_{L^p} + \norm{\nabla \fn}_{L^p}
-		\geq \norm{\nabla \fn}_{L^p}
-	\end{equation}
-	The second inequality $\norm{\fn}_{W^{1,p}} \leq \norm{\fn}_{W^{2,p}}$
-	follows because the $W^{2,p}$ norm sum includes all terms in the $W^{1,p}$
-	norm sum plus additional second-order terms:
-	\begin{equation}
-		\norm{\fn}_{W^{2,p}} =
-		\sum_{|\alpha| \leq 2} \norm{\partial^\alpha \fn}_{L^p} \geq
-		\sum_{|\alpha| \leq 1} \norm{\partial^\alpha \fn}_{L^p} =
-		\norm{\fn}_{W^{1,p}}
-	\end{equation}
-	
-	\begin{quote}
-		\textit{TODO: Write out the two norm inequalities above as a short formal
-			proof, citing \citet[Section~5.2]{evans2010pde} for the norm definitions.
-			This is the shortest proof in the appendix --- approximately half a page.}
-	\end{quote}
-	\qed
-	
-	% ============================================================
-	\section{Proof of Lemma~\ref{lem:sobolev_consistency}
-		(Derivative Consistency, Sobolev)}
-	\label{app:lem_sobolev_consistency}
-	% ============================================================
-	
-	\subsection{What Needs to Be Shown}
-	
-	That well-behavedness in the Sobolev sense implies
-	$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
-	
-	\subsection{Step 1: Extract a Strongly Convergent Subsequence}
-	
-	By the uniform $\Wtwop$ boundedness condition, the sequence $\{\fn\}$ is
-	bounded in $\Wtwop$. The Rellich--Kondrachov theorem states that
-	$W^{2,p}(\Omega) \hookrightarrow\hookrightarrow W^{1,p}(\Omega)$ compactly
-	for bounded Lipschitz $\Omega$ \citep[Theorem~5,~Section~5.7]{evans2010pde}.
-	Therefore every subsequence of $\{\fn\}$ has a further subsequence converging
-	strongly in $\Wonep$.
-	
-	\begin{quote}
-		\textit{TODO: State the Rellich--Kondrachov theorem precisely as it applies
-			here --- the specific embedding $W^{2,p} \hookrightarrow\hookrightarrow
-			W^{1,p}$, the conditions on $\Omega$ (bounded and Lipschitz), and the
-			conclusion of strong $W^{1,p}$ convergence for subsequences. Two to three
-			paragraphs citing \citet{evans2010pde} carefully.}
-	\end{quote}
-	
-	\subsection{Step 2: Identify the Limit}
-	
-	Strong $\Wonep$ convergence implies strong $L^p$ convergence. By the $L^p$
-	consistency assumption $\norm{\fn - f}_{L^p} \xrightarrowp 0$, the only
-	possible $L^p$ limit is $f$. Therefore every subsequence that converges
-	strongly in $\Wonep$ must converge to $f$.
-	
-	\begin{quote}
-		\textit{TODO: Write out the standard topological argument: if every
-			subsequence of $\{\fn\}$ has a further subsequence converging to $f$ in
-			$\Wonep$, then the full sequence converges to $f$ in $\Wonep$. This is a
-			general fact about metric spaces that requires one careful paragraph.}
-	\end{quote}
-	
-	\subsection{Step 3: Extract Gradient Convergence}
-	
-	Strong convergence $\fn \to f$ in $\Wonep$ means by definition:
-	\begin{equation}
-		\norm{\fn - f}_{W^{1,p}}
-		= \norm{\fn - f}_{L^p} + \norm{\nabla \fn - \nabla f}_{L^p}
-		\to 0
-	\end{equation}
-	In particular $\norm{\nabla \fn - \nabla f}_{L^p} \to 0$. The almost sure
-	statement converts to in-probability immediately since convergence almost
-	surely implies convergence in probability.
-	
-	\begin{quote}
-		\textit{TODO: Unpack the $W^{1,p}$ norm to extract the gradient convergence
-			term. Verify the conversion from almost sure to in-probability. One paragraph.
-			Note: the argument above gives almost sure convergence along subsequences;
-			Step~2 promotes this to full sequence convergence in probability. Make sure
-			the logical flow between Steps~2 and~3 is tight.}
-	\end{quote}
-	\qed
-	
-	\begin{remark}
-		The hardest part of this proof is Step~1 --- specifically writing the
-		Rellich--Kondrachov argument carefully enough that a referee is satisfied. The
-		theorem is standard but the application needs to be precise about which
-		embedding is used and what conditions on $\Omega$ are required. The full
-		lemma is approximately four to five pages.
-	\end{remark}
-	
-	% ============================================================
-	\section{Proof of Lemma~\ref{lem:bv_existence}
-		(Derivative Existence, BV)}
-	\label{app:lem_bv_existence}
-	% ============================================================
-	
-	\subsection{What Needs to Be Shown}
-	
-	Two things: that $BV$ membership implies $D\fn$ exists as a Radon measure,
-	and the explicit formula for piecewise constant functions.
-	
-	\subsection{Step 1: Existence by Definition}
-	
-	The space $\BV$ is defined as the set of functions $g \in \Lone$ whose
-	distributional gradient is representable as a finite $\R^d$-valued Radon
-	measure \citep[Chapter~3]{ambrosio2000bv}. Therefore $\fn \in \BV$ directly
-	implies $D\fn \in \cM$ with $|D\fn|(\Omega) < \infty$.
-	
-	\begin{quote}
-		\textit{TODO: State the definition of $BV(\Omega)$ precisely following
-			\citet[Definition~3.1]{ambrosio2000bv} and note that existence of $D\fn$ as
-			a Radon measure is part of the definition. One paragraph.}
-	\end{quote}
-	
-	\subsection{Step 2: Explicit Formula for Piecewise Constant Functions}
-	
-	Let $\fn = \sum_j \bar{y}_j \mathbf{1}_{R_j}$ where $\{R_j\}$ is a finite
-	partition of $\Omega$ into sets with Lipschitz boundaries. For any test
-	function $\phi \in C_c^1(\Omega)^d$, the definition of distributional gradient
-	gives:
-	\begin{equation}
-		\int_\Omega \phi \cdot d(D\fn)
-		= -\int_\Omega \fn \operatorname{div} \phi \, dx
-		= -\sum_j \bar{y}_j \int_{R_j} \operatorname{div} \phi \, dx
-	\end{equation}
-	Applying the Gauss--Green theorem to each leaf:
-	\begin{equation}
-		\int_{R_j} \operatorname{div} \phi \, dx
-		= \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
-	\end{equation}
-	Summing over leaves and noting that interior boundaries are shared between
-	adjacent pairs with opposite orientations:
-	\begin{equation}
-		-\sum_j \bar{y}_j \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
-		= \sum_{j \sim k} (\bar{y}_k - \bar{y}_j)
-		\int_{\partial R_j \cap \partial R_k} \phi \cdot \nu_{jk}
-		\, d\mathcal{H}^{d-1}
-	\end{equation}
-	This identifies the distributional gradient as:
-	\begin{equation}
-		D\fn = \sum_{j \sim k} (\bar{y}_k - \bar{y}_j) \cdot \nu_{jk} \cdot
-		\mathcal{H}^{d-1}\lfloor_{\partial R_j \cap \partial R_k}
-	\end{equation}
-	which is the formula stated in the lemma.
-	
-	\begin{quote}
-		\textit{TODO: Write out the Gauss--Green calculation above carefully with
-			precise notation for the boundary orientations and the sign convention for
-			$\nu_{jk}$. Verify that the boundary terms cancel correctly for interior
-			boundaries. The key reference for the Gauss--Green theorem on Lipschitz
-			domains is \citet[Section~3.2]{ambrosio2000bv} or
-			\citet[Appendix~C]{evans2010pde}. Approximately three pages.}
-	\end{quote}
-	\qed
-	
-	% ============================================================
-	\section{Proof of Lemma~\ref{lem:bv_consistency}
-		(Derivative Consistency, BV)}
-	\label{app:lem_bv_consistency}
-	% ============================================================
-	
-	\subsection{What Needs to Be Shown}
-	
-	That well-behavedness in the BV sense implies $D\fn \xrightarrow{w*} Df$
-	in $\cM$, and the strict convergence upgrade under the additional condition
-	$\E[|D\fn|(\Omega)] \to |Df|(\Omega)$.
-	
-	\textit{Note: This is the hardest lemma. Budget accordingly --- the full proof
-		is approximately eight to ten pages.}
-	
-	\subsection{Part I: Weak-* Convergence}
-	
-	\subsubsection*{Step 1: Bound the Full BV Norm}
-	
-	The BV compactness theorem requires a bound on the full $BV$ norm, not just
-	the total variation. We have:
-	\begin{equation}
-		\norm{\fn}_{BV} = \norm{\fn}_{L^1} + |D\fn|(\Omega)
-	\end{equation}
-	The total variation term is bounded by assumption:
-	$\sup_n \E[|D\fn|(\Omega)] < \infty$. For the $L^1$ term, the consistency
-	assumption $\norm{\fn - f}_{L^1} \xrightarrowp 0$ gives eventual $L^1$
-	boundedness.
-	
-	\begin{quote}
-		\textit{TODO: Combine the two conditions to obtain $\sup_n \E[\norm{\fn}_{BV}]
-			< \infty$. Handle the probabilistic statement carefully --- the BV compactness
-			theorem is deterministic and you need to argue that the random sequence
-			$\{\fn\}$ is bounded in $BV$ with high probability. Approximately one page.}
-	\end{quote}
-	
-	\subsubsection*{Step 2: Extract a Weakly-* Convergent Subsequence}
-	
-	By the BV compactness theorem \citep[Theorem~3.23]{ambrosio2000bv}, every
-	sequence bounded in $\BV$ has a subsequence $\{\hat{f}_{n_k}\}$ such that:
-	\begin{enumerate}
-		\item $\hat{f}_{n_k} \to g$ strongly in $\Lone$ for some $g \in \BV$
-		\item $D\hat{f}_{n_k} \xrightarrow{w*} Dg$ in $\cM$
-	\end{enumerate}
-	
-	\begin{quote}
-		\textit{TODO: State the BV compactness theorem precisely as it applies here,
-			citing \citet[Theorem~3.23]{ambrosio2000bv}. Check all hypotheses: $\Omega$
-			bounded Lipschitz, sequence bounded in $BV$ norm. Two to three paragraphs.}
-	\end{quote}
-	
-	\subsubsection*{Step 3: Identify the Limit}
-	
-	By the $L^1$ part of the BV convergence, $\hat{f}_{n_k} \to g$ in $\Lone$.
-	By the $L^1$ consistency assumption, $\norm{\fn - f}_{L^1} \xrightarrowp 0$,
-	so $g = f$.
-	
-	\begin{quote}
-		\textit{TODO: Same subsequence argument as in
-			Lemma~\ref{lem:sobolev_consistency} --- every subsequence has a further
-			subsequence converging to $f$, therefore the full sequence converges. One
-			paragraph.}
-	\end{quote}
-	
-	\subsubsection*{Step 4: Handle the Probabilistic Statement}
-	
-	The BV compactness theorem is deterministic. The estimator $\fn$ is random.
-	A careful measurability argument is needed to pass from deterministic
-	subsequential convergence to convergence in probability.
-	
-	\begin{quote}
-		\textit{TODO: For any $\epsilon > 0$ and any test function
-			$\phi \in C_0(\Omega)^d$ with $\norm{\phi}_\infty \leq 1$, show:
-			\begin{equation}
-				\Prob\!\left(\left|
-				\int_\Omega \phi \cdot d(D\fn) - \int_\Omega \phi \cdot d(Df)
-				\right| > \epsilon\right) \to 0
-			\end{equation}
-			One approach: condition on the training data, apply the deterministic
-			convergence result, then integrate out the randomness. An alternative is to
-			use a measurable selection argument. Either way this requires care ---
-			approximately two pages.}
-	\end{quote}
-	
-	\subsection{Part II: Strict Convergence Upgrade}
-	
-	\subsubsection*{Step 1: Lower Semicontinuity Gives One Direction}
-	
-	The total variation functional $\mu \mapsto |\mu|(\Omega)$ is lower
-	semicontinuous with respect to weak-* convergence of measures
-	\citep[Proposition~1.62]{ambrosio2000bv}. Therefore weak-* convergence
-	$D\fn \xrightarrow{w*} Df$ gives:
-	\begin{equation}
-		|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)
-	\end{equation}
-	
-	\begin{quote}
-		\textit{TODO: State and apply the lower semicontinuity of total variation,
-			citing \citet[Proposition~1.62]{ambrosio2000bv}. One paragraph.}
-	\end{quote}
-	
-	\subsubsection*{Step 2: The Additional Condition Gives the Other Direction}
-	
-	The assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$ combined with Step~1
-	gives $|D\fn|(\Omega) \to |Df|(\Omega)$ in expectation.
-	
-	\begin{quote}
-		\textit{TODO: Combine the liminf lower bound from Step~1 with the limsup
-			upper bound from the assumption to conclude
-			$|D\fn|(\Omega) \to |Df|(\Omega)$. Note that the combination of weak-*
-			convergence plus total mass convergence is precisely the definition of strict
-			convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}. One paragraph.}
-	\end{quote}
-	\qed
 	
 	\bibliographystyle{apalike}  % or plainnat, or whatever style you prefer
 	\bibliography{references}
