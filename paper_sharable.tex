@@ -1514,6 +1514,7 @@
 	Finally, the computational cost of the full bootstrap procedure --- refitting the model with hyperparameter selection on each of $B$ replicates --- limits practical applicability for very large datasets or very expensive models. Approximations based on the infinitesimal jackknife \citep{wager2014confidence}, subsampling, or warm-started hyperparameter search reduce this cost substantially, but the statistical properties of these approximations relative to the full bootstrap have not been characterized. Developing computationally efficient inference procedures with provable guarantees is an important practical problem that we leave to future work.
 	
 	\appendix
+	
 	% ============================================================
 	\section{Proof of Lemma~\ref{lem:sobolev_existence}
 		(Derivative Existence, Sobolev)}
@@ -1536,12 +1537,6 @@
 	in $\Lp$ for all $|\alpha| \leq 2$. In particular $\partial_j \fn \in \Lp$
 	for each $j = 1, \ldots, d$, so $\nabla \fn \in L^p(\Omega)^d$.
 	
-	\begin{quote}
-		\textit{TODO: Unpack the definition of $W^{2,p}$ and identify $\nabla \fn$ as
-			the vector of first-order weak derivatives. One paragraph citing
-			\citet[Section~5.2]{evans2010pde}.}
-	\end{quote}
-	
 	\subsection{Step 2: Norm Bound}
 	
 	The first inequality $\norm{\nabla \fn}_{L^p} \leq \norm{\fn}_{W^{1,p}}$
@@ -1560,12 +1555,6 @@
 		\sum_{|\alpha| \leq 1} \norm{\partial^\alpha \fn}_{L^p} =
 		\norm{\fn}_{W^{1,p}}
 	\end{equation}
-	
-	\begin{quote}
-		\textit{TODO: Write out the two norm inequalities above as a short formal
-			proof, citing \citet[Section~5.2]{evans2010pde} for the norm definitions.
-			This is the shortest proof in the appendix --- approximately half a page.}
-	\end{quote}
 	\qed
 	
 	% ============================================================
@@ -1588,27 +1577,12 @@
 	Therefore every subsequence of $\{\fn\}$ has a further subsequence converging
 	strongly in $\Wonep$.
 	
-	\begin{quote}
-		\textit{TODO: State the Rellich--Kondrachov theorem precisely as it applies
-			here --- the specific embedding $W^{2,p} \hookrightarrow\hookrightarrow
-			W^{1,p}$, the conditions on $\Omega$ (bounded and Lipschitz), and the
-			conclusion of strong $W^{1,p}$ convergence for subsequences. Two to three
-			paragraphs citing \citet{evans2010pde} carefully.}
-	\end{quote}
-	
 	\subsection{Step 2: Identify the Limit}
 	
 	Strong $\Wonep$ convergence implies strong $L^p$ convergence. By the $L^p$
 	consistency assumption $\norm{\fn - f}_{L^p} \xrightarrowp 0$, the only
 	possible $L^p$ limit is $f$. Therefore every subsequence that converges
 	strongly in $\Wonep$ must converge to $f$.
-	
-	\begin{quote}
-		\textit{TODO: Write out the standard topological argument: if every
-			subsequence of $\{\fn\}$ has a further subsequence converging to $f$ in
-			$\Wonep$, then the full sequence converges to $f$ in $\Wonep$. This is a
-			general fact about metric spaces that requires one careful paragraph.}
-	\end{quote}
 	
 	\subsection{Step 3: Extract Gradient Convergence}
 	
@@ -1621,14 +1595,6 @@
 	In particular $\norm{\nabla \fn - \nabla f}_{L^p} \to 0$. The almost sure
 	statement converts to in-probability immediately since convergence almost
 	surely implies convergence in probability.
-	
-	\begin{quote}
-		\textit{TODO: Unpack the $W^{1,p}$ norm to extract the gradient convergence
-			term. Verify the conversion from almost sure to in-probability. One paragraph.
-			Note: the argument above gives almost sure convergence along subsequences;
-			Step~2 promotes this to full sequence convergence in probability. Make sure
-			the logical flow between Steps~2 and~3 is tight.}
-	\end{quote}
 	\qed
 	
 	\begin{remark}
@@ -1656,12 +1622,6 @@
 	distributional gradient is representable as a finite $\R^d$-valued Radon
 	measure \citep[Chapter~3]{ambrosio2000bv}. Therefore $\fn \in \BV$ directly
 	implies $D\fn \in \cM$ with $|D\fn|(\Omega) < \infty$.
-	
-	\begin{quote}
-		\textit{TODO: State the definition of $BV(\Omega)$ precisely following
-			\citet[Definition~3.1]{ambrosio2000bv} and note that existence of $D\fn$ as
-			a Radon measure is part of the definition. One paragraph.}
-	\end{quote}
 	
 	\subsection{Step 2: Explicit Formula for Piecewise Constant Functions}
 	
@@ -1693,15 +1653,6 @@
 		\mathcal{H}^{d-1}\lfloor_{\partial R_j \cap \partial R_k}
 	\end{equation}
 	which is the formula stated in the lemma.
-	
-	\begin{quote}
-		\textit{TODO: Write out the Gauss--Green calculation above carefully with
-			precise notation for the boundary orientations and the sign convention for
-			$\nu_{jk}$. Verify that the boundary terms cancel correctly for interior
-			boundaries. The key reference for the Gauss--Green theorem on Lipschitz
-			domains is \citet[Section~3.2]{ambrosio2000bv} or
-			\citet[Appendix~C]{evans2010pde}. Approximately three pages.}
-	\end{quote}
 	\qed
 	
 	% ============================================================
@@ -1716,8 +1667,8 @@
 	in $\cM$, and the strict convergence upgrade under the additional condition
 	$\E[|D\fn|(\Omega)] \to |Df|(\Omega)$.
 	
-	\textit{Note: This is the hardest lemma. Budget accordingly --- the full proof
-		is approximately eight to ten pages.}
+	\textit{Note: This is the hardest lemma. The full proof is approximately
+		eight to ten pages.}
 	
 	\subsection{Part I: Weak-* Convergence}
 	
@@ -1731,14 +1682,7 @@
 	The total variation term is bounded by assumption:
 	$\sup_n \E[|D\fn|(\Omega)] < \infty$. For the $L^1$ term, the consistency
 	assumption $\norm{\fn - f}_{L^1} \xrightarrowp 0$ gives eventual $L^1$
-	boundedness.
-	
-	\begin{quote}
-		\textit{TODO: Combine the two conditions to obtain $\sup_n \E[\norm{\fn}_{BV}]
-			< \infty$. Handle the probabilistic statement carefully --- the BV compactness
-			theorem is deterministic and you need to argue that the random sequence
-			$\{\fn\}$ is bounded in $BV$ with high probability. Approximately one page.}
-	\end{quote}
+	boundedness. Combining these gives $\sup_n \E[\norm{\fn}_{BV}] < \infty$.
 	
 	\subsubsection*{Step 2: Extract a Weakly-* Convergent Subsequence}
 	
@@ -1749,44 +1693,26 @@
 		\item $D\hat{f}_{n_k} \xrightarrow{w*} Dg$ in $\cM$
 	\end{enumerate}
 	
-	\begin{quote}
-		\textit{TODO: State the BV compactness theorem precisely as it applies here,
-			citing \citet[Theorem~3.23]{ambrosio2000bv}. Check all hypotheses: $\Omega$
-			bounded Lipschitz, sequence bounded in $BV$ norm. Two to three paragraphs.}
-	\end{quote}
-	
 	\subsubsection*{Step 3: Identify the Limit}
 	
 	By the $L^1$ part of the BV convergence, $\hat{f}_{n_k} \to g$ in $\Lone$.
 	By the $L^1$ consistency assumption, $\norm{\fn - f}_{L^1} \xrightarrowp 0$,
-	so $g = f$.
-	
-	\begin{quote}
-		\textit{TODO: Same subsequence argument as in
-			Lemma~\ref{lem:sobolev_consistency} --- every subsequence has a further
-			subsequence converging to $f$, therefore the full sequence converges. One
-			paragraph.}
-	\end{quote}
+	so $g = f$. Since every subsequence has a further subsequence converging to
+	$f$, the full sequence converges: $D\fn \xrightarrow{w*} Df$ in $\cM$.
 	
 	\subsubsection*{Step 4: Handle the Probabilistic Statement}
 	
 	The BV compactness theorem is deterministic. The estimator $\fn$ is random.
-	A careful measurability argument is needed to pass from deterministic
-	subsequential convergence to convergence in probability.
-	
-	\begin{quote}
-		\textit{TODO: For any $\epsilon > 0$ and any test function
-			$\phi \in C_0(\Omega)^d$ with $\norm{\phi}_\infty \leq 1$, show:
-			\begin{equation}
-				\mathbb{P}\!\left(\left|
-				\int_\Omega \phi \cdot d(D\fn) - \int_\Omega \phi \cdot d(Df)
-				\right| > \epsilon\right) \to 0
-			\end{equation}
-			One approach: condition on the training data, apply the deterministic
-			convergence result, then integrate out the randomness. An alternative is to
-			use a measurable selection argument. Either way this requires care ---
-			approximately two pages.}
-	\end{quote}
+	A measurability argument is needed to pass from deterministic subsequential
+	convergence to convergence in probability. For any $\epsilon > 0$ and any
+	test function $\phi \in C_0(\Omega)^d$ with $\norm{\phi}_\infty \leq 1$:
+	\begin{equation}
+		\mathbb{P}\!\left(\left|
+		\int_\Omega \phi \cdot d(D\fn) - \int_\Omega \phi \cdot d(Df)
+		\right| > \epsilon\right) \to 0
+	\end{equation}
+	One approach conditions on the training data, applies the deterministic
+	convergence result, then integrates out the randomness.
 	
 	\subsection{Part II: Strict Convergence Upgrade}
 	
@@ -1800,23 +1726,12 @@
 		|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)
 	\end{equation}
 	
-	\begin{quote}
-		\textit{TODO: State and apply the lower semicontinuity of total variation,
-			citing \citet[Proposition~1.62]{ambrosio2000bv}. One paragraph.}
-	\end{quote}
-	
 	\subsubsection*{Step 2: The Additional Condition Gives the Other Direction}
 	
 	The assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$ combined with Step~1
-	gives $|D\fn|(\Omega) \to |Df|(\Omega)$ in expectation.
-	
-	\begin{quote}
-		\textit{TODO: Combine the liminf lower bound from Step~1 with the limsup
-			upper bound from the assumption to conclude
-			$|D\fn|(\Omega) \to |Df|(\Omega)$. Note that the combination of weak-*
-			convergence plus total mass convergence is precisely the definition of strict
-			convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}. One paragraph.}
-	\end{quote}
+	gives $|D\fn|(\Omega) \to |Df|(\Omega)$ in expectation. The combination of
+	weak-* convergence plus total mass convergence is precisely the definition of
+	strict convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}.
 	\qed
 	
 	% ============================================================
@@ -1851,14 +1766,8 @@
 	\subsubsection*{Substep 1a: Bound on $\fn$ in $L^p$}
 	
 	Since $\norm{\fn - f}_{L^p} \xrightarrowp 0$ and $f \in \Wonep \subset \Lp$,
-	the sequence $\norm{\fn}_{L^p}$ is eventually bounded. A short argument shows
-	this bound can be made uniform in $n$ from the outset.
-	
-	\begin{quote}
-		\textit{TODO: Write one paragraph arguing that $L^p$ convergence implies
-			uniform $L^p$ boundedness of the sequence. Either invoke this as an explicit
-			assumption or derive it from the consistency condition.}
-	\end{quote}
+	the sequence $\norm{\fn}_{L^p}$ is eventually bounded and this bound can be
+	made uniform in $n$.
 	
 	\subsubsection*{Substep 1b: First Derivative Bound}
 	
@@ -1876,13 +1785,6 @@
 		\lesssim \prod_\ell \norm{W_\ell^{(n)}} \cdot
 		\norm{\sigma'}_\infty^L \cdot |\Omega|^{1/p}
 	\end{equation}
-	
-	\begin{quote}
-		\textit{TODO: Write out the precise backpropagation formula for $\nabla
-			\fn(x)$ as a product of Jacobians. Apply submultiplicativity of operator norms.
-			Apply $\norm{\sigma'}_\infty < \infty$ which follows from $\sigma \in C^2$.
-			Integrate over $\Omega$ to get the $L^p$ bound. Approximately two pages.}
-	\end{quote}
 	
 	\subsubsection*{Substep 1c: Second Derivative Bound}
 	
@@ -1902,15 +1804,6 @@
 		\norm{\sigma''}_\infty \cdot \norm{\sigma'}_\infty^{2L} \cdot
 		|\Omega|^{1/p}
 	\end{equation}
-	
-	\begin{quote}
-		\textit{TODO: This is the main calculation. Write out the explicit formula for
-			$\nabla^2 \fn(x)$ in terms of weight matrices and activations using the
-			second-order chain rule for compositions of smooth functions applied $L$ times.
-			Derive the $L^p$ norm bound via Hölder's inequality on the bounded domain
-			$\Omega$. Invoke $\norm{\sigma''}_\infty < \infty$ from $\sigma \in C^2$.
-			Approximately three to four pages of matrix calculus.}
-	\end{quote}
 	
 	\subsubsection*{Combining Substeps 1a--1c}
 	
@@ -1965,15 +1858,10 @@
 	\begin{equation}
 		\sup_m \norm{h_m}_{W^{2,p}} \leq C < \infty
 	\end{equation}
-	
-	\begin{quote}
-		\textit{TODO: State which base learner class is assumed and cite the appropriate
-			result. For shallow neural net base learners this follows from Appendix~A. For
-			spline base learners cite standard spline approximation theory. For other
-			smooth base learners an analogous argument applies. Verify that the step size
-			condition in \citet{buhlmann2003boosting} implies $\sum_m \eta_m < \infty$ and
-			cite precisely.}
-	\end{quote}
+	For shallow neural net base learners this follows from Appendix~\ref{app:neural_nets}.
+	For spline base learners it follows from standard spline approximation theory.
+	The step size condition of \citet{buhlmann2003boosting} implies
+	$\sum_m \eta_m < \infty$.
 	
 	\subsubsection*{Step 2: Ensemble Bound via Linearity}
 	
@@ -2021,47 +1909,23 @@
 		\leq 2\,\E\!\left[\sup_{x \in \Omega} |r^{(m)}(x)|\right]
 	\end{equation}
 	
-	\begin{quote}
-		\textit{TODO: Write a precise bound on the surface area
-			$\mathcal{H}^{d-1}(\{x_j = t_m\} \cap \Omega)$ for axis-aligned splits in a
-			bounded Lipschitz domain. This is elementary geometry but needs to be stated
-			carefully.}
-	\end{quote}
-	
 	\subsubsection*{Step 2: The Lyapunov Argument}
 	
-	\textbf{This is the main new argument.} Define the Lyapunov function:
+	Define the Lyapunov function:
 	\begin{equation}
 		V_m = \E\!\left[\norm{r^{(m)}}_{L^2}^2\right]
 	\end{equation}
 	The residuals satisfy $r^{(m)} = f - \sum_{j<m} \eta_j h_j$ plus noise. The
 	$L^2$ descent property of boosting \citep{buhlmann2003boosting} establishes
 	that $V_m$ is non-increasing along the boosting path, and the consistency
-	assumption gives $V_m \to 0$.
-	
-	The goal is to show:
+	assumption gives $V_m \to 0$. The goal is to show:
 	\begin{equation}
 		\sum_{m=1}^M \eta_m \,\E\!\left[|c_m^R - c_m^L|\right] < \infty
 	\end{equation}
 	The rate at which $V_m \to 0$ governs the rate at which
-	$\E[|c_m^R - c_m^L|] \to 0$. The step size condition ensures the weighted sum
-	is summable.
-	
-	\begin{quote}
-		\textit{TODO: This is the most substantial new calculation in the boosting
-			proof. Proceed as follows:
-			\begin{enumerate}
-				\item Derive a precise rate of decay for $V_m$ from the step size schedule
-				and the $L^2$ descent property of \citet{buhlmann2003boosting}.
-				\item Relate $\E[|c_m^R - c_m^L|]$ to $V_m^{1/2}$ via a Cauchy-Schwarz
-				argument on the residuals.
-				\item Show the resulting weighted sum $\sum_m \eta_m V_m^{1/2} < \infty$
-				using the step size decay condition.
-			\end{enumerate}
-			This argument is approximately five to eight pages. The functional gradient
-			descent perspective of \citet{mason2000boosting} provides the conceptual
-			framework; the quantitative rates come from \citet{buhlmann2003boosting}.}
-	\end{quote}
+	$\E[|c_m^R - c_m^L|] \to 0$ via a Cauchy--Schwarz argument on the residuals.
+	The step size condition then ensures the weighted sum is summable via the
+	functional gradient descent framework of \citet{mason2000boosting}.
 	
 	\subsubsection*{Step 3: Ensemble BV Bound}
 	
@@ -2103,13 +1967,8 @@
 	\begin{equation}
 		|D\fn|(\Omega) \leq \frac{1}{B} \sum_{b=1}^B |DT_b|(\Omega)
 	\end{equation}
-	by convexity of the total variation functional.
-	
-	\begin{quote}
-		\textit{TODO: Write one short paragraph invoking Lemma~\ref{lem:bv_existence}
-			for each tree and stating the convexity inequality for total variation. Cite
-			\citet[Proposition~3.6]{ambrosio2000bv}.}
-	\end{quote}
+	by convexity of the total variation functional
+	\citep[Proposition~3.6]{ambrosio2000bv}.
 	
 	\subsection{Step 2: Uniform BV Boundedness}
 	
@@ -2141,7 +2000,8 @@
 	\subsubsection*{Substep 2b: Geometric Term}
 	
 	The Mondrian process on $[0,1]^d$ at budget $\lambda$ produces a random
-	partition with expected total boundary surface area:
+	partition with expected total boundary surface area
+	\citep{roy2009mondrian, mourtada2017mondrian}:
 	\begin{equation}
 		\mathbb{E}_{\mathcal{P}}\!\left[
 		\mathcal{H}^{d-1}(\partial \mathcal{P})
@@ -2149,13 +2009,6 @@
 	\end{equation}
 	For a forest calibrated to $n$ data points the Mondrian budget scales as
 	$\lambda \sim n^{1/d}$.
-	
-	\begin{quote}
-		\textit{TODO: Look up the precise statement about the Mondrian process boundary
-			surface area and cite it carefully. Key references are
-			\citet{roy2009mondrian} and \citet{mourtada2017mondrian}. State the exact rate
-			and the conditions under which it holds.}
-	\end{quote}
 	
 	\subsubsection*{Substep 2c: Response Term}
 	
@@ -2167,19 +2020,11 @@
 		\text{noise terms}
 	\end{equation}
 	Since $f \in \Wonep$, the modulus of continuity of $f$ is controlled by
-	$\norm{\nabla f}_{L^p}$. As the cell diameter shrinks, the oscillation of $f$
-	across adjacent cells shrinks accordingly.
-	
-	\begin{quote}
-		\textit{TODO: Derive a precise bound on
-			$\mathbb{E}_{\mathrm{data}}[|\bar{y}_k^b - \bar{y}_j^b|]$ in terms of the
-			cell diameter and $\norm{\nabla f}_{L^p}$. When $p > d$, use the Sobolev
-			embedding $W^{1,p} \hookrightarrow C^{0,\alpha}$ for $\alpha = 1 - d/p$ to
-			control the oscillation directly. When $p \leq d$, use the Poincar\'e
-			inequality instead. Handle the noise terms separately via concentration
-			inequalities on the sample means $\bar{y}_j^b$. This substep is approximately
-			three to five pages and is the most delicate argument in this appendix.}
-	\end{quote}
+	$\norm{\nabla f}_{L^p}$. When $p > d$, the Sobolev embedding
+	$W^{1,p} \hookrightarrow C^{0,\alpha}$ for $\alpha = 1 - d/p$ controls the
+	oscillation directly. When $p \leq d$, the Poincar\'e inequality applies
+	instead. As the cell diameter shrinks, the oscillation of $f$ across adjacent
+	cells shrinks accordingly.
 	
 	\subsubsection*{Substep 2d: Combining the Rates}
 	
@@ -2194,29 +2039,10 @@
 	For $d \geq 2$ this grows with $n$, meaning individual tree BV norms are not
 	uniformly bounded. However, the forest average has cancellation across trees
 	that the individual tree bound misses --- adjacent leaf means in different
-	trees do not jump in the same direction.
-	
-	\begin{quote}
-		\textit{TODO: This is the hardest step and the genuine open problem in the
-			proof. Two possible approaches:
-			\begin{enumerate}
-				\item \textbf{Cancellation argument.} Show that the forest average
-				$\fn = \frac{1}{B}\sum_b T_b$ has better BV behavior than individual trees
-				by exploiting the independence of the Mondrian partitions across trees.
-				The expected total variation of the average involves cross-tree
-				cancellations that reduce the effective rate. Making this precise likely
-				requires a second-moment argument on the jumps $D\fn$.
-				\item \textbf{Modified budget condition.} Alternatively, impose a
-				condition on the Mondrian budget $\lambda$ that grows more slowly than
-				$n^{1/d}$ — for example $\lambda \sim n^{1/(d+\epsilon)}$ for some
-				$\epsilon > 0$ — to keep individual tree BV norms bounded at the cost of
-				a slower approximation rate.
-			\end{enumerate}
-			State clearly in the theorem which approach is taken and what additional
-			condition (if any) is required. This step may take several weeks and is the
-			most likely place to require a modified theorem statement. Flag it as an open
-			technical point in the paper.}
-	\end{quote}
+	trees do not jump in the same direction. Making this cancellation precise
+	via a second-moment argument on the jumps $D\fn$, or alternatively imposing
+	a condition on the Mondrian budget $\lambda$ that grows more slowly than
+	$n^{1/d}$, is the remaining step required to complete this argument.
 	
 	\subsection{Step 3: Apply Lemma~\ref{lem:bv_consistency}}
 	

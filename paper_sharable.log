@@ -2,8 +2,8 @@ This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded forma
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**paper_long.tex
-(./paper_long.tex
+**paper_sharable.tex
+(./paper_sharable.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
 (c:/texlive/2026/texmf-dist/tex/latex/base/article.cls
@@ -424,8 +424,8 @@ Package: ifthen 2024/03/16 v1.1e Standard LaTeX ifthen package (DPC)
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count328
 )
-(./paper_long.aux)
-\openout1 = `paper_long.aux'.
+(./paper_sharable.aux)
+\openout1 = `paper_sharable.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 60.
 LaTeX Font Info:    ... okay on input line 60.
@@ -504,9 +504,9 @@ e
 ))
 Package hyperref Info: Link coloring OFF on input line 60.
 
-(./paper_long.out) (./paper_long.out)
+(./paper_sharable.out) (./paper_sharable.out)
 \@outlinefile=\write3
-\openout3 = `paper_long.out'.
+\openout3 = `paper_sharable.out'.
 
 LaTeX Font Info:    Trying to load font information for U+msa on input line 67.
 
@@ -541,63 +541,62 @@ Overfull \hbox (46.7137pt too wide) in paragraph at lines 963--992
  []
 
 [36] [37] [38] [39] [40] [41] [42] [43] [44] [45] [46] [47] [48] [49] [50]
-[51] [52] [53] [54] [55] [56] [57] [58] [59] [60] [61] [62]
+[51] [52] [53] [54] [55] [56] [57] [58] [59] [60]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1847.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 1847.
+(hyperref)                removing `math shift' on input line 1762.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1847.
+(hyperref)                removing `superscript' on input line 1762.
 
-[63] [64] [65] [66] [67] [68] [69] [70] [71] (./paper_long.bbl [72] [73]
-[74]) [75] (./paper_long.aux)
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1762.
+
+[61] [62] [63] [64] [65] [66] [67] (./paper_sharable.bbl [68] [69] [70])
+[71] (./paper_sharable.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
  ***********
-Package rerunfilecheck Info: File `paper_long.out' has not changed.
+Package rerunfilecheck Info: File `paper_sharable.out' has not changed.
 (rerunfilecheck)             Checksum: DCC8CAEB368481B396D03DECB8F1BDAE;9158.
  ) 
 Here is how much of TeX's memory you used:
- 12672 strings out of 469472
- 193325 string characters out of 5469219
- 638268 words of memory out of 5000000
- 40875 multiletter control sequences out of 15000+600000
- 644979 words of font info for 103 fonts, out of 8000000 for 9000
+ 12658 strings out of 469472
+ 193276 string characters out of 5469219
+ 638288 words of memory out of 5000000
+ 40871 multiletter control sequences out of 15000+600000
+ 644620 words of font info for 102 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 75i,13n,79p,2419b,637s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,13n,79p,2423b,634s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <c:/Users/e200601/.texlive2026/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm120
 0.600pk><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><
 c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/texliv
 e/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb><c:/texlive/2026/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><c:/texlive/2026/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2026/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/publi
-c/amsfonts/cm/cmmi12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmmi6.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8
-.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><c:
-/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2
-026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2026/texmf-
-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2026/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmr6.pfb><c:/texlive/2026/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmr8.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmsy10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6
-.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb><c:/t
-exlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/texlive/202
-6/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb><c:/texlive/2026/texmf-d
-ist/fonts/type1/public/amsfonts/cm/cmti12.pfb><c:/texlive/2026/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmtt12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/pu
-blic/amsfonts/symbols/msam10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public
-/amsfonts/symbols/msbm10.pfb>
-Output written on paper_long.pdf (75 pages, 490390 bytes).
+mf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2026/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2026/texmf-dist/fonts/type
+1/public/amsfonts/cm/cmmi12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmmi6.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmmi8.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.
+pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/te
+xlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2026
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb><c:/texlive/2026/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/texlive/2026/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmr8.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmsy10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmsy6.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pf
+b><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/texl
+ive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb><c:/texlive/2026/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb><c:/texlive/2026/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmtt12.pfb><c:/texlive/2026/texmf-dist/fonts/t
+ype1/public/amsfonts/symbols/msam10.pfb><c:/texlive/2026/texmf-dist/fonts/type1
+/public/amsfonts/symbols/msbm10.pfb>
+Output written on paper_sharable.pdf (71 pages, 467766 bytes).
 PDF statistics:
- 1161 PDF objects out of 1200 (max. 8388607)
- 1024 compressed objects within 11 object streams
- 280 named destinations out of 1000 (max. 500000)
+ 1108 PDF objects out of 1200 (max. 8388607)
+ 978 compressed objects within 10 object streams
+ 271 named destinations out of 1000 (max. 500000)
  385 words of extra memory for PDF output out of 10000 (max. 10000000)
 

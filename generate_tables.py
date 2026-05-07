@@ -140,7 +140,12 @@ CALIBRATION_SAMPLE_SIZES = [250, 1000, 5000]
 
 SIM_MODELS_REGRESSION = ['linear', 'rf', 'xgboost', 'tensorflow']
 SIM_MODELS_CLASSIFICATION = ['logistic', 'rf', 'xgboost', 'tensorflow']
-CALIBRATION_MODELS = ['logistic', 'xgboost', 'tensorflow']
+
+# Classification calibration models
+CALIBRATION_MODELS = ['logistic', 'rf', 'xgboost', 'tensorflow']
+
+# Regression calibration models
+CALIBRATION_MODELS_REGRESSION = ['linear', 'rf', 'xgboost', 'tensorflow']
 
 SIM_MODEL_LABELS = {
     'linear':     'Linear',
@@ -768,23 +773,8 @@ def make_sim1_table(outcome_type: str, dgp: str) -> tuple:
 
 
 # ---------------------------------------------------------------------------
-# Simulation 2: SE Calibration helpers
+# Simulation 2: SE Calibration helpers (shared)
 # ---------------------------------------------------------------------------
-
-def load_sim2_results(dgp: str) -> pd.DataFrame:
-    """Load and concatenate all sim2 calibration results for a given DGP."""
-    dfs = []
-    for model in CALIBRATION_MODELS:
-        for n in CALIBRATION_SAMPLE_SIZES:
-            fname = f'calibration_{dgp}_n{n}_{model}.parquet'
-            fpath = os.path.join(SIM2_RESULTS_DIR, fname)
-            if os.path.exists(fpath):
-                df = pd.read_parquet(fpath)
-                dfs.append(df)
-    if not dfs:
-        return pd.DataFrame()
-    return pd.concat(dfs, ignore_index=True)
-
 
 def compute_coverage_stats(df: pd.DataFrame) -> pd.DataFrame:
     """Compute mean coverage and mean CI width per model, n, feature."""
@@ -800,33 +790,18 @@ def compute_coverage_stats(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def make_sim2_table(dgp: str = 'linear') -> tuple:
+def _make_calibration_table(
+    stats: pd.DataFrame,
+    available_models: list,
+    true_ame_map: dict,
+    caption: str,
+    label: str,
+) -> tuple:
     """
-    Generate Simulation 2 SE Calibration table.
-
-    Rows: features grouped by model with panel labels
-    Columns: n=250, n=1000, n=5000
-    Each cell: coverage rate on top, (mean CI width) below
-    Nominal coverage target stated in caption.
+    Shared table builder for classification and regression calibration tables.
     """
-    df = load_sim2_results(dgp)
-    if df.empty:
-        print(f"    WARNING: No calibration data found for dgp={dgp}")
-        return '', pd.DataFrame()
-
-    stats = compute_coverage_stats(df)
-    available_models = [m for m in CALIBRATION_MODELS if m in stats['model'].unique()]
-    true_ame_map = df.groupby('feature')['true_ame'].first().to_dict()
-
     n_cols = len(CALIBRATION_SAMPLE_SIZES)
     col_spec = 'lr' + 'r' * n_cols
-
-    caption = (
-        f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP (Classification). "
-        f"Nominal coverage target: 95\\%. "
-        f"Coverage rate and mean 95\\% CI width (in parentheses) across 500 Monte Carlo iterations."
-    )
-    label = f"tab:sim2_calibration_{dgp}"
 
     lines = latex_begin(caption, label, col_spec)
 
@@ -873,7 +848,6 @@ def make_sim2_table(dgp: str = 'linear') -> tuple:
                     cov_cells.append(f"{coverage:.3f}")
                     width_cells.append(f"({ci_width:.4f})")
                     summary_rows.append({
-                        'dgp': dgp,
                         'model': model,
                         'n': n,
                         'feature': feature,
@@ -909,8 +883,87 @@ def make_sim2_table(dgp: str = 'linear') -> tuple:
         r'\end{table*}',
     ]
 
-    summary_df = pd.DataFrame(summary_rows)
-    return '\n'.join(lines), summary_df
+    return '\n'.join(lines), pd.DataFrame(summary_rows)
+
+
+# ---------------------------------------------------------------------------
+# Simulation 2: Classification calibration table
+# ---------------------------------------------------------------------------
+
+def load_sim2_results(dgp: str) -> pd.DataFrame:
+    """Load classification calibration results."""
+    dfs = []
+    for model in CALIBRATION_MODELS:
+        for n in CALIBRATION_SAMPLE_SIZES:
+            fname = f'calibration_{dgp}_n{n}_{model}.parquet'
+            fpath = os.path.join(SIM2_RESULTS_DIR, fname)
+            if os.path.exists(fpath):
+                df = pd.read_parquet(fpath)
+                dfs.append(df)
+    if not dfs:
+        return pd.DataFrame()
+    return pd.concat(dfs, ignore_index=True)
+
+
+def make_sim2_table(dgp: str = 'linear') -> tuple:
+    """Generate Simulation 2 SE Calibration table — classification."""
+    df = load_sim2_results(dgp)
+    if df.empty:
+        print(f"    WARNING: No classification calibration data found for dgp={dgp}")
+        return '', pd.DataFrame()
+
+    stats = compute_coverage_stats(df)
+    available_models = [m for m in CALIBRATION_MODELS if m in stats['model'].unique()]
+    true_ame_map = df.groupby('feature')['true_ame'].first().to_dict()
+
+    caption = (
+        f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP (Classification). "
+        f"Nominal coverage target: 95\\%. "
+        f"Coverage rate and mean 95\\% CI width (in parentheses) across 500 Monte Carlo iterations."
+    )
+    label = f"tab:sim2_calibration_{dgp}"
+
+    return _make_calibration_table(stats, available_models, true_ame_map, caption, label)
+
+
+# ---------------------------------------------------------------------------
+# Simulation 2: Regression calibration table
+# ---------------------------------------------------------------------------
+
+def load_sim2_regression_results(dgp: str) -> pd.DataFrame:
+    """Load regression calibration results."""
+    dfs = []
+    for model in CALIBRATION_MODELS_REGRESSION:
+        for n in CALIBRATION_SAMPLE_SIZES:
+            fname = f'calibration_regression_{dgp}_n{n}_{model}.parquet'
+            fpath = os.path.join(SIM2_RESULTS_DIR, fname)
+            if os.path.exists(fpath):
+                df = pd.read_parquet(fpath)
+                dfs.append(df)
+    if not dfs:
+        return pd.DataFrame()
+    return pd.concat(dfs, ignore_index=True)
+
+
+def make_sim2_regression_table(dgp: str = 'linear') -> tuple:
+    """Generate Simulation 2 SE Calibration table — regression."""
+    df = load_sim2_regression_results(dgp)
+    if df.empty:
+        print(f"    WARNING: No regression calibration data found for dgp={dgp}")
+        return '', pd.DataFrame()
+
+    stats = compute_coverage_stats(df)
+    available_models = [m for m in CALIBRATION_MODELS_REGRESSION if m in stats['model'].unique()]
+    true_ame_map = df.groupby('feature')['true_ame'].first().to_dict()
+
+    caption = (
+        f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP (Regression). "
+        f"Nominal coverage target: 95\\%. "
+        f"Coverage rate and mean 95\\% CI width (in parentheses) across 500 Monte Carlo iterations."
+    )
+    label = f"tab:sim2_calibration_regression_{dgp}"
+
+    return _make_calibration_table(stats, available_models, true_ame_map, caption, label)
 
 
 # ---------------------------------------------------------------------------
@@ -976,13 +1029,24 @@ def main():
     print(f"\nGenerating simulation 2 calibration tables...")
 
     for dgp in ['linear']:
-        print(f"  Generating sim2_calibration_{dgp}...")
+        # Classification calibration
+        print(f"  Generating sim2_calibration_{dgp} (classification)...")
         tex, df = make_sim2_table(dgp)
-
         if tex:
             tex_path = os.path.join(TABLES_DIR, f'sim2_calibration_{dgp}.tex')
             pq_path  = os.path.join(TABLES_DIR, f'sim2_calibration_{dgp}.parquet')
+            with open(tex_path, 'w') as f:
+                f.write(tex)
+            if not df.empty:
+                df.to_parquet(pq_path, index=False)
+            print(f"    Saved: {tex_path}")
 
+        # Regression calibration
+        print(f"  Generating sim2_calibration_regression_{dgp} (regression)...")
+        tex, df = make_sim2_regression_table(dgp)
+        if tex:
+            tex_path = os.path.join(TABLES_DIR, f'sim2_calibration_regression_{dgp}.tex')
+            pq_path  = os.path.join(TABLES_DIR, f'sim2_calibration_regression_{dgp}.parquet')
             with open(tex_path, 'w') as f:
                 f.write(tex)
             if not df.empty:
