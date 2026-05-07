@@ -63,6 +63,15 @@ def build_model(model_name: str, seed: int):
         from sklearn.linear_model import LogisticRegression
         return LogisticRegression(max_iter=1000, random_state=seed)
 
+    elif model_name == 'rf':
+        from sklearn.ensemble import RandomForestClassifier
+        return RandomForestClassifier(
+            n_estimators=RF_N_ESTIMATORS,
+            max_depth=RF_MAX_DEPTH,
+            random_state=seed,
+            n_jobs=1,
+        )
+
     elif model_name == 'xgboost':
         import xgboost as xgb
         return xgb.XGBClassifier(

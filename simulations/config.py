@@ -40,7 +40,7 @@ elif MODE == 'production':
     # Calibration-specific
     N_ITER_CALIBRATION = 500
     N_BOOTSTRAP_CALIBRATION = 200
-    CALIBRATION_MODELS = ['logistic', 'xgboost', 'tensorflow']
+    CALIBRATION_MODELS = ['logistic', 'rf', 'xgboost', 'tensorflow']
     CALIBRATION_SAMPLE_SIZES = [250, 1000, 5000]
 
 # ---------------------------------------------------------------------------

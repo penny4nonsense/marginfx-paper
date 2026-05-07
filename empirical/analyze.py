@@ -127,33 +127,37 @@ def fit_model(
             y_scale = float(np.std(y))
             y_fit = (y - y_mean) / y_scale
 
+        normalizer = tf.keras.layers.Normalization(axis=-1)
+        normalizer.adapt(X.astype(np.float32))
         if outcome_type == 'regression':
-            normalizer = tf.keras.layers.Normalization(axis=-1)
-            normalizer.adapt(X.astype(np.float32))
             layers = [
                 normalizer,
+                tf.keras.layers.Dense(256, activation='relu'),
+                tf.keras.layers.Dense(128, activation='relu'),
                 tf.keras.layers.Dense(64, activation='relu'),
                 tf.keras.layers.Dense(32, activation='relu'),
                 tf.keras.layers.Dense(1, activation=output_activation),
             ]
         else:
             layers = [
-                tf.keras.layers.Dense(64, activation='relu',
-                                      input_shape=(X.shape[1],)),
+                normalizer,
+                tf.keras.layers.Dense(64, activation='relu'),
                 tf.keras.layers.Dense(32, activation='relu'),
                 tf.keras.layers.Dense(1, activation=output_activation),
             ]
 
         model = tf.keras.Sequential(layers)
+        lr = 3e-4 if outcome_type == 'regression' else float(1e-3)
         model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=float(1e-3)),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
             loss=loss,
         )
+        patience = 50 if outcome_type == 'regression' else 20
         model.fit(X.astype(np.float32), y_fit.astype(np.float32),
                   epochs=500, batch_size=32, verbose=0,
                   validation_split=0.1,
                   callbacks=[tf.keras.callbacks.EarlyStopping(
-                      patience=20, restore_best_weights=True,
+                      patience=patience, restore_best_weights=True,
                       monitor='val_loss'
                   )])
 
