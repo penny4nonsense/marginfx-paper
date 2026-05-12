@@ -3,126 +3,191 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: paper_long.aux
 The style file: apalike.bst
 Database file #1: references.bib
-Repeated entry---line 423 of file references.bib
+Repeated entry---line 431 of file references.bib
  : @article{decock2011
  :                    ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 443 of file references.bib
+Repeated entry---line 451 of file references.bib
  : @misc{kohavi1996
  :                 ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 457 of file references.bib
+Repeated entry---line 465 of file references.bib
  : @misc{UCI
  :          ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 473 of file references.bib
+Repeated entry---line 481 of file references.bib
  : @misc{yeh2009
  :              ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 489 of file references.bib
+Repeated entry---line 497 of file references.bib
  : @book{ambrosio2000bv
  :                     ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 509 of file references.bib
+Repeated entry---line 517 of file references.bib
  : @article{buhlmann2003boosting
  :                              ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 531 of file references.bib
+Repeated entry---line 539 of file references.bib
  : @book{evans2010pde
  :                   ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 575 of file references.bib
+Repeated entry---line 563 of file references.bib
+ : @book{evans2015measure
+ :                       ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 583 of file references.bib
  : @article{hornik1990universal
  :                             ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 619 of file references.bib
+Repeated entry---line 627 of file references.bib
  : @inproceedings{mason2000boosting
  :                                 ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 639 of file references.bib
+Repeated entry---line 647 of file references.bib
  : @article{scornet2015forests
  :                            ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 661 of file references.bib
+Repeated entry---line 669 of file references.bib
  : @article{wager2014confidence
  :                             ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 681 of file references.bib
+Repeated entry---line 689 of file references.bib
  : @article{wager2018forests
  :                          ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 703 of file references.bib
+Repeated entry---line 711 of file references.bib
  : @inproceedings{lakshminarayanan2014mondrian
  :                                            ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 721 of file references.bib
+Repeated entry---line 729 of file references.bib
  : @inproceedings{roy2009mondrian
  :                               ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 739 of file references.bib
+Repeated entry---line 747 of file references.bib
  : @inproceedings{mourtada2017mondrian
  :                                    ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 757 of file references.bib
+Repeated entry---line 765 of file references.bib
  : @book{greene2012
  :                 ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 775 of file references.bib
+Repeated entry---line 783 of file references.bib
  : @book{wooldridge2010
  :                     ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 793 of file references.bib
- : @manual{leeper2021
- :                   ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 807 of file references.bib
+Repeated entry---line 815 of file references.bib
  : @article{efron1979
  :                   ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 829 of file references.bib
+Repeated entry---line 837 of file references.bib
  : @book{efrontibshirani1993
  :                          ,
 I'm skipping whatever remains of this entry
+Repeated entry---line 1115 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1139 of file references.bib
+ : @book{ambrosio2000bv
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1159 of file references.bib
+ : @article{buhlmann2003boosting
+ :                              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1181 of file references.bib
+ : @book{evans2010pde
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1205 of file references.bib
+ : @article{hornik1990universal
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1251 of file references.bib
+ : @inproceedings{mason2000boosting
+ :                                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1273 of file references.bib
+ : @article{scornet2015forests
+ :                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1295 of file references.bib
+ : @article{wager2014confidence
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1317 of file references.bib
+ : @inproceedings{lakshminarayanan2014mondrian
+ :                                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1335 of file references.bib
+ : @inproceedings{roy2009mondrian
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1353 of file references.bib
+ : @inproceedings{mourtada2017mondrian
+ :                                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1375 of file references.bib
+ : @book{evans2015measure
+ :                       ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1395 of file references.bib
+ : @book{vandervaart1996weak
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1415 of file references.bib
+ : @article{jacot2018ntk
+ :                      ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1435 of file references.bib
+ : @incollection{horowitz2000bootstrap
+ :                                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1459 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Warning--I didn't find a database entry for "bartlett2017spectrally"
 Warning--empty publisher in molnar2025
-You've used 31 entries,
+You've used 36 entries,
             1935 wiz_defined-function locations,
-            649 strings with 8124 characters,
-and the built_in function-call counts, 12009 in all, are:
-= -- 1220
-> -- 396
-< -- 33
-+ -- 137
-- -- 126
-* -- 955
-:= -- 2025
-add.period$ -- 94
-call.type$ -- 31
-change.case$ -- 215
-chr.to.int$ -- 30
-cite$ -- 32
-duplicate$ -- 503
-empty$ -- 876
-format.name$ -- 175
-if$ -- 2411
+            680 strings with 8916 characters,
+and the built_in function-call counts, 14126 in all, are:
+= -- 1433
+> -- 473
+< -- 38
++ -- 163
+- -- 150
+* -- 1127
+:= -- 2379
+add.period$ -- 111
+call.type$ -- 36
+change.case$ -- 249
+chr.to.int$ -- 35
+cite$ -- 37
+duplicate$ -- 591
+empty$ -- 1033
+format.name$ -- 208
+if$ -- 2842
 int.to.chr$ -- 2
 int.to.str$ -- 0
-missing$ -- 32
-newline$ -- 156
-num.names$ -- 93
-pop$ -- 197
+missing$ -- 39
+newline$ -- 181
+num.names$ -- 110
+pop$ -- 230
 preamble$ -- 1
-purify$ -- 218
+purify$ -- 254
 quote$ -- 0
-skip$ -- 396
+skip$ -- 465
 stack$ -- 0
-substring$ -- 868
-swap$ -- 96
-text.length$ -- 12
+substring$ -- 1017
+swap$ -- 115
+text.length$ -- 14
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 172
+type$ -- 198
 warning$ -- 1
-while$ -- 100
+while$ -- 118
 width$ -- 0
-write$ -- 406
-(There were 20 error messages)
+write$ -- 476
+(There were 36 error messages)

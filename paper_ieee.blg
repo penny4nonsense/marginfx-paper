@@ -1,0 +1,106 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: paper_ieee.aux
+The style file: IEEEtran.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: references.bib
+Repeated entry---line 431 of file references.bib
+ : @article{decock2011
+ :                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 451 of file references.bib
+ : @misc{kohavi1996
+ :                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 465 of file references.bib
+ : @misc{UCI
+ :          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 669 of file references.bib
+ : @article{wager2014confidence
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 689 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 765 of file references.bib
+ : @book{greene2012
+ :                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 783 of file references.bib
+ : @book{wooldridge2010
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 815 of file references.bib
+ : @article{efron1979
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 837 of file references.bib
+ : @book{efrontibshirani1993
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1115 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1295 of file references.bib
+ : @article{wager2014confidence
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1459 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+-- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--missing publisher in molnar2025
+
+Done.
+You've used 21 entries,
+            4087 wiz_defined-function locations,
+            945 strings with 10560 characters,
+and the built_in function-call counts, 13817 in all, are:
+= -- 1120
+> -- 263
+< -- 120
++ -- 141
+- -- 40
+* -- 645
+:= -- 2137
+add.period$ -- 41
+call.type$ -- 21
+change.case$ -- 21
+chr.to.int$ -- 273
+cite$ -- 22
+duplicate$ -- 1021
+empty$ -- 1158
+format.name$ -- 52
+if$ -- 3203
+int.to.chr$ -- 0
+int.to.str$ -- 21
+missing$ -- 170
+newline$ -- 92
+num.names$ -- 21
+pop$ -- 393
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 2
+skip$ -- 1076
+stack$ -- 0
+substring$ -- 613
+swap$ -- 785
+text.length$ -- 29
+text.prefix$ -- 0
+top$ -- 5
+type$ -- 21
+warning$ -- 1
+while$ -- 65
+width$ -- 23
+write$ -- 221
+(There were 12 error messages)

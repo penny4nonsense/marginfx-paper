@@ -1,0 +1,554 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+
+% Math
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+
+% Tables
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{threeparttable}
+\usepackage{tabularx}
+
+% General
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{rotating}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{remark}{Remark}
+\newtheorem{definition}{Definition}
+
+% Custom commands
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Lp}{L^p(\Omega)}
+\newcommand{\Lone}{L^1(\Omega)}
+\newcommand{\Wonep}{W^{1,p}(\Omega)}
+\newcommand{\Wtwop}{W^{2,p}(\Omega)}
+\newcommand{\BV}{BV(\Omega)}
+\newcommand{\cM}{\mathcal{M}(\Omega)^d}
+\newcommand{\fn}{\hat{f}_n}
+\newcommand{\xrightarrowp}{\xrightarrow{p}}
+\newcommand{\wstar}{\xrightarrow{w*}}
+\newcommand{\Prob}{\mathbb{P}}
+
+\begin{document}
+	
+	\title{Model-Agnostic Interpretation of Machine Learning via Average Marginal Effects}
+	\author{Jason Parker}
+	\date{May 2026}
+	
+	\maketitle
+	
+	\begin{abstract}
+		\noindent We propose a framework for interpreting any supervised machine learning model through the lens of average marginal effects, a standard tool in the econometrics of nonlinear models. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether the prediction function is a neural network, a gradient boosted model, a random forest, or any other supervised learner. Marginal effects are estimated via adaptive centered finite differences and averaged over the empirical distribution of the covariates, producing a coefficient table directly analogous to the output of a parametric regression. Standard errors are obtained via a nonparametric bootstrap with full model refitting on each replicate, capturing uncertainty about model specification as well as estimation. The framework nests the classical generalized linear model result as a special case. Empirical validation on the Ames Housing dataset and a Monte Carlo simulation study demonstrate that average marginal effects are stable across model classes, that bootstrap standard errors narrow as model fit improves, and that existing interpretability methods including SHAP lack the inferential apparatus the proposed framework provides.
+	\end{abstract}
+	
+	\section{Introduction}
+	
+	The rise of flexible machine learning methods has created a persistent tension in empirical research. Models such as random forests \cite{breiman2001rf}, gradient boosted trees \cite{chen2016xgboost}, and deep neural networks \cite{hastie2009esl} routinely achieve predictive accuracy that parametric models cannot match. Yet the standard tools of statistical inference apply naturally only to parametric models whose functional form is specified in advance. \cite{breiman2001cultures} framed this as a conflict between two cultures of statistical modeling: one oriented toward interpretable data-generating models, the other toward accurate algorithmic prediction. The conventional resolution treats accuracy and interpretability as opposing ends of a spectrum, accepting reduced interpretability as the price of improved prediction. This paper argues that the tradeoff is not fundamental --- it is an artifact of requiring parametric assumptions to make interpretation rigorous, and it disappears once that requirement is dropped.
+	
+	The machine learning literature has produced a rich set of post-hoc interpretability methods that attempt to explain black-box model predictions without parametric assumptions. Partial dependence plots \cite{friedman2001pdp} visualize the marginal relationship between a feature and the predicted outcome. LIME \cite{ribeiro2016lime} fits a local linear approximation to the prediction function around individual observations. SHAP \cite{lundberg2017shap} assigns each feature a contribution based on Shapley values from cooperative game theory. These tools are widely used in practice and surveyed in \cite{molnar2025} and \cite{doshivelez2017interpretability}. However, they share a fundamental limitation: they produce point estimates with no associated sampling distributions. A SHAP value, a PDP slope, and a LIME coefficient are descriptive quantities --- there is no standard error, no confidence interval, and no basis for a hypothesis test. A researcher cannot determine whether a SHAP value is statistically distinguishable from zero or whether two features have significantly different effects. For applied researchers who need to draw defensible conclusions from their models, this is a serious constraint.
+	
+	Two prior contributions are closest in spirit to the present paper. \cite{scholbeck2024fme} propose forward marginal effects for nonlinear prediction functions as a model-agnostic interpretability method, but their framework is descriptive rather than inferential and explicitly argues against summarizing feature effects in a single metric such as the average marginal effect. The present paper takes the opposite position. \cite{scholbeck2024fmeffects} provide the \texttt{fmeffects} R package implementing this descriptive framework, demonstrating practical demand for marginal-effect-style interpretation of machine learning models, but without the theoretical justification --- gradient consistency, bootstrap validity, characterization of when marginal effects are well-defined --- that the present paper provides.
+	
+	The econometric literature has solved exactly this inferential problem for parametric models through average marginal effects \cite{greene2012, wooldridge2010}. For a generalized linear model with inverse link function $\mu$ and linear predictor $\eta = \mathbf{x}^\top \boldsymbol{\beta}$, the average marginal effect of variable $j$ is $\mathrm{AME}_j = \beta_j \cdot \mathbb{E}[\mu'(\eta)]$ --- the regression coefficient scaled by the average derivative of the inverse link, averaged over the empirical distribution of the linear predictor. The result is interpretable as the average change in the predicted outcome associated with a one-unit change in $x_j$, with standard errors obtained by the delta method or bootstrap. This is the output of \texttt{marginaleffects} in R and Python \cite{arelbundock2024marginaleffects}, and it is the standard form in which marginal effects are reported in applied economics, political science, sociology, and public health. The limitation is that it has been restricted to parametric models.
+	
+	This paper removes that restriction. We propose a framework for computing average marginal effects for any supervised machine learning model, requiring only that the prediction function $\hat{f}$ can be evaluated at a point. For models where the derivative is not available in closed form --- which includes tree-based models, for which classical derivatives do not exist everywhere --- we estimate it via a centered finite difference with an adaptive step size scaled to the spread of each feature. Standard errors are obtained via a nonparametric bootstrap \cite{efron1979, efrontibshirani1993} that refits the model, including hyperparameter selection, on each bootstrap sample, capturing uncertainty about model specification as well as estimation. The result is a coefficient table --- estimate, standard error, and significance level --- directly analogous to the output of a parametric regression but with no restrictions on the functional form of $\hat{f}$. The framework nests the classical GLM result as a special case: when $\hat{f}$ is a logistic regression, the estimator recovers the classical AME automatically. When $\hat{f}$ is XGBoost or a random forest or a neural network, the same formula applies and produces output on the same scale and with the same interpretation. Asymptotic results establishing gradient consistency for the proposed estimator across neural networks, gradient boosted models, and Mondrian forests are developed in a companion journal paper.
+	
+	We validate the framework empirically on the Ames Housing dataset \cite{decock2011}, comparing AMEs from linear regression, random forests \cite{breiman2001rf}, XGBoost \cite{chen2016xgboost}, and neural networks against SHAP values \cite{lundberg2017shap} and partial dependence plot slopes \cite{friedman2001pdp}. The AME and PDP estimates are in close agreement throughout, while SHAP values are on a different scale and in several cases have the wrong sign. Because AMEs come with standard errors and SHAP values do not, the AME framework supports conclusions that the SHAP framework cannot.
+	
+	The remainder of the paper is organized as follows. Section~2 defines the estimand, presents the estimator, and describes the bootstrap inference procedure. Section~3 presents the empirical application. Section~4 presents simulation evidence on finite-sample performance. Section~5 concludes.
+	
+	\section{Method}
+	
+	We propose a framework for interpreting any supervised machine learning model through the lens of average marginal effects. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether $\hat{f}$ is a neural network, a gradient boosted model, a random forest, or any other supervised learner. The framework produces standard errors via a nonparametric bootstrap, enabling hypothesis tests and confidence intervals that existing model-agnostic interpretability methods do not support. The result is a coefficient table --- estimate, standard error, and significance --- directly analogous to the output of a parametric regression, with no restrictions on the functional form of $\hat{f}$.
+	
+	\subsection{Estimand}
+	
+	Let $\mathbf{x}_i = (x_{i1}, \dots, x_{ip})^\top \in \mathbb{R}^p$ denote the feature vector for observation $i$ and let $y_i \in \mathbb{R}$ denote the outcome. We observe $n$ independent draws $\{(\mathbf{x}_i, y_i)\}_{i=1}^n$ from some population distribution $P$. Let $f: \mathbb{R}^p \to \mathbb{R}$ denote the conditional expectation function $f(\mathbf{x}) = E[Y \mid \mathbf{x}]$. For binary outcomes this is the conditional probability of the positive class; for continuous outcomes it is the conditional mean directly. The method requires no modification across outcome types.
+	
+	The marginal effect of variable $j$ at observation $i$ is the partial derivative of $f$ evaluated at $\mathbf{x}_i$, and the population average marginal effect is its expectation over the marginal distribution of $\mathbf{x}$:
+	\begin{equation}
+		\mathrm{AME}_j = \mathbb{E}\left[\frac{\partial f}{\partial x_j}(\mathbf{x})\right]
+	\end{equation}
+	For parametric models this estimand reduces to the classical result \cite{greene2012, wooldridge2010}. For a generalized linear model with inverse link $\mu$ and linear predictor $\eta = \mathbf{x}^\top \boldsymbol{\beta}$, $\mathrm{AME}_j = \beta_j \cdot \mathbb{E}[\mu'(\eta)]$ --- the OLS coefficient under the identity link, the average logistic density under the logistic link, and the average normal density under the probit link. The framework therefore nests the entire GLM family as a special case and reduces to the output of \texttt{marginaleffects} in R and Python \cite{arelbundock2024marginaleffects} when the model is parametric.
+	
+	\subsection{Estimation}
+	
+	The estimator combines a sample average over observations with a finite-difference approximation of the partial derivative for each feature. Given an estimator $\hat{f}$ of $f$, the sample analog of the AME is:
+	\begin{equation}
+		\widehat{\mathrm{AME}}_j = \frac{1}{n} \sum_{i=1}^n \frac{\partial \hat{f}}{\partial x_j}\bigg|_{\mathbf{x}_i}
+	\end{equation}
+	For most supervised learners the partial derivative is not available in closed form, and for tree-based models it does not exist everywhere in the classical sense. We estimate it via a centered finite difference:
+	\begin{equation}
+		\frac{\partial \hat{f}}{\partial x_j}\bigg|_{\mathbf{x}_i} \approx \frac{\hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} + h_j)}\right) - \hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} - h_j)}\right)}{2h_j}
+	\end{equation}
+	where $\mathbf{x}_i^{(j,v)}$ denotes $\mathbf{x}_i$ with the $j$-th component replaced by $v$. The centered difference has approximation error $O(h_j^2)$ rather than $O(h_j)$. The step size is chosen adaptively as $h_j = \max(10^{-4}, 0.05 \cdot \hat{\sigma}_j)$, where $\hat{\sigma}_j$ is the sample standard deviation of feature $j$. Scaling to the spread of $x_j$ ensures the finite difference is neither numerically unstable nor too coarse.
+	
+	For binary or categorical variables the partial derivative does not exist and the finite difference is replaced by the contrast $m_{ij} = \hat{f}(\mathbf{x}_i^{(j,1)}) - \hat{f}(\mathbf{x}_i^{(j,0)})$, with interpretation identical to the continuous case. For binary classification models, $\hat{f}$ must return the estimated conditional probability $\hat{P}(Y=1 \mid \mathbf{x})$ rather than the predicted class label, available as \texttt{predict\_proba(X)[:,1]} in scikit-learn and equivalent interfaces elsewhere.
+	
+	\subsection{Inference}
+	
+	Standard errors are obtained via a nonparametric bootstrap \cite{efron1979, efrontibshirani1993}. Let $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^n$ denote the observed sample and let $\hat{\lambda}$ denote the hyperparameters of $\hat{f}$ selected by cross-validation on $\mathcal{D}$. For $b = 1, \dots, B$, draw a bootstrap sample $\mathcal{D}^{(b)}$ by sampling $(\mathbf{x}_i, y_i)$ pairs jointly with replacement, refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ with hyperparameters $\hat{\lambda}^{(b)}$ selected by cross-validation initialized at $\hat{\lambda}$, and compute $\widehat{\mathrm{AME}}_j^{(b)}$ using $\hat{f}^{(b)}$ evaluated at $\mathcal{D}$. The bootstrap standard error is the standard deviation of $\{\widehat{\mathrm{AME}}_j^{(b)}\}_{b=1}^B$.
+	
+	The complete procedure is summarized in Algorithm~\ref{alg:ame}. Sampling pairs jointly preserves the joint distribution of features and outcome that $\hat{f}$ is trained to approximate. Refitting $\hat{f}^{(b)}$ with hyperparameter selection on each bootstrap sample captures uncertainty about model specification rather than only estimation uncertainty conditional on a fixed architecture. Warm-starting the hyperparameter search at $\hat{\lambda}$ makes this computationally feasible. Evaluating $\hat{f}^{(b)}$ at $\mathcal{D}$ rather than $\mathcal{D}^{(b)}$ follows standard practice for smooth functionals of the empirical distribution \cite{efrontibshirani1993}.
+	
+	\begin{algorithm}
+		\caption{AME estimation with bootstrap inference}
+		\label{alg:ame}
+		\begin{algorithmic}[1]
+			\Require Sample $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^n$, model class, hyperparameter grid $\Lambda$, bootstrap replicates $B$
+			\Ensure AME estimates $\{\widehat{\mathrm{AME}}_j\}_{j=1}^p$ and standard errors $\{\widehat{\mathrm{se}}_j\}_{j=1}^p$
+			\State Fit $\hat{f}$ on $\mathcal{D}$ with hyperparameters $\hat{\lambda}$ selected by cross-validation over $\Lambda$
+			\For{$j = 1, \dots, p$}
+			\If{$x_j$ continuous}
+			\State Compute $\widehat{\mathrm{AME}}_j$ via centered finite difference with step size $h_j$
+			\Else
+			\State Compute $\widehat{\mathrm{AME}}_j$ via the contrast $\hat{f}(\mathbf{x}_i^{(j,1)}) - \hat{f}(\mathbf{x}_i^{(j,0)})$
+			\EndIf
+			\EndFor
+			\For{$b = 1, \dots, B$}
+			\State Draw $\mathcal{D}^{(b)}$ by sampling pairs from $\mathcal{D}$ with replacement
+			\State Refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ with hyperparameter search warm-started at $\hat{\lambda}$
+			\For{$j = 1, \dots, p$}
+			\State Compute $\widehat{\mathrm{AME}}_j^{(b)}$ using $\hat{f}^{(b)}$ evaluated at $\mathcal{D}$
+			\EndFor
+			\EndFor
+			\State Set $\widehat{\mathrm{se}}_j$ to the standard deviation of $\{\widehat{\mathrm{AME}}_j^{(b)}\}_{b=1}^B$ for each $j$
+		\end{algorithmic}
+	\end{algorithm}
+	
+	\section{Empirical Examples}
+	
+	Across applications we fit four model classes: logistic or linear regression as the parametric baseline, a random forest, XGBoost, and a feedforward neural network. The random forest uses 200 trees with maximum depth 8. XGBoost uses 200 boosting rounds with maximum depth 4 and learning rate 0.05. For binary classification, the neural network has two hidden layers of 64 and 32 units trained with Adam at learning rate $10^{-3}$, with early stopping on a 10\% validation split. For continuous regression, the network is deeper --- four hidden layers of 256, 128, 64, and 32 units --- trained at learning rate $3 \times 10^{-4}$ with the input normalization layer and target standardization wrapper described in Section~2. Bootstrap standard errors use 200 replicates.
+	
+	\subsection{UCI Adult Income}
+	
+	The first dataset is the UCI Adult Income dataset \cite{UCI, kohavi1996}, comprising 48,842 observations of US adults. The outcome is whether an individual earns more than \$50,000 per year. Features are organized into demographics (age, sex, years of education), work characteristics (hours worked per week, occupation group, work class), and financial variables (capital gains, capital losses, marital status). The specification search considers logistic regression and XGBoost across four specifications.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		
+		\resizebox{\textwidth}{!}{%
+			\begin{threeparttable}
+				\caption{UCI Adult Income: Specification Search. Average marginal effects on P(Income $>$ \$50k).}
+				\label{tab:adult_spec_search}
+				
+				\begin{tabular}{lrrrrrrrr}
+					\toprule
+					& \multicolumn{4}{c}{Logistic} & \multicolumn{4}{c}{XGBoost} \\
+					\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+					& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
+					\midrule
+					\multicolumn{9}{l}{\textit{Panel A: Demographics}} \\
+					\quad age & 0.0060$^{***}$ & 0.0060$^{***}$ & 0.0024$^{***}$ & 0.0027$^{***}$ & 0.0059$^{***}$ & 0.0059$^{***}$ & 0.0029$^{***}$ & 0.0031$^{***}$ \\
+					& (0.0001) & (0.0001) & (0.0001) & (0.0001) & (0.0002) & (0.0001) & (0.0001) & (0.0001) \\
+					\quad female & -0.1730$^{***}$ & -0.1648$^{***}$ & -0.0275$^{***}$ & -0.0269$^{***}$ & -0.1592$^{***}$ & -0.1446$^{***}$ & -0.0138$^{***}$ & -0.0122$^{***}$ \\
+					& (0.0034) & (0.0034) & (0.0041) & (0.0041) & (0.0032) & (0.0032) & (0.0028) & (0.0032) \\
+					\quad education\_num & 0.0523$^{***}$ & 0.0393$^{***}$ & 0.0400$^{***}$ & 0.0306$^{***}$ & 0.0610$^{***}$ & 0.0452$^{***}$ & 0.0405$^{***}$ & 0.0312$^{***}$ \\
+					& (0.0006) & (0.0007) & (0.0006) & (0.0006) & (0.0023) & (0.0017) & (0.0011) & (0.0011) \\
+					\midrule
+					\multicolumn{9}{l}{\textit{Panel B: Work Characteristics}} \\
+					\quad hours\_per\_week & -- & 0.0048$^{***}$ & -- & 0.0033$^{***}$ & -- & 0.0084$^{***}$ & -- & 0.0032 \\
+					&  & (0.0001) &  & (0.0001) &  & (0.0028) &  & (0.0025) \\
+					\quad government & -- & 0.0029 & -- & 0.0033 & -- & -0.0067$^{*}$ & -- & -0.0003 \\
+					&  & (0.0051) &  & (0.0045) &  & (0.0037) &  & (0.0026) \\
+					\quad self\_employed & -- & -0.0077 & -- & -0.0268$^{***}$ & -- & 0.0113$^{**}$ & -- & -0.0055$^{*}$ \\
+					&  & (0.0050) &  & (0.0044) &  & (0.0054) &  & (0.0033) \\
+					\quad white\_collar & -- & 0.0666$^{***}$ & -- & 0.0541$^{***}$ & -- & 0.0466$^{***}$ & -- & 0.0474$^{***}$ \\
+					&  & (0.0056) &  & (0.0051) &  & (0.0026) &  & (0.0017) \\
+					\quad blue\_collar & -- & -0.0264$^{***}$ & -- & -0.0270$^{***}$ & -- & -0.0446$^{***}$ & -- & -0.0251$^{***}$ \\
+					&  & (0.0052) &  & (0.0048) &  & (0.0041) &  & (0.0034) \\
+					\quad service & -- & -0.0697$^{***}$ & -- & -0.0427$^{***}$ & -- & -0.0807$^{***}$ & -- & -0.0343$^{***}$ \\
+					&  & (0.0069) &  & (0.0066) &  & (0.0049) &  & (0.0058) \\
+					\midrule
+					\multicolumn{9}{l}{\textit{Panel C: Financial}} \\
+					\quad capital\_gain & -- & -- & 0.0000$^{***}$ & 0.0000$^{***}$ & -- & -- & -0.0001$^{***}$ & -0.0001$^{***}$ \\
+					&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
+					\quad capital\_loss & -- & -- & 0.0001$^{***}$ & 0.0001$^{***}$ & -- & -- & -0.0001$^{***}$ & -0.0000$^{***}$ \\
+					&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
+					\quad married & -- & -- & 0.2854$^{***}$ & 0.2752$^{***}$ & -- & -- & 0.2383$^{***}$ & 0.2357$^{***}$ \\
+					&  &  & (0.0042) & (0.0041) &  &  & (0.0035) & (0.0036) \\
+					\midrule
+					McFadden $R^2$ & 0.199 & 0.233 & 0.376 & 0.400 & 0.257 & 0.296 & 0.467 & 0.492 \\
+					Accuracy & 0.797 & 0.806 & 0.841 & 0.847 & 0.805 & 0.818 & 0.864 & 0.872 \\
+					\bottomrule
+				\end{tabular}
+				\begin{tablenotes}
+					\footnotesize
+					\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+				\end{tablenotes}
+			\end{threeparttable}
+		}%
+	\end{table*}
+	
+	Table~\ref{tab:adult_spec_search} presents the specification search. The demographic panel tells a consistent story across specifications and both model classes. Age and education have positive effects on the probability of earning above \$50,000. The female indicator is large and negative, falling from $-$0.16 to $-$0.03 as financial and work controls are added --- a pattern of omitted variable bias that is clearly legible in the AME framework and consistent across logistic regression and XGBoost. The XGBoost standard errors are comparable to or smaller than those from logistic regression despite the additional model complexity, reflecting the efficiency gain when the black-box model fits better. The financial panel illustrates a limitation of the capital gains and losses variables --- the AMEs are near zero in magnitude because these variables are highly skewed and the displayed coefficients reflect a one-dollar change.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{UCI Adult Income: Model Comparison. Average marginal effects on P(Income $>$ \$50k), full specification (A+B+C).}
+			\label{tab:adult_model_comparison}
+			\begin{tabular}{lrrrr}
+				\toprule
+				Feature & Logistic & Random Forest & XGBoost & Neural Net \\
+				\midrule
+				age & 0.0027$^{***}$ & 0.0042$^{***}$ & 0.0031$^{***}$ & 0.0035$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0001) & (0.0006) \\
+				female & -0.0269$^{***}$ & -0.0218$^{***}$ & -0.0122$^{***}$ & -0.0085 \\
+				& (0.0041) & (0.0001) & (0.0032) & (0.0084) \\
+				education\_num & 0.0306$^{***}$ & 0.0294$^{***}$ & 0.0312$^{***}$ & 0.0238$^{***}$ \\
+				& (0.0006) & (0.0002) & (0.0011) & (0.0025) \\
+				\midrule
+				hours\_per\_week & 0.0033$^{***}$ & 0.0070$^{***}$ & 0.0032 & 0.0028$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0025) & (0.0006) \\
+				government & 0.0033 & 0.0051$^{***}$ & -0.0003 & -0.0065 \\
+				& (0.0045) & (0.0001) & (0.0026) & (0.0090) \\
+				self\_employed & -0.0268$^{***}$ & 0.0032$^{***}$ & -0.0055$^{*}$ & -0.0068 \\
+				& (0.0044) & (0.0001) & (0.0033) & (0.0066) \\
+				white\_collar & 0.0541$^{***}$ & 0.0600$^{***}$ & 0.0474$^{***}$ & 0.0243$^{***}$ \\
+				& (0.0051) & (0.0002) & (0.0017) & (0.0065) \\
+				blue\_collar & -0.0270$^{***}$ & -0.0240$^{***}$ & -0.0251$^{***}$ & -0.0502$^{***}$ \\
+				& (0.0048) & (0.0001) & (0.0034) & (0.0081) \\
+				service & -0.0427$^{***}$ & -0.0176$^{***}$ & -0.0343$^{***}$ & -0.0452$^{***}$ \\
+				& (0.0066) & (0.0001) & (0.0058) & (0.0088) \\
+				\midrule
+				capital\_gain & 0.0000$^{***}$ & 0.0000$^{***}$ & -0.0001$^{***}$ & 0.0001$^{***}$ \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+				capital\_loss & 0.0001$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & 0.0037$^{***}$ \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0006) \\
+				married & 0.2752$^{***}$ & 0.2446$^{***}$ & 0.2357$^{***}$ & 0.2046$^{***}$ \\
+				& (0.0041) & (0.0006) & (0.0036) & (0.0196) \\
+				\midrule
+				McFadden $R^2$ & 0.400 & 0.450 & 0.492 & 0.418 \\
+				Accuracy & 0.847 & 0.863 & 0.872 & 0.853 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:adult_model_comparison} compares all four model classes on the full specification. The most important finding is the stability of the core demographic results across architectures. The education AME is 0.031 for logistic regression, 0.029 for random forest, 0.031 for XGBoost, and 0.024 for the neural network --- a range of less than one percentage point. The married AME is similarly stable, ranging from 0.205 to 0.275. This is the kind of cross-model validation that the AME framework makes possible because it produces output on a common scale. The female indicator shows more variation across models, suggesting some sensitivity to specification.
+	
+	\begin{table*}[htbp]
+		\centering
+		\footnotesize
+		\begin{threeparttable}
+			\caption{UCI Adult Income: Method Comparison. AME, SHAP, and PDP estimates for P(Income $>$ \$50k), full specification (A+B+C).}
+			\label{tab:adult_method_comparison}
+			\begin{tabular}{lrrrrrrrrrrrr}
+				\toprule
+				& \multicolumn{3}{c}{Logistic} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
+				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+				& AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
+				\midrule
+				age & 0.0027 & -0.0270 & 0.0028 & 0.0042 & -0.0068 & 0.0024 & 0.0031 & -0.0097 & 0.0036 & 0.0035 & 0.0044 & 0.0033 \\
+				female & -0.0269 & 0.0022 & -0.0270 & -0.0218 & 0.0011 & -0.0218 & -0.0122 & 0.0015 & -0.0122 & -0.0085 & -0.0001 & -0.0222 \\
+				education\_num & 0.0306 & -0.1186 & 0.0269 & 0.0294 & -0.0077 & 0.0137 & 0.0312 & -0.0093 & 0.0170 & 0.0238 & -0.0051 & 0.0207 \\
+				\midrule
+				hours\_per\_week & 0.0033 & -0.0691 & 0.0033 & 0.0070 & -0.0054 & 0.0020 & 0.0032 & -0.0080 & 0.0028 & 0.0028 & -0.0032 & 0.0028 \\
+				government & 0.0033 & -0.0009 & 0.0026 & 0.0051 & -0.0003 & 0.0051 & -0.0003 & -0.0008 & -0.0003 & -0.0065 & 0.0002 & 0.0082 \\
+				self\_employed & -0.0268 & 0.0016 & -0.0265 & 0.0032 & -0.0003 & 0.0032 & -0.0055 & -0.0002 & -0.0055 & -0.0068 & -0.0008 & -0.0045 \\
+				white\_collar & 0.0541 & 0.0127 & 0.0538 & 0.0600 & 0.0031 & 0.0600 & 0.0474 & 0.0025 & 0.0474 & 0.0243 & 0.0007 & 0.0312 \\
+				blue\_collar & -0.0270 & 0.0136 & -0.0273 & -0.0240 & 0.0010 & -0.0240 & -0.0251 & 0.0004 & -0.0251 & -0.0502 & -0.0008 & -0.0531 \\
+				service & -0.0427 & -0.0027 & -0.0427 & -0.0176 & 0.0003 & -0.0176 & -0.0343 & 0.0005 & -0.0343 & -0.0452 & 0.0011 & -0.0558 \\
+				\midrule
+				capital\_gain & 0.0000 & -0.2627 & 0.0000 & 0.0000 & -0.0224 & 0.0000 & -0.0001 & -0.0264 & -0.0001 & 0.0001 & 0.0042 & 0.0000 \\
+				capital\_loss & 0.0001 & 0.0027 & -- & -0.0000 & -0.0034 & -- & -0.0000 & -0.0062 & -- & 0.0037 & -0.0115 & -- \\
+				married & 0.2752 & -0.0768 & 0.2749 & 0.2446 & -0.0064 & 0.2446 & 0.2357 & -0.0049 & 0.2357 & 0.2046 & 0.0149 & 0.1958 \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:adult_method_comparison} compares AMEs against SHAP values and partial dependence plot slopes. The contrast is stark. The AME and PDP estimates are in close agreement throughout --- the married AME of 0.275 for logistic regression matches the PDP slope of 0.275, and similar agreement holds for the occupation indicators and hours per week. The SHAP values, by contrast, are on a different scale and in several cases have the wrong sign. The SHAP value for age is negative across all four models while the AME and PDP are both positive --- a direct contradiction reflecting the fact that mean signed SHAP values are not marginal effects. No standard errors are reported for SHAP or PDP, so a researcher using SHAP alone has no basis to test whether age, education, or any other variable has a statistically distinguishable effect.
+	
+	\subsection{Ames Housing}
+	
+	The Ames Housing dataset \cite{decock2011} comprises approximately 1,460 observations of residential home sales in Ames, Iowa between 2006 and 2010. The outcome is sale price in dollars, so AMEs are interpreted in dollar units. Features are organized into physical characteristics, quality and condition, and lot and location indicators. The specification search considers linear regression and a random forest.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\resizebox{\textwidth}{!}{%
+			\begin{threeparttable}
+				\caption{Ames Housing: Specification Search. Average marginal effects on Sale Price (USD).}
+				\label{tab:ames_housing_spec_search}
+				\begin{tabular}{lrrrrrrrr}
+					\toprule
+					Variable & \multicolumn{4}{c}{Linear} & \multicolumn{4}{c}{Random Forest} \\
+					\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+					& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
+					\midrule
+					\multicolumn{9}{l}{\textit{Panel A: Physical Characteristics}} \\
+					\quad GrLivArea & 108.22$^{***}$ & 85.99$^{***}$ & 74.32$^{***}$ & 65.57$^{***}$ & 126.41$^{***}$ & 79.37$^{***}$ & 78.92$^{***}$ & 56.44$^{***}$ \\
+					& (13.45) & (15.05) & (11.03) & (13.84) & (8.22) & (3.47) & (3.61) & (1.93) \\
+					\quad BedroomAbvGr & -27911.62$^{***}$ & -10181.55$^{***}$ & -11440.18$^{***}$ & -6189.02$^{**}$ & -23128.28$^{***}$ & -3055.72$^{***}$ & -5528.45$^{***}$ & -1470.18$^{***}$ \\
+					& (3632.79) & (3107.43) & (3193.68) & (3042.41) & (1115.11) & (246.78) & (470.90) & (127.74) \\
+					\quad FullBath & 30380.78$^{***}$ & -9793.90$^{*}$ & 5378.67 & -6287.42 & 18535.37$^{***}$ & 382.25$^{***}$ & 1687.49$^{***}$ & 498.18$^{***}$ \\
+					& (5236.69) & (5750.79) & (3666.97) & (4593.14) & (601.00) & (104.69) & (108.04) & (73.44) \\
+					\quad HalfBath & 3586.62 & -13111.01$^{***}$ & -728.29 & -6967.90$^{*}$ & 493.43 & -1160.44$^{***}$ & 420.55$^{***}$ & -198.68$^{***}$ \\
+					& (4187.08) & (4093.96) & (2954.56) & (3607.14) & (491.19) & (111.48) & (97.27) & (51.07) \\
+					\midrule
+					\multicolumn{9}{l}{\textit{Panel B: Quality and Condition}} \\
+					\quad OverallQual & -- & 21388.25$^{***}$ & -- & 16465.22$^{***}$ & -- & 17049.34$^{***}$ & -- & 15636.08$^{***}$ \\
+					&  & (1824.85) &  & (1228.91) &  & (560.81) &  & (519.24) \\
+					\quad OverallCond & -- & 5810.75$^{***}$ & -- & 6311.48$^{***}$ & -- & 2774.28$^{***}$ & -- & 1974.55$^{***}$ \\
+					&  & (1112.27) &  & (934.11) &  & (126.97) &  & (89.75) \\
+					\quad YearBuilt & -- & 685.31$^{***}$ & -- & 440.47$^{***}$ & -- & 729.64$^{***}$ & -- & 576.01$^{***}$ \\
+					&  & (87.70) &  & (113.18) &  & (143.44) &  & (112.13) \\
+					\quad YearRemodAdd & -- & 72.76 & -- & 101.51$^{*}$ & -- & 756.23$^{***}$ & -- & 518.52$^{***}$ \\
+					&  & (62.62) &  & (53.22) &  & (72.12) &  & (46.58) \\
+					\midrule
+					\multicolumn{9}{l}{\textit{Panel C: Lot and Location}} \\
+					\quad LotArea & -- & -- & 0.33 & 0.61$^{***}$ & -- & -- & 1.97$^{***}$ & 1.81$^{***}$ \\
+					&  &  & (0.21) & (0.24) &  &  & (0.15) & (0.09) \\
+					\quad GarageArea & -- & -- & 72.25$^{***}$ & 38.68$^{***}$ & -- & -- & 82.79$^{***}$ & 50.03$^{***}$ \\
+					&  &  & (6.92) & (6.01) &  &  & (5.75) & (3.11) \\
+					\quad nbhd\_high & -- & -- & 90316.66$^{***}$ & 51433.02$^{***}$ & -- & -- & 51108.94$^{***}$ & 5058.64$^{***}$ \\
+					&  &  & (7451.69) & (9809.90) &  &  & (999.15) & (255.98) \\
+					\quad nbhd\_mid & -- & -- & 31391.51$^{***}$ & 7508.07 & -- & -- & 25973.59$^{***}$ & 5949.97$^{***}$ \\
+					&  &  & (3266.03) & (5151.49) &  &  & (531.38) & (259.64) \\
+					\midrule
+					$R^2$ & 0.584 & 0.758 & 0.739 & 0.802 & 0.829 & 0.937 & 0.926 & 0.953 \\
+					RMSE & 51,243.9 & 39,080.1 & 40,596.4 & 35,355.5 & 32,830.9 & 19,881.6 & 21,534.2 & 17,244.4 \\
+					\bottomrule
+				\end{tabular}
+				\begin{tablenotes}
+					\footnotesize
+					\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
+				\end{tablenotes}
+			\end{threeparttable}
+		}%
+	\end{table*}
+	
+	Table~\ref{tab:ames_housing_spec_search} presents the specification search. Above-ground living area carries an AME of \$108 per square foot in the demographics-only specification for linear regression, falling to \$66 in the full specification as quality, condition, and location controls absorb variation --- a pattern of positive omitted variable bias since larger homes tend to be in better neighborhoods and of higher quality. The random forest standard errors are dramatically tighter than those from linear regression: the GrLivArea AME of \$56 has a standard error of \$1.93 for the random forest versus \$13.84 for linear regression, a sevenfold reduction reflecting both the better model fit ($R^2$ of 0.953 versus 0.802) and the smoother prediction surface of the ensemble. The overall quality rating is the largest single predictor, with an AME of approximately \$21,000 per rating point for linear regression and \$17,000 for the random forest, both precisely estimated. The neighborhood tier indicators show substantial attenuation as quality controls are added --- the high neighborhood AME falls from \$90,000 to \$51,000 for linear regression and from \$51,000 to \$5,000 for the random forest --- suggesting that neighborhood effects are largely mediated by quality and condition variables in a way the linear model cannot fully represent.
+	
+	\section{Simulation}
+	
+	We evaluate the finite-sample performance of the AME estimator through two simulation studies. Simulation 1 examines bias and root mean squared error as a function of sample size. Simulation 2 examines bootstrap standard error calibration via empirical coverage of nominal 95\% confidence intervals. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. The linear DGP sets $\eta = 2x_1 + 3x_2$. For regression, $y = \eta + \varepsilon$ with $\varepsilon \sim N(0,1)$; for classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly. Sample sizes of $n \in \{250, 500, 1{,}000, 2{,}500, 5{,}000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression. Nonlinear and interaction DGPs are evaluated in the journal version.
+	
+	The simulation fits four model classes. The random forest uses 100 trees with maximum depth 6. XGBoost uses 100 boosting rounds with maximum depth 4 and learning rate 0.05. The neural network is a feedforward architecture with two hidden layers of 32 and 16 units, trained for 50 epochs with batch size 64 and learning rate $10^{-3}$ using Adam. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2. Logistic and linear regression baselines use no hyperparameter tuning. Bootstrap calibration in Simulation 2 uses 200 bootstrap replicates per Monte Carlo iteration and 500 iterations per cell.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Linear DGP (Classification). Mean bias and RMSE (in parentheses) across 500 Monte Carlo iterations.}
+			\label{tab:sim1_classification_linear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.199 & -0.0058 & -0.0034 & -0.0014 & -0.0008 & -0.0006 \\
+				&  & (0.0201) & (0.0146) & (0.0106) & (0.0064) & (0.0048) \\
+				\quad x2 & 0.298 & -0.0109 & -0.0057 & -0.0026 & -0.0010 & -0.0005 \\
+				&  & (0.0229) & (0.0153) & (0.0105) & (0.0066) & (0.0046) \\
+				\quad x3 & 0.000 & 0.0012 & 0.0006 & 0.0006 & 0.0003 & 0.0002 \\
+				&  & (0.0198) & (0.0136) & (0.0099) & (0.0063) & (0.0045) \\
+				\quad x4 & 0.000 & 0.0008 & -0.0001 & -0.0008 & -0.0001 & 0.0003 \\
+				&  & (0.0197) & (0.0136) & (0.0100) & (0.0062) & (0.0045) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.199 & 0.0126 & 0.0044 & -0.0018 & -0.0111 & -0.0157 \\
+				&  & (0.0412) & (0.0239) & (0.0160) & (0.0142) & (0.0168) \\
+				\quad x2 & 0.298 & 0.0199 & 0.0113 & -0.0008 & -0.0102 & -0.0158 \\
+				&  & (0.0500) & (0.0309) & (0.0174) & (0.0143) & (0.0172) \\
+				\quad x3 & 0.000 & 0.0007 & 0.0010 & 0.0005 & 0.0002 & 0.0002 \\
+				&  & (0.0284) & (0.0171) & (0.0104) & (0.0056) & (0.0034) \\
+				\quad x4 & 0.000 & -0.0008 & -0.0013 & -0.0012 & -0.0001 & 0.0002 \\
+				&  & (0.0267) & (0.0177) & (0.0106) & (0.0055) & (0.0034) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.199 & 0.0590 & 0.0265 & 0.0107 & -0.0016 & -0.0049 \\
+				&  & (0.0782) & (0.0401) & (0.0223) & (0.0108) & (0.0083) \\
+				\quad x2 & 0.298 & 0.0643 & 0.0315 & 0.0085 & -0.0016 & -0.0046 \\
+				&  & (0.0893) & (0.0490) & (0.0218) & (0.0116) & (0.0083) \\
+				\quad x3 & 0.000 & 0.0008 & -0.0002 & 0.0006 & 0.0002 & 0.0002 \\
+				&  & (0.0332) & (0.0193) & (0.0110) & (0.0056) & (0.0033) \\
+				\quad x4 & 0.000 & 0.0008 & -0.0009 & -0.0006 & 0.0000 & 0.0002 \\
+				&  & (0.0344) & (0.0198) & (0.0116) & (0.0054) & (0.0032) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.199 & -0.0078 & -0.0007 & 0.0005 & 0.0003 & -0.0002 \\
+				&  & (0.0222) & (0.0156) & (0.0115) & (0.0074) & (0.0058) \\
+				\quad x2 & 0.298 & -0.0162 & -0.0017 & 0.0004 & 0.0004 & 0.0002 \\
+				&  & (0.0276) & (0.0174) & (0.0116) & (0.0073) & (0.0052) \\
+				\quad x3 & 0.000 & 0.0014 & 0.0010 & 0.0007 & 0.0003 & 0.0004 \\
+				&  & (0.0204) & (0.0144) & (0.0103) & (0.0069) & (0.0057) \\
+				\quad x4 & 0.000 & 0.0009 & -0.0003 & -0.0007 & -0.0001 & 0.0004 \\
+				&  & (0.0203) & (0.0143) & (0.0105) & (0.0070) & (0.0055) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_classification_linear} reports bias and RMSE for the linear classification DGP, where the true AMEs of $x_1$ and $x_2$ are 0.199 and 0.298 --- not 2.0 and 3.0 because the sigmoid compresses the scale. Logistic regression recovers the true AMEs with negligible bias at all sample sizes, and RMSE declines from 0.020 at $n=250$ to 0.005 at $n=5{,}000$ at the expected $O(n^{-1/2})$ rate. The neural network behaves similarly. XGBoost shows larger bias at small samples --- around 0.06 at $n=250$ --- reflecting underfitting, but converges by $n=2{,}500$. Random forests show a different pattern: bias is small at $n=250$ and $n=500$ but turns negative and persistent at $n=2{,}500$ and $n=5{,}000$, reaching $-0.016$ at the largest sample size. This reflects regularization bias --- the tree depth and subsampling constraints impose shrinkage that does not vanish with sample size at default tuning. The noise features have bias and RMSE near zero throughout for all model classes.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 1: AME Recovery --- Linear DGP (Regression). Mean bias and RMSE (in parentheses) across 1,000 Monte Carlo iterations.}
+			\label{tab:sim1_regression_linear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+				\quad x1 & 2.000 & -0.0017 & -0.0001 & -0.0000 & -0.0006 & -0.0003 \\
+				&  & (0.0659) & (0.0445) & (0.0322) & (0.0207) & (0.0137) \\
+				\quad x2 & 3.000 & -0.0043 & -0.0017 & 0.0007 & -0.0004 & -0.0003 \\
+				&  & (0.0636) & (0.0453) & (0.0316) & (0.0197) & (0.0140) \\
+				\quad x3 & 0.000 & -0.0001 & -0.0006 & -0.0005 & 0.0012 & -0.0003 \\
+				&  & (0.0650) & (0.0457) & (0.0312) & (0.0199) & (0.0140) \\
+				\quad x4 & 0.000 & -0.0034 & 0.0006 & -0.0002 & -0.0003 & -0.0001 \\
+				&  & (0.0642) & (0.0452) & (0.0315) & (0.0196) & (0.0139) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 2.000 & -0.0973 & -0.0332 & -0.0387 & -0.0703 & -0.0911 \\
+				&  & (0.2064) & (0.1189) & (0.0850) & (0.0824) & (0.0956) \\
+				\quad x2 & 3.000 & -0.0215 & -0.0105 & -0.0433 & -0.0797 & -0.0953 \\
+				&  & (0.2338) & (0.1456) & (0.0997) & (0.0958) & (0.1025) \\
+				\quad x3 & 0.000 & -0.0015 & -0.0005 & -0.0005 & 0.0001 & 0.0000 \\
+				&  & (0.0562) & (0.0290) & (0.0137) & (0.0036) & (0.0011) \\
+				\quad x4 & 0.000 & -0.0021 & -0.0010 & -0.0005 & -0.0002 & 0.0000 \\
+				&  & (0.0572) & (0.0297) & (0.0138) & (0.0037) & (0.0011) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 2.000 & 0.4114 & 0.1780 & 0.0366 & -0.0337 & -0.0467 \\
+				&  & (0.4644) & (0.2227) & (0.0917) & (0.0554) & (0.0547) \\
+				\quad x2 & 3.000 & 0.3122 & 0.0948 & -0.0172 & -0.0558 & -0.0601 \\
+				&  & (0.4103) & (0.1884) & (0.0947) & (0.0754) & (0.0677) \\
+				\quad x3 & 0.000 & 0.0007 & 0.0016 & -0.0003 & 0.0011 & -0.0001 \\
+				&  & (0.1090) & (0.0550) & (0.0313) & (0.0153) & (0.0083) \\
+				\quad x4 & 0.000 & -0.0080 & 0.0002 & 0.0011 & -0.0006 & 0.0001 \\
+				&  & (0.1077) & (0.0597) & (0.0314) & (0.0149) & (0.0081) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 2.000 & -0.0659 & -0.0208 & -0.0063 & -0.0021 & -0.0008 \\
+				&  & (0.1161) & (0.0544) & (0.0344) & (0.0293) & (0.0329) \\
+				\quad x2 & 3.000 & -0.1231 & -0.0349 & -0.0102 & -0.0031 & -0.0006 \\
+				&  & (0.1765) & (0.0638) & (0.0361) & (0.0324) & (0.0372) \\
+				\quad x3 & 0.000 & 0.0014 & -0.0006 & -0.0003 & 0.0009 & -0.0006 \\
+				&  & (0.0788) & (0.0484) & (0.0330) & (0.0250) & (0.0280) \\
+				\quad x4 & 0.000 & -0.0002 & 0.0008 & -0.0003 & -0.0004 & -0.0017 \\
+				&  & (0.0752) & (0.0496) & (0.0336) & (0.0247) & (0.0287) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim1_regression_linear} reports the regression setting with the linear DGP, $y = 2x_1 + 3x_2 + \varepsilon$. Linear regression recovers the true AMEs of 2.0 and 3.0 with negligible bias and RMSE declining from 0.066 at $n=250$ to 0.014 at $n=5{,}000$. The regression setting reveals random forest regularization bias more starkly: bias reaches $-0.091$ for $x_1$ and $-0.095$ for $x_2$ at $n=5{,}000$, and RMSE is not declining at the largest sample sizes. XGBoost shows large positive bias at small samples --- 0.41 for $x_1$ at $n=250$ --- but converges quickly. The neural network shows moderate negative bias at small samples that falls toward zero by $n=2{,}500$.
+	
+	\begin{table*}[htbp]
+		\centering
+		\footnotesize
+		\begin{threeparttable}
+			\caption{Simulation 2: Bootstrap SE Calibration --- Linear DGP (Classification). Nominal coverage target: 95\%. Coverage rate and mean 95\% CI width (in parentheses) across 500 Monte Carlo iterations.}
+			\label{tab:sim2_calibration_linear}
+			\begin{tabular}{lrrrr}
+				\toprule
+				& & \multicolumn{3}{c}{Coverage (CI Width)} \\
+				\cmidrule(lr){3-5}
+				Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{5}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.199 & 0.938 & 0.940 & 0.930 \\
+				&  & (0.0745) & (0.0388) & (0.0176) \\
+				\quad x2 & 0.298 & 0.896 & 0.944 & 0.950 \\
+				&  & (0.0763) & (0.0400) & (0.0182) \\
+				\quad x3 & 0.000 & 0.932 & 0.936 & 0.940 \\
+				&  & (0.0736) & (0.0378) & (0.0171) \\
+				\quad x4 & 0.000 & 0.922 & 0.936 & 0.940 \\
+				&  & (0.0737) & (0.0378) & (0.0171) \\
+				\midrule
+				\multicolumn{5}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.199 & 0.882 & 0.878 & 0.130 \\
+				&  & (0.1286) & (0.0498) & (0.0165) \\
+				\quad x2 & 0.298 & 0.914 & 0.930 & 0.274 \\
+				&  & (0.1706) & (0.0663) & (0.0228) \\
+				\quad x3 & 0.000 & 0.700 & 0.614 & 0.392 \\
+				&  & (0.0580) & (0.0170) & (0.0034) \\
+				\quad x4 & 0.000 & 0.688 & 0.548 & 0.392 \\
+				&  & (0.0571) & (0.0170) & (0.0034) \\
+				\midrule
+				\multicolumn{5}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.199 & 0.920 & 0.928 & 0.966 \\
+				&  & (0.2625) & (0.1028) & (0.0305) \\
+				\quad x2 & 0.298 & 0.924 & 0.966 & 0.970 \\
+				&  & (0.3076) & (0.1161) & (0.0339) \\
+				\quad x3 & 0.000 & 0.978 & 0.986 & 0.978 \\
+				&  & (0.1718) & (0.0767) & (0.0233) \\
+				\quad x4 & 0.000 & 0.980 & 0.982 & 0.972 \\
+				&  & (0.1715) & (0.0770) & (0.0234) \\
+				\midrule
+				\multicolumn{5}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.199 & 0.916 & 0.922 & 0.990 \\
+				&  & (0.0770) & (0.0417) & (0.0253) \\
+				\quad x2 & 0.298 & 0.902 & 0.950 & 0.978 \\
+				&  & (0.0889) & (0.0459) & (0.0233) \\
+				\quad x3 & 0.000 & 0.866 & 0.926 & 0.990 \\
+				&  & (0.0645) & (0.0375) & (0.0258) \\
+				\quad x4 & 0.000 & 0.854 & 0.918 & 0.994 \\
+				&  & (0.0648) & (0.0374) & (0.0260) \\
+				\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) computed over 500 Monte Carlo iterations. Bootstrap SEs from nonparametric bootstrap with 200 replicates. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+			\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP. Logistic regression achieves coverage between 0.896 and 0.950 across variables and sample sizes, well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features --- around 0.978 to 0.986 --- reflecting wide bootstrap intervals produced by high variance at small samples; the intervals are conservative rather than anti-conservative. The neural network shows undercoverage for noise features at $n=250$ (0.866 and 0.854) that recovers and drifts above nominal by $n=5{,}000$, consistent with the smooth differentiable surface producing stable finite differences across replicates. Random forests show a more concerning pattern: coverage collapses dramatically at $n=5{,}000$, falling to 0.130 for $x_1$, 0.274 for $x_2$, and 0.392 for the noise features. This is a direct consequence of the regularization bias documented in Simulation 1 --- the bootstrap intervals shrink at the expected rate but around a biased point estimate, so as they narrow they fail to cover the true AME. The intervals at $n=5{,}000$ have mean width 0.0165 for $x_1$ while the bias is around $-0.016$, so the interval is roughly the width of the bias itself. This is the empirical counterpart to the bootstrap validity conjecture for random forests --- the bootstrap is consistent for the variability of $\widehat{\mathrm{AME}}_j$ around its expectation under the forest, but that expectation does not coincide with the true AME.
+	
+	\section{Conclusion}
+	
+	This paper has proposed a framework for interpreting any supervised machine learning model through the lens of average marginal effects. The central claim is that the traditional accuracy-interpretability tradeoff is not fundamental. By defining the average marginal effect as the expectation of the partial derivative of the prediction function with respect to each feature, averaged over the empirical distribution of the covariates, we obtain an estimand that is well-defined for any supervised learner and reduces to the classical econometric AME when the model is a generalized linear model. The estimator replaces analytical derivatives with adaptive centered finite differences and produces a coefficient table directly analogous to the output of a parametric regression. The nonparametric bootstrap, with full model refitting and hyperparameter selection on each replicate, provides standard errors that capture uncertainty about model specification as well as estimation --- capabilities that existing interpretability methods including SHAP \cite{lundberg2017shap}, LIME \cite{ribeiro2016lime}, and partial dependence plots \cite{friedman2001pdp} do not provide.
+	
+	The empirical application to Ames Housing and the simulation study validate the framework. AME estimates are stable across model classes where the underlying models are well-fitted, bootstrap standard errors narrow as model fit improves, and AME and PDP estimates are in close agreement throughout. The comparison with SHAP values reveals a systematic divergence: SHAP values are on a different scale, in several cases have the wrong sign, and carry no inferential apparatus. The dollar-denominated Ames Housing application makes the divergence concrete --- SHAP attributes to above-ground living area an effect fifty times larger than the AME for the linear model, a number that is not interpretable as a marginal effect in any standard sense.
+	
+	Several important problems remain open. A companion journal paper establishes gradient consistency for neural networks, gradient boosted models, and Mondrian forests, but bootstrap validity for the AME estimator is conjectured rather than proved across all three classes. The closest existing results --- the infinitesimal jackknife for random forests \cite{wager2014confidence} and the bootstrap theory for honest forests \cite{wager2018forests} --- do not apply directly to the gradient functional studied here. The simulation results in Section~4 document a clear coverage failure for Breiman random forests at large sample sizes, driven by regularization bias that the standard nonparametric bootstrap does not correct, suggesting that the path to bootstrap validity may require alternatives such as Mondrian forests where the partition structure is data-independent. Extension of the framework to additional model classes including support vector machines and Bayesian additive regression trees, to causal estimands beyond the predictive AME, and to computationally efficient inference procedures based on the infinitesimal jackknife or subsampling are also natural directions for future work.
+	
+	\bibliographystyle{IEEEtran}
+	\bibliography{references}
+	
+\end{document}
