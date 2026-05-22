@@ -1,6 +1,6 @@
-Need to add writing explaining the choices we made in setting up the models for tensorflow etc. 
-Need to fix tensorflow for credit default and ames housing. 
-Need to add sim2 table for regression. 
-Need to explain the setting for tensorflow in the simulation study as well
-Need to remove TODO lines from the proofs. 
+Need to add discussion of proofs for other methods and which space is important (Asymptotics)
+Need to revise introduction with update to asymptotics
+Need to revise conclusion with update to asymptotics
+Need to revise abstract with update to asymptotics. 
 
+Need to make changes from reading

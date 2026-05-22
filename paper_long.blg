@@ -148,40 +148,41 @@ Repeated entry---line 1459 of file references.bib
  :                          ,
 I'm skipping whatever remains of this entry
 Warning--I didn't find a database entry for "bartlett2017spectrally"
+Warning--I didn't find a database entry for "wahba1990splines"
 Warning--empty publisher in molnar2025
 You've used 36 entries,
             1935 wiz_defined-function locations,
-            680 strings with 8916 characters,
-and the built_in function-call counts, 14126 in all, are:
-= -- 1433
-> -- 473
-< -- 38
-+ -- 163
-- -- 150
-* -- 1127
-:= -- 2379
+            681 strings with 8994 characters,
+and the built_in function-call counts, 14220 in all, are:
+= -- 1439
+> -- 488
+< -- 37
++ -- 169
+- -- 156
+* -- 1139
+:= -- 2400
 add.period$ -- 111
 call.type$ -- 36
-change.case$ -- 249
+change.case$ -- 253
 chr.to.int$ -- 35
 cite$ -- 37
 duplicate$ -- 591
 empty$ -- 1033
-format.name$ -- 208
-if$ -- 2842
+format.name$ -- 212
+if$ -- 2857
 int.to.chr$ -- 2
 int.to.str$ -- 0
-missing$ -- 39
+missing$ -- 40
 newline$ -- 181
 num.names$ -- 110
-pop$ -- 230
+pop$ -- 234
 preamble$ -- 1
-purify$ -- 254
+purify$ -- 257
 quote$ -- 0
-skip$ -- 465
+skip$ -- 464
 stack$ -- 0
 substring$ -- 1017
-swap$ -- 115
+swap$ -- 114
 text.length$ -- 14
 text.prefix$ -- 0
 top$ -- 0

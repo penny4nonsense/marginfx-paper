@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  12 MAY 2026 14:48
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  22 MAY 2026 12:02
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -575,59 +575,59 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `math shift' on input line 2250.
 
 [67] [68] [69] [70] [71] [72] [73] [74]
-Overfull \hbox (2.06245pt too wide) in paragraph at lines 2561--2571
+Overfull \hbox (2.06245pt too wide) in paragraph at lines 2566--2576
 []\OT1/cmr/bx/n/12 Remark 7. \OT1/cmr/m/it/12 The strict con-ver-gence up-grade
  re-quires the ad-di-tional as-sump-tion $\U/msb/m/n/12 E\OT1/cmr/m/n/12 [\OMS/
 cmsy/m/n/12 j\OML/cmm/m/it/12 D[]\OMS/cmsy/m/n/12 j\OT1/cmr/m/n/12 (
 )] \OMS/cmsy/m/n/12 !
  []
 
-[75] [76] [77] [78]
+[75] [76] [77] [78] [79]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2733.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 2733.
+(hyperref)                removing `math shift' on input line 2738.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2733.
+(hyperref)                removing `superscript' on input line 2738.
 
-[79] [80] [81]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2738.
+
+[80] [81]
 
 Package natbib Warning: Citation `bartlett2017spectrally' on page 82 undefined 
-on input line 2842.
+on input line 2847.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2850.
+(hyperref)                removing `math shift' on input line 2855.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 2850.
+(hyperref)                removing `superscript' on input line 2855.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2850.
+(hyperref)                removing `math shift' on input line 2855.
 
 [82]
 
 Package natbib Warning: Citation `bartlett2017spectrally' on page 83 undefined 
-on input line 2881.
+on input line 2886.
 
 [83]
 
 Package natbib Warning: Citation `wahba1990splines' on page 84 undefined on inp
-ut line 2953.
+ut line 2958.
 
 [84] [85] [86] [87] [88] [89] [90] [91] [92] [93] [94] [95] [96] [97] [98]
-[99] [100] (./paper_long.bbl [101] [102] [103])
+[99] [100] (./paper_long.bbl [101] [102] [103] [104])
 
 Package natbib Warning: There were undefined citations.
 
-[104] (./paper_long.aux)
+[105] (./paper_long.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -636,9 +636,9 @@ Package rerunfilecheck Info: File `paper_long.out' has not changed.
 (rerunfilecheck)             Checksum: 5775189DAA10475E95EDFC56E873285D;14758.
  ) 
 Here is how much of TeX's memory you used:
- 12897 strings out of 469472
- 196271 string characters out of 5469219
- 639165 words of memory out of 5000000
+ 12898 strings out of 469472
+ 196259 string characters out of 5469219
+ 639154 words of memory out of 5000000
  40921 multiletter control sequences out of 15000+600000
  644620 words of font info for 102 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
@@ -665,10 +665,10 @@ s/type1/public/amsfonts/cm/cmtt12.pfb><c:/texlive/2026/texmf-dist/fonts/type1/p
 ublic/amsfonts/symbols/msam10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/publi
 c/amsfonts/symbols/msbm10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/cm
 -super/sfrm1200.pfb>
-Output written on paper_long.pdf (104 pages, 570015 bytes).
+Output written on paper_long.pdf (105 pages, 571093 bytes).
 PDF statistics:
- 1673 PDF objects out of 1728 (max. 8388607)
- 1503 compressed objects within 16 object streams
- 459 named destinations out of 1000 (max. 500000)
+ 1679 PDF objects out of 1728 (max. 8388607)
+ 1508 compressed objects within 16 object streams
+ 460 named destinations out of 1000 (max. 500000)
  553 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -124,7 +124,7 @@
 	opposite position: we argue that the average marginal effect is precisely the right
 	summary quantity, that it has a rigorous population-level interpretation inherited
 	from the econometric literature, and that valid inference is achievable via a
-	nonparametric bootstrap with full model refitting. \citet{scholbeck2024fmeffects}
+	nonparametric bootstrap with full model refitting. \cite{lowe2024fmeffects}
 	provide the \texttt{fmeffects} R package implementing this descriptive framework,
 	demonstrating the practical demand for marginal-effect-style interpretation of
 	machine learning models, but without the theoretical justification --- no gradient
@@ -2533,16 +2533,21 @@
 	
 	\subsubsection*{Step 3: Pin the Total Variation}
 	
-	Combining Steps~1 and~2:
+	Step~1 gives $|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)$ by
+	lower semicontinuity of total variation under weak-* convergence. Step~2
+	gives $\limsup_{n \to \infty} |D\fn|(\Omega) \leq |Df|(\Omega)$ from the
+	additional assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$. Since
+	$\liminf \leq \limsup$ always, combining gives:
 	\begin{equation}
 		|Df|(\Omega)
 		\leq \liminf_{n \to \infty} |D\fn|(\Omega)
 		\leq \limsup_{n \to \infty} |D\fn|(\Omega)
 		\leq |Df|(\Omega)
 	\end{equation}
-	Therefore $|D\fn|(\Omega) \to |Df|(\Omega)$ in probability. Combined with
-	the weak-* convergence $D\fn \xrightarrow{w*} Df$ established in Part~I,
-	this is precisely the definition of strict convergence in $\cM$. \qed
+	All inequalities are therefore equalities and $|D\fn|(\Omega) \to |Df|(\Omega)$
+	in probability. Combined with the weak-* convergence $D\fn \xrightarrow{w*}
+	Df$ established in Part~I, this is precisely the definition of strict
+	convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}. \qed
 	
 	\begin{remark}
 		The parallel between Lemma~\ref{lem:sobolev_consistency} and

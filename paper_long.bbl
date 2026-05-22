@@ -122,6 +122,12 @@ Leeper, T.~J. (2021).
 \newblock {\em margins: Marginal Effects for Model Objects}.
 \newblock R package version 0.3.26.
 
+\bibitem[L{\"o}we et~al., 2024]{lowe2024fmeffects}
+L{\"o}we, H., Scholbeck, C.~A., Casalicchio, G., Bischl, B., and Heumann, C.
+  (2024).
+\newblock fmeffects: An {R} package for forward marginal effects.
+\newblock {\em arXiv preprint arXiv:2310.02008}.
+
 \bibitem[Lundberg and Lee, 2017]{lundberg2017shap}
 Lundberg, S.~M. and Lee, S.-I. (2017).
 \newblock A unified approach to interpreting model predictions.
@@ -158,12 +164,6 @@ Roy, D.~M. and Teh, Y.~W. (2009).
 \newblock The mondrian process.
 \newblock In {\em Advances in Neural Information Processing Systems},
   volume~21, pages 1377--1384.
-
-\bibitem[Scholbeck and Casalicchio, 2024]{scholbeck2024fmeffects}
-Scholbeck, C.~A. and Casalicchio, G. (2024).
-\newblock {\em fmeffects: Model-Agnostic Interpretations with Forward Marginal
-  Effects}.
-\newblock R package.
 
 \bibitem[Scholbeck et~al., 2024]{scholbeck2024fme}
 Scholbeck, C.~A., Casalicchio, G., Molnar, C., Bischl, B., and Heumann, C.

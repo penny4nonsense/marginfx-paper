@@ -64,37 +64,37 @@ Warning--missing publisher in molnar2025
 Done.
 You've used 21 entries,
             4087 wiz_defined-function locations,
-            945 strings with 10560 characters,
-and the built_in function-call counts, 13817 in all, are:
-= -- 1120
-> -- 263
+            944 strings with 10578 characters,
+and the built_in function-call counts, 13889 in all, are:
+= -- 1117
+> -- 275
 < -- 120
-+ -- 141
-- -- 40
-* -- 645
-:= -- 2137
-add.period$ -- 41
++ -- 147
+- -- 43
+* -- 649
+:= -- 2136
+add.period$ -- 42
 call.type$ -- 21
 change.case$ -- 21
 chr.to.int$ -- 273
 cite$ -- 22
-duplicate$ -- 1021
-empty$ -- 1158
-format.name$ -- 52
-if$ -- 3203
+duplicate$ -- 1030
+empty$ -- 1170
+format.name$ -- 55
+if$ -- 3224
 int.to.chr$ -- 0
 int.to.str$ -- 21
 missing$ -- 170
-newline$ -- 92
+newline$ -- 90
 num.names$ -- 21
-pop$ -- 393
+pop$ -- 400
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1076
+skip$ -- 1077
 stack$ -- 0
-substring$ -- 613
-swap$ -- 785
+substring$ -- 612
+swap$ -- 788
 text.length$ -- 29
 text.prefix$ -- 0
 top$ -- 5
@@ -102,5 +102,5 @@ type$ -- 21
 warning$ -- 1
 while$ -- 65
 width$ -- 23
-write$ -- 221
+write$ -- 218
 (There were 12 error messages)

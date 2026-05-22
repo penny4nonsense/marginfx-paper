@@ -72,12 +72,10 @@ C.~A. Scholbeck, G.~Casalicchio, C.~Molnar, B.~Bischl, and C.~Heumann,
   ``Marginal effects for non-linear prediction functions,'' \emph{Data Mining
   and Knowledge Discovery}, vol.~38, no.~5, pp. 2997--3042, 2024.
 
-\bibitem{scholbeck2024fmeffects}
-\BIBentryALTinterwordspacing
-C.~A. Scholbeck and G.~Casalicchio, \emph{fmeffects: Model-Agnostic
-  Interpretations with Forward Marginal Effects}, 2024, r package. [Online].
-  Available: \url{https://CRAN.R-project.org/package=fmeffects}
-\BIBentrySTDinterwordspacing
+\bibitem{lowe2024fmeffects}
+H.~L{\"o}we, C.~A. Scholbeck, G.~Casalicchio, B.~Bischl, and C.~Heumann,
+  ``fmeffects: An {R} package for forward marginal effects,'' \emph{arXiv
+  preprint arXiv:2310.02008}, 2024.
 
 \bibitem{greene2012}
 W.~H. Greene, \emph{Econometric Analysis}, 7th~ed.\hskip 1em plus 0.5em minus
@@ -101,10 +99,10 @@ B.~Efron, ``Bootstrap methods: Another look at the jackknife,'' \emph{Annals of
 B.~Efron and R.~J. Tibshirani, \emph{An Introduction to the Bootstrap}.\hskip
   1em plus 0.5em minus 0.4em\relax New York: Chapman and Hall, 1993.
 
-\bibitem{decock2011}
-D.~De~Cock, ``Ames, iowa: Alternative to the boston housing data as an end of
-  semester regression project,'' \emph{Journal of Statistics Education},
-  vol.~19, no.~3, 2011.
+\bibitem{kohavi1996}
+R.~Kohavi, ``Scaling up the accuracy of naive-bayes classifiers: A
+  decision-tree hybrid,'' 1996, proceedings of the Second International
+  Conference on Knowledge Discovery and Data Mining.
 
 \bibitem{UCI}
 \BIBentryALTinterwordspacing
@@ -112,10 +110,10 @@ D.~Dua and C.~Graff, ``{UCI} machine learning repository,'' 2019. [Online].
   Available: \url{https://archive.ics.uci.edu/ml}
 \BIBentrySTDinterwordspacing
 
-\bibitem{kohavi1996}
-R.~Kohavi, ``Scaling up the accuracy of naive-bayes classifiers: A
-  decision-tree hybrid,'' 1996, proceedings of the Second International
-  Conference on Knowledge Discovery and Data Mining.
+\bibitem{decock2011}
+D.~De~Cock, ``Ames, iowa: Alternative to the boston housing data as an end of
+  semester regression project,'' \emph{Journal of Statistics Education},
+  vol.~19, no.~3, 2011.
 
 \bibitem{wager2014confidence}
 S.~Wager, T.~Hastie, and B.~Efron, ``Confidence intervals for random forests:

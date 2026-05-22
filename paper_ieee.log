@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  11 MAY 2026 15:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  22 MAY 2026 11:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -601,30 +601,27 @@ LaTeX Font Warning: Font shape `TS1/ptm/m/sc' undefined
 (Font)              for symbol `textdollar' on input line 198.
 
 [3]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+Underfull \vbox (badness 4954) has occurred while \output is active []
 
  [4
 pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.356 	
+l.350 	
        ] [5
 pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.356 	
+l.350 	
        
 pdfTeX warning (ext4): destination with the same identifier (name{table.3}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.356 	
+l.350 	
        ]
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
-
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [6
@@ -632,12 +629,24 @@ pdfTeX warning (ext4): destination with the same identifier (name{table.4}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.542 	
+l.418 	
        ]
+Underfull \vbox (badness 5475) has occurred while \output is active []
+
+
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [7
 pdfTeX warning (ext4): destination with the same identifier (name{table.5}) has
+ been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.542 	
+       ]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [8
+pdfTeX warning (ext4): destination with the same identifier (name{table.6}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
@@ -648,19 +657,13 @@ Underfull \vbox (badness 10000) has occurred while \output is active []
 
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
- [8
-pdfTeX warning (ext4): destination with the same identifier (name{table.6}) has
- been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.550 	
-       ] (./paper_ieee.bbl [9
+ [9
 pdfTeX warning (ext4): destination with the same identifier (name{table.7}) has
  been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.70 \bibitem{scholbeck2024fme}
-                               ])
+l.550 	
+       ] (./paper_ieee.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -687,13 +690,13 @@ Package rerunfilecheck Info: File `paper_ieee.out' has not changed.
 (rerunfilecheck)             Checksum: 1128FA054006AAE4224B3BA0D1366162;1163.
  ) 
 Here is how much of TeX's memory you used:
- 12666 strings out of 469472
- 197323 string characters out of 5469219
- 672461 words of memory out of 5000000
- 41074 multiletter control sequences out of 15000+600000
+ 12667 strings out of 469472
+ 197321 string characters out of 5469219
+ 666279 words of memory out of 5000000
+ 41075 multiletter control sequences out of 15000+600000
  674949 words of font info for 137 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 75i,13n,79p,1612b,599s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,13n,79p,2119b,459s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/tex
 live/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb><c:/texlive/2026/
 texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2026/texmf-dis
@@ -714,10 +717,10 @@ ive/2026/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/
 fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/ti
 mes/utmbi8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c
 :/texlive/2026/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on paper_ieee.pdf (10 pages, 276802 bytes).
+Output written on paper_ieee.pdf (10 pages, 279292 bytes).
 PDF statistics:
- 303 PDF objects out of 1000 (max. 8388607)
- 242 compressed objects within 3 object streams
+ 304 PDF objects out of 1000 (max. 8388607)
+ 243 compressed objects within 3 object streams
  54 named destinations out of 1000 (max. 500000)
  89 words of extra memory for PDF output out of 10000 (max. 10000000)
 
