@@ -1,0 +1,178 @@
+\begin{thebibliography}{13}
+% BibTex style file: imsart-nameyear.bst, 2017-11-03
+% Default style options (sort=1,type=nameyear).
+% Used options (sort=1,type=nameyear).
+
+\bibitem[\protect\citeauthoryear{Ambrosio, Fusco and
+  Pallara}{2000}]{ambrosio2000bv}
+\begin{bbook}[author]
+\bauthor{\bsnm{Ambrosio},~\bfnm{Luigi}\binits{L.}},
+  \bauthor{\bsnm{Fusco},~\bfnm{Nicola}\binits{N.}} \AND
+  \bauthor{\bsnm{Pallara},~\bfnm{Diego}\binits{D.}}
+(\byear{2000}).
+\btitle{Functions of Bounded Variation and Free Discontinuity Problems}.
+\bseries{Oxford Mathematical Monographs}.
+\bpublisher{Oxford University Press}, \baddress{Oxford}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Bartlett, Foster and
+  Telgarsky}{2017}]{bartlett2017spectrally}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Bartlett},~\bfnm{Peter~L.}\binits{P.~L.}},
+  \bauthor{\bsnm{Foster},~\bfnm{Dylan~J.}\binits{D.~J.}} \AND
+  \bauthor{\bsnm{Telgarsky},~\bfnm{Matus~J.}\binits{M.~J.}}
+(\byear{2017}).
+\btitle{Spectrally-Normalized Margin Bounds for Neural Networks}.
+In \bbooktitle{Advances in Neural Information Processing Systems 30}
+\bpages{6241--6250}.
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{B{\"u}hlmann and
+  Yu}{2003}]{buhlmann2003boosting}
+\begin{barticle}[author]
+\bauthor{\bsnm{B{\"u}hlmann},~\bfnm{Peter}\binits{P.}} \AND
+  \bauthor{\bsnm{Yu},~\bfnm{Bin}\binits{B.}}
+(\byear{2003}).
+\btitle{Boosting with the {$L^2$} Loss: Regression and Classification}.
+\bjournal{Journal of the American Statistical Association}
+\bvolume{98}
+\bpages{324--339}.
+\bdoi{10.1198/016214503000125}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Evans}{2010}]{evans2010pde}
+\begin{bbook}[author]
+\bauthor{\bsnm{Evans},~\bfnm{Lawrence~C.}\binits{L.~C.}}
+(\byear{2010}).
+\btitle{Partial Differential Equations},
+\bedition{2nd} ed.
+\bseries{Graduate Studies in Mathematics}
+\bvolume{19}.
+\bpublisher{American Mathematical Society}, \baddress{Providence, RI}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Evans and Gariepy}{2015}]{evans2015measure}
+\begin{bbook}[author]
+\bauthor{\bsnm{Evans},~\bfnm{Lawrence~C.}\binits{L.~C.}} \AND
+  \bauthor{\bsnm{Gariepy},~\bfnm{Ronald~F.}\binits{R.~F.}}
+(\byear{2015}).
+\btitle{Measure Theory and Fine Properties of Functions},
+\bedition{Revised} ed.
+\bpublisher{CRC Press}, \baddress{Boca Raton, FL}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Hornik, Stinchcombe and
+  White}{1990}]{hornik1990universal}
+\begin{barticle}[author]
+\bauthor{\bsnm{Hornik},~\bfnm{Kurt}\binits{K.}},
+  \bauthor{\bsnm{Stinchcombe},~\bfnm{Maxwell}\binits{M.}} \AND
+  \bauthor{\bsnm{White},~\bfnm{Halbert}\binits{H.}}
+(\byear{1990}).
+\btitle{Universal Approximation of an Unknown Mapping and Its Derivatives Using
+  Multilayer Feedforward Networks}.
+\bjournal{Neural Networks}
+\bvolume{3}
+\bpages{551--560}.
+\bdoi{10.1016/0893-6080(90)90005-6}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Horowitz}{2001}]{horowitz2000bootstrap}
+\begin{bincollection}[author]
+\bauthor{\bsnm{Horowitz},~\bfnm{Joel~L.}\binits{J.~L.}}
+(\byear{2001}).
+\btitle{The Bootstrap}.
+In \bbooktitle{Handbook of Econometrics},
+(\beditor{\bfnm{James~J.}\binits{J.~J.}~\bsnm{Heckman}} \AND
+  \beditor{\bfnm{Edward~E.}\binits{E.~E.}~\bsnm{Leamer}}, eds.)
+\bvolume{5}
+\bpages{3159--3228}.
+\bpublisher{Elsevier}, \baddress{Amsterdam}.
+\end{bincollection}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Jacot, Gabriel and
+  Hongler}{2018}]{jacot2018ntk}
+\begin{barticle}[author]
+\bauthor{\bsnm{Jacot},~\bfnm{Arthur}\binits{A.}},
+  \bauthor{\bsnm{Gabriel},~\bfnm{Franck}\binits{F.}} \AND
+  \bauthor{\bsnm{Hongler},~\bfnm{Cl{\'e}ment}\binits{C.}}
+(\byear{2018}).
+\btitle{Neural Tangent Kernel: Convergence and Generalization in Neural
+  Networks}.
+\bjournal{Advances in Neural Information Processing Systems}
+\bvolume{31}
+\bpages{8571--8580}.
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Mourtada, Ga{\"i}ffas and
+  Scornet}{2017}]{mourtada2017mondrian}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Mourtada},~\bfnm{Jaouad}\binits{J.}},
+  \bauthor{\bsnm{Ga{\"i}ffas},~\bfnm{St{\'e}phane}\binits{S.}} \AND
+  \bauthor{\bsnm{Scornet},~\bfnm{Erwan}\binits{E.}}
+(\byear{2017}).
+\btitle{Universal Consistency and Minimax Rates for Online Mondrian Forests}.
+In \bbooktitle{Advances in Neural Information Processing Systems}
+\bvolume{30}
+\bpages{3758--3767}.
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Roy and Teh}{2009}]{roy2009mondrian}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Roy},~\bfnm{Daniel~M.}\binits{D.~M.}} \AND
+  \bauthor{\bsnm{Teh},~\bfnm{Yee~Whye}\binits{Y.~W.}}
+(\byear{2009}).
+\btitle{The Mondrian Process}.
+In \bbooktitle{Advances in Neural Information Processing Systems}
+\bvolume{21}
+\bpages{1377--1384}.
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{van~der Vaart and
+  Wellner}{1996}]{vandervaart1996weak}
+\begin{bbook}[author]
+\bauthor{\bparticle{van~der} \bsnm{Vaart},~\bfnm{Aad~W.}\binits{A.~W.}} \AND
+  \bauthor{\bsnm{Wellner},~\bfnm{Jon~A.}\binits{J.~A.}}
+(\byear{1996}).
+\btitle{Weak Convergence and Empirical Processes}.
+\bseries{Springer Series in Statistics}.
+\bpublisher{Springer}, \baddress{New York}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Wager, Hastie and
+  Efron}{2014}]{wager2014confidence}
+\begin{barticle}[author]
+\bauthor{\bsnm{Wager},~\bfnm{Stefan}\binits{S.}},
+  \bauthor{\bsnm{Hastie},~\bfnm{Trevor}\binits{T.}} \AND
+  \bauthor{\bsnm{Efron},~\bfnm{Bradley}\binits{B.}}
+(\byear{2014}).
+\btitle{Confidence Intervals for Random Forests: The Jackknife and the
+  Infinitesimal Jackknife}.
+\bjournal{Journal of Machine Learning Research}
+\bvolume{15}
+\bpages{1625--1651}.
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Wahba}{1990}]{wahba1990splines}
+\begin{bbook}[author]
+\bauthor{\bsnm{Wahba},~\bfnm{Grace}\binits{G.}}
+(\byear{1990}).
+\btitle{Spline Models for Observational Data}.
+\bseries{CBMS-NSF Regional Conference Series in Applied Mathematics}
+\bvolume{59}.
+\bpublisher{SIAM}, \baddress{Philadelphia, PA}.
+\end{bbook}
+\endbibitem
+
+\end{thebibliography}

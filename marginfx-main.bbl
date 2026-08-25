@@ -1,0 +1,472 @@
+\begin{thebibliography}{37}
+% BibTex style file: imsart-nameyear.bst, 2017-11-03
+% Default style options (sort=1,type=nameyear).
+% Used options (sort=1,type=nameyear).
+
+\bibitem[\protect\citeauthoryear{Ambrosio, Fusco and
+  Pallara}{2000}]{ambrosio2000bv}
+\begin{bbook}[author]
+\bauthor{\bsnm{Ambrosio},~\bfnm{Luigi}\binits{L.}},
+  \bauthor{\bsnm{Fusco},~\bfnm{Nicola}\binits{N.}} \AND
+  \bauthor{\bsnm{Pallara},~\bfnm{Diego}\binits{D.}}
+(\byear{2000}).
+\btitle{Functions of Bounded Variation and Free Discontinuity Problems}.
+\bseries{Oxford Mathematical Monographs}.
+\bpublisher{Oxford University Press}, \baddress{Oxford}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Arel-Bundock, Greifer and
+  Heiss}{2024}]{arelbundock2024marginaleffects}
+\begin{barticle}[author]
+\bauthor{\bsnm{Arel-Bundock},~\bfnm{Vincent}\binits{V.}},
+  \bauthor{\bsnm{Greifer},~\bfnm{Noah}\binits{N.}} \AND
+  \bauthor{\bsnm{Heiss},~\bfnm{Andrew}\binits{A.}}
+(\byear{2024}).
+\btitle{How to Interpret Statistical Models Using {marginaleffects} for {R} and
+  {Python}}.
+\bjournal{Journal of Statistical Software}
+\bvolume{111}
+\bpages{1--32}.
+\bdoi{10.18637/jss.v111.i09}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Breiman}{2001a}]{breiman2001rf}
+\begin{barticle}[author]
+\bauthor{\bsnm{Breiman},~\bfnm{Leo}\binits{L.}}
+(\byear{2001}a).
+\btitle{Random Forests}.
+\bjournal{Machine Learning}
+\bvolume{45}
+\bpages{5--32}.
+\bdoi{10.1023/A:1010933404324}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Breiman}{2001b}]{breiman2001cultures}
+\begin{barticle}[author]
+\bauthor{\bsnm{Breiman},~\bfnm{Leo}\binits{L.}}
+(\byear{2001}b).
+\btitle{Statistical Modeling: The Two Cultures (with comments and a rejoinder
+  by the author)}.
+\bjournal{Statistical Science}
+\bvolume{16}
+\bpages{199--231}.
+\bdoi{10.1214/ss/1009213726}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{B{\"u}hlmann and
+  Yu}{2003}]{buhlmann2003boosting}
+\begin{barticle}[author]
+\bauthor{\bsnm{B{\"u}hlmann},~\bfnm{Peter}\binits{P.}} \AND
+  \bauthor{\bsnm{Yu},~\bfnm{Bin}\binits{B.}}
+(\byear{2003}).
+\btitle{Boosting with the {$L^2$} Loss: Regression and Classification}.
+\bjournal{Journal of the American Statistical Association}
+\bvolume{98}
+\bpages{324--339}.
+\bdoi{10.1198/016214503000125}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Chen and Guestrin}{2016}]{chen2016xgboost}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Chen},~\bfnm{Tianqi}\binits{T.}} \AND
+  \bauthor{\bsnm{Guestrin},~\bfnm{Carlos}\binits{C.}}
+(\byear{2016}).
+\btitle{{XGBoost}: A Scalable Tree Boosting System}.
+In \bbooktitle{Proceedings of the 22nd ACM SIGKDD International Conference on
+  Knowledge Discovery and Data Mining}
+\bpages{785--794}.
+\bdoi{10.1145/2939672.2939785}
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{De~Cock}{2011}]{decock2011}
+\begin{barticle}[author]
+\bauthor{\bsnm{De~Cock},~\bfnm{Dean}\binits{D.}}
+(\byear{2011}).
+\btitle{Ames, Iowa: Alternative to the Boston Housing Data as an End of
+  Semester Regression Project}.
+\bjournal{Journal of Statistics Education}
+\bvolume{19}.
+\bdoi{10.1080/10691898.2011.11889627}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Doshi-Velez and
+  Kim}{2017}]{doshivelez2017interpretability}
+\begin{bmisc}[author]
+\bauthor{\bsnm{Doshi-Velez},~\bfnm{Finale}\binits{F.}} \AND
+  \bauthor{\bsnm{Kim},~\bfnm{Been}\binits{B.}}
+(\byear{2017}).
+\btitle{Towards a Rigorous Science of Interpretable Machine Learning}.
+\end{bmisc}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Dua and Graff}{2019}]{UCI}
+\begin{bmisc}[author]
+\bauthor{\bsnm{Dua},~\bfnm{Dheeru}\binits{D.}} \AND
+  \bauthor{\bsnm{Graff},~\bfnm{Casey}\binits{C.}}
+(\byear{2019}).
+\btitle{{UCI} Machine Learning Repository}.
+\end{bmisc}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Efron}{1979}]{efron1979}
+\begin{barticle}[author]
+\bauthor{\bsnm{Efron},~\bfnm{Bradley}\binits{B.}}
+(\byear{1979}).
+\btitle{Bootstrap Methods: Another Look at the Jackknife}.
+\bjournal{Annals of Statistics}
+\bvolume{7}
+\bpages{1--26}.
+\bdoi{10.1214/aos/1176344552}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Efron and
+  Tibshirani}{1993}]{efrontibshirani1993}
+\begin{bbook}[author]
+\bauthor{\bsnm{Efron},~\bfnm{Bradley}\binits{B.}} \AND
+  \bauthor{\bsnm{Tibshirani},~\bfnm{Robert~J.}\binits{R.~J.}}
+(\byear{1993}).
+\btitle{An Introduction to the Bootstrap}.
+\bpublisher{Chapman and Hall}, \baddress{New York}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Evans}{2010}]{evans2010pde}
+\begin{bbook}[author]
+\bauthor{\bsnm{Evans},~\bfnm{Lawrence~C.}\binits{L.~C.}}
+(\byear{2010}).
+\btitle{Partial Differential Equations},
+\bedition{2nd} ed.
+\bseries{Graduate Studies in Mathematics}
+\bvolume{19}.
+\bpublisher{American Mathematical Society}, \baddress{Providence, RI}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Evans and Gariepy}{2015}]{evans2015measure}
+\begin{bbook}[author]
+\bauthor{\bsnm{Evans},~\bfnm{Lawrence~C.}\binits{L.~C.}} \AND
+  \bauthor{\bsnm{Gariepy},~\bfnm{Ronald~F.}\binits{R.~F.}}
+(\byear{2015}).
+\btitle{Measure Theory and Fine Properties of Functions},
+\bedition{Revised} ed.
+\bpublisher{CRC Press}, \baddress{Boca Raton, FL}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Friedman}{2001}]{friedman2001pdp}
+\begin{barticle}[author]
+\bauthor{\bsnm{Friedman},~\bfnm{Jerome~H.}\binits{J.~H.}}
+(\byear{2001}).
+\btitle{Greedy Function Approximation: A Gradient Boosting Machine}.
+\bjournal{Annals of Statistics}
+\bvolume{29}
+\bpages{1189--1232}.
+\bdoi{10.1214/aos/1013203451}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Greene}{2012}]{greene2012}
+\begin{bbook}[author]
+\bauthor{\bsnm{Greene},~\bfnm{William~H.}\binits{W.~H.}}
+(\byear{2012}).
+\btitle{Econometric Analysis},
+\bedition{7} ed.
+\bpublisher{Prentice Hall}, \baddress{Upper Saddle River, NJ}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Hastie, Tibshirani and
+  Friedman}{2009}]{hastie2009esl}
+\begin{bbook}[author]
+\bauthor{\bsnm{Hastie},~\bfnm{Trevor}\binits{T.}},
+  \bauthor{\bsnm{Tibshirani},~\bfnm{Robert}\binits{R.}} \AND
+  \bauthor{\bsnm{Friedman},~\bfnm{Jerome}\binits{J.}}
+(\byear{2009}).
+\btitle{The Elements of Statistical Learning: Data Mining, Inference, and
+  Prediction},
+\bedition{2nd} ed.
+\bpublisher{Springer}, \baddress{New York}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Hornik, Stinchcombe and
+  White}{1990}]{hornik1990universal}
+\begin{barticle}[author]
+\bauthor{\bsnm{Hornik},~\bfnm{Kurt}\binits{K.}},
+  \bauthor{\bsnm{Stinchcombe},~\bfnm{Maxwell}\binits{M.}} \AND
+  \bauthor{\bsnm{White},~\bfnm{Halbert}\binits{H.}}
+(\byear{1990}).
+\btitle{Universal Approximation of an Unknown Mapping and Its Derivatives Using
+  Multilayer Feedforward Networks}.
+\bjournal{Neural Networks}
+\bvolume{3}
+\bpages{551--560}.
+\bdoi{10.1016/0893-6080(90)90005-6}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Horowitz}{2001}]{horowitz2000bootstrap}
+\begin{bincollection}[author]
+\bauthor{\bsnm{Horowitz},~\bfnm{Joel~L.}\binits{J.~L.}}
+(\byear{2001}).
+\btitle{The Bootstrap}.
+In \bbooktitle{Handbook of Econometrics},
+(\beditor{\bfnm{James~J.}\binits{J.~J.}~\bsnm{Heckman}} \AND
+  \beditor{\bfnm{Edward~E.}\binits{E.~E.}~\bsnm{Leamer}}, eds.)
+\bvolume{5}
+\bpages{3159--3228}.
+\bpublisher{Elsevier}, \baddress{Amsterdam}.
+\end{bincollection}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Jacot, Gabriel and
+  Hongler}{2018}]{jacot2018ntk}
+\begin{barticle}[author]
+\bauthor{\bsnm{Jacot},~\bfnm{Arthur}\binits{A.}},
+  \bauthor{\bsnm{Gabriel},~\bfnm{Franck}\binits{F.}} \AND
+  \bauthor{\bsnm{Hongler},~\bfnm{Cl{\'e}ment}\binits{C.}}
+(\byear{2018}).
+\btitle{Neural Tangent Kernel: Convergence and Generalization in Neural
+  Networks}.
+\bjournal{Advances in Neural Information Processing Systems}
+\bvolume{31}
+\bpages{8571--8580}.
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Kohavi}{1996}]{kohavi1996}
+\begin{bmisc}[author]
+\bauthor{\bsnm{Kohavi},~\bfnm{Ron}\binits{R.}}
+(\byear{1996}).
+\btitle{Scaling Up the Accuracy of Naive-Bayes Classifiers: A Decision-Tree
+  Hybrid}.
+\bnote{Proceedings of the Second International Conference on Knowledge
+  Discovery and Data Mining}.
+\end{bmisc}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Lakshminarayanan, Roy and
+  Teh}{2014}]{lakshminarayanan2014mondrian}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Lakshminarayanan},~\bfnm{Balaji}\binits{B.}},
+  \bauthor{\bsnm{Roy},~\bfnm{Daniel~M.}\binits{D.~M.}} \AND
+  \bauthor{\bsnm{Teh},~\bfnm{Yee~Whye}\binits{Y.~W.}}
+(\byear{2014}).
+\btitle{Mondrian Forests: Efficient Online Random Forests}.
+In \bbooktitle{Advances in Neural Information Processing Systems}
+\bvolume{27}
+\bpages{3140--3148}.
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Leeper}{2021}]{leeper2021}
+\begin{bmanual}[author]
+\bauthor{\bsnm{Leeper},~\bfnm{Thomas~J.}\binits{T.~J.}}
+(\byear{2021}).
+\btitle{margins: Marginal Effects for Model Objects}
+\bnote{R package version 0.3.26}.
+\end{bmanual}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{L{\"o}we et~al.}{2024}]{lowe2024fmeffects}
+\begin{barticle}[author]
+\bauthor{\bsnm{L{\"o}we},~\bfnm{Holger}\binits{H.}},
+  \bauthor{\bsnm{Scholbeck},~\bfnm{Christian~A.}\binits{C.~A.}},
+  \bauthor{\bsnm{Casalicchio},~\bfnm{Giuseppe}\binits{G.}},
+  \bauthor{\bsnm{Bischl},~\bfnm{Bernd}\binits{B.}} \AND
+  \bauthor{\bsnm{Heumann},~\bfnm{Christian}\binits{C.}}
+(\byear{2024}).
+\btitle{fmeffects: An {R} Package for Forward Marginal Effects}.
+\bjournal{arXiv preprint arXiv:2310.02008}.
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Lundberg and Lee}{2017}]{lundberg2017shap}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Lundberg},~\bfnm{Scott~M.}\binits{S.~M.}} \AND
+  \bauthor{\bsnm{Lee},~\bfnm{Su-In}\binits{S.-I.}}
+(\byear{2017}).
+\btitle{A Unified Approach to Interpreting Model Predictions}.
+In \bbooktitle{Advances in Neural Information Processing Systems}
+\bvolume{30}.
+\bpublisher{Curran Associates, Inc.}
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Mason et~al.}{2000}]{mason2000boosting}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Mason},~\bfnm{Llew}\binits{L.}},
+  \bauthor{\bsnm{Baxter},~\bfnm{Jonathan}\binits{J.}},
+  \bauthor{\bsnm{Bartlett},~\bfnm{Peter}\binits{P.}} \AND
+  \bauthor{\bsnm{Frean},~\bfnm{Marcus}\binits{M.}}
+(\byear{2000}).
+\btitle{Boosting Algorithms as Gradient Descent}.
+In \bbooktitle{Advances in Neural Information Processing Systems}
+\bvolume{12}
+\bpages{512--518}.
+\bpublisher{MIT Press}.
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Molnar}{2025}]{molnar2025}
+\begin{bbook}[author]
+\bauthor{\bsnm{Molnar},~\bfnm{Christoph}\binits{C.}}
+(\byear{2025}).
+\btitle{Interpretable Machine Learning: A Guide for Making Black Box Models
+  Explainable},
+\bedition{3rd} ed.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Mourtada, Ga{\"i}ffas and
+  Scornet}{2017}]{mourtada2017mondrian}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Mourtada},~\bfnm{Jaouad}\binits{J.}},
+  \bauthor{\bsnm{Ga{\"i}ffas},~\bfnm{St{\'e}phane}\binits{S.}} \AND
+  \bauthor{\bsnm{Scornet},~\bfnm{Erwan}\binits{E.}}
+(\byear{2017}).
+\btitle{Universal Consistency and Minimax Rates for Online Mondrian Forests}.
+In \bbooktitle{Advances in Neural Information Processing Systems}
+\bvolume{30}
+\bpages{3758--3767}.
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Parker}{2026}]{parker2026supp}
+\begin{bmisc}[author]
+\bauthor{\bsnm{Parker},~\bfnm{Jason}\binits{J.}}
+(\byear{2026}).
+\btitle{Supplement to ``Model-Agnostic Interpretation of Machine Learning via
+  Average Marginal Effects''}.
+\bnote{DOI: 10.1214/[provided by typesetter]}.
+\end{bmisc}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Ribeiro, Singh and
+  Guestrin}{2016}]{ribeiro2016lime}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Ribeiro},~\bfnm{Marco~Tulio}\binits{M.~T.}},
+  \bauthor{\bsnm{Singh},~\bfnm{Sameer}\binits{S.}} \AND
+  \bauthor{\bsnm{Guestrin},~\bfnm{Carlos}\binits{C.}}
+(\byear{2016}).
+\btitle{{``Why Should {I} Trust You?''}:\ Explaining the Predictions of Any
+  Classifier}.
+In \bbooktitle{Proceedings of the 22nd ACM SIGKDD International Conference on
+  Knowledge Discovery and Data Mining}
+\bpages{1135--1144}.
+\bdoi{10.1145/2939672.2939778}
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Roy and Teh}{2009}]{roy2009mondrian}
+\begin{binproceedings}[author]
+\bauthor{\bsnm{Roy},~\bfnm{Daniel~M.}\binits{D.~M.}} \AND
+  \bauthor{\bsnm{Teh},~\bfnm{Yee~Whye}\binits{Y.~W.}}
+(\byear{2009}).
+\btitle{The Mondrian Process}.
+In \bbooktitle{Advances in Neural Information Processing Systems}
+\bvolume{21}
+\bpages{1377--1384}.
+\end{binproceedings}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Scholbeck et~al.}{2024}]{scholbeck2024fme}
+\begin{barticle}[author]
+\bauthor{\bsnm{Scholbeck},~\bfnm{Christian~A.}\binits{C.~A.}},
+  \bauthor{\bsnm{Casalicchio},~\bfnm{Giuseppe}\binits{G.}},
+  \bauthor{\bsnm{Molnar},~\bfnm{Christoph}\binits{C.}},
+  \bauthor{\bsnm{Bischl},~\bfnm{Bernd}\binits{B.}} \AND
+  \bauthor{\bsnm{Heumann},~\bfnm{Christian}\binits{C.}}
+(\byear{2024}).
+\btitle{Marginal Effects for Non-Linear Prediction Functions}.
+\bjournal{Data Mining and Knowledge Discovery}
+\bvolume{38}
+\bpages{2997--3042}.
+\bdoi{10.1007/s10618-023-00993-x}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Scornet, Biau and
+  Vert}{2015}]{scornet2015forests}
+\begin{barticle}[author]
+\bauthor{\bsnm{Scornet},~\bfnm{Erwan}\binits{E.}},
+  \bauthor{\bsnm{Biau},~\bfnm{G{\'e}rard}\binits{G.}} \AND
+  \bauthor{\bsnm{Vert},~\bfnm{Jean-Philippe}\binits{J.-P.}}
+(\byear{2015}).
+\btitle{Consistency of Random Forests}.
+\bjournal{The Annals of Statistics}
+\bvolume{43}
+\bpages{1716--1741}.
+\bdoi{10.1214/15-AOS1321}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{van~der Vaart and
+  Wellner}{1996}]{vandervaart1996weak}
+\begin{bbook}[author]
+\bauthor{\bparticle{van~der} \bsnm{Vaart},~\bfnm{Aad~W.}\binits{A.~W.}} \AND
+  \bauthor{\bsnm{Wellner},~\bfnm{Jon~A.}\binits{J.~A.}}
+(\byear{1996}).
+\btitle{Weak Convergence and Empirical Processes}.
+\bseries{Springer Series in Statistics}.
+\bpublisher{Springer}, \baddress{New York}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Wager and Athey}{2018}]{wager2018forests}
+\begin{barticle}[author]
+\bauthor{\bsnm{Wager},~\bfnm{Stefan}\binits{S.}} \AND
+  \bauthor{\bsnm{Athey},~\bfnm{Susan}\binits{S.}}
+(\byear{2018}).
+\btitle{Estimation and Inference of Heterogeneous Treatment Effects Using
+  Random Forests}.
+\bjournal{Journal of the American Statistical Association}
+\bvolume{113}
+\bpages{1228--1242}.
+\bdoi{10.1080/01621459.2017.1319839}
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Wager, Hastie and
+  Efron}{2014}]{wager2014confidence}
+\begin{barticle}[author]
+\bauthor{\bsnm{Wager},~\bfnm{Stefan}\binits{S.}},
+  \bauthor{\bsnm{Hastie},~\bfnm{Trevor}\binits{T.}} \AND
+  \bauthor{\bsnm{Efron},~\bfnm{Bradley}\binits{B.}}
+(\byear{2014}).
+\btitle{Confidence Intervals for Random Forests: The Jackknife and the
+  Infinitesimal Jackknife}.
+\bjournal{Journal of Machine Learning Research}
+\bvolume{15}
+\bpages{1625--1651}.
+\end{barticle}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Wooldridge}{2010}]{wooldridge2010}
+\begin{bbook}[author]
+\bauthor{\bsnm{Wooldridge},~\bfnm{Jeffrey~M.}\binits{J.~M.}}
+(\byear{2010}).
+\btitle{Econometric Analysis of Cross Section and Panel Data},
+\bedition{2} ed.
+\bpublisher{MIT Press}, \baddress{Cambridge, MA}.
+\end{bbook}
+\endbibitem
+
+\bibitem[\protect\citeauthoryear{Yeh}{2009}]{yeh2009}
+\begin{bmisc}[author]
+\bauthor{\bsnm{Yeh},~\bfnm{I-Cheng}\binits{I.-C.}}
+(\byear{2009}).
+\btitle{The Default of Credit Card Clients Dataset}.
+\bnote{UCI Machine Learning Repository}.
+\end{bmisc}
+\endbibitem
+
+\end{thebibliography}

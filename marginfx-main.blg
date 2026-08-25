@@ -1,0 +1,195 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: marginfx-main.aux
+The style file: imsart-nameyear.bst
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: references.bib
+Repeated entry---line 413 of file references.bib
+ : @article{decock2011
+ :                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 433 of file references.bib
+ : @misc{kohavi1996
+ :                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 447 of file references.bib
+ : @misc{UCI
+ :          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 463 of file references.bib
+ : @misc{yeh2009
+ :              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 479 of file references.bib
+ : @book{ambrosio2000bv
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 499 of file references.bib
+ : @article{buhlmann2003boosting
+ :                              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 521 of file references.bib
+ : @book{evans2010pde
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 545 of file references.bib
+ : @book{evans2015measure
+ :                       ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 565 of file references.bib
+ : @article{hornik1990universal
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 609 of file references.bib
+ : @inproceedings{mason2000boosting
+ :                                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 629 of file references.bib
+ : @article{scornet2015forests
+ :                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 651 of file references.bib
+ : @article{wager2014confidence
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 671 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 693 of file references.bib
+ : @inproceedings{lakshminarayanan2014mondrian
+ :                                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 711 of file references.bib
+ : @inproceedings{roy2009mondrian
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 729 of file references.bib
+ : @book{greene2012
+ :                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 747 of file references.bib
+ : @book{wooldridge2010
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 779 of file references.bib
+ : @article{efron1979
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 801 of file references.bib
+ : @book{efrontibshirani1993
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1079 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1103 of file references.bib
+ : @book{ambrosio2000bv
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1123 of file references.bib
+ : @article{buhlmann2003boosting
+ :                              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1145 of file references.bib
+ : @book{evans2010pde
+ :                   ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1169 of file references.bib
+ : @article{hornik1990universal
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1215 of file references.bib
+ : @inproceedings{mason2000boosting
+ :                                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1237 of file references.bib
+ : @article{scornet2015forests
+ :                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1259 of file references.bib
+ : @article{wager2014confidence
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1281 of file references.bib
+ : @inproceedings{lakshminarayanan2014mondrian
+ :                                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1299 of file references.bib
+ : @inproceedings{roy2009mondrian
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1339 of file references.bib
+ : @book{evans2015measure
+ :                       ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1359 of file references.bib
+ : @book{vandervaart1996weak
+ :                          ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1379 of file references.bib
+ : @article{jacot2018ntk
+ :                      ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1399 of file references.bib
+ : @incollection{horowitz2000bootstrap
+ :                                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1423 of file references.bib
+ : @article{wager2018forests
+ :                          ,
+I'm skipping whatever remains of this entry
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+You've used 37 entries,
+            5204 wiz_defined-function locations,
+            1076 strings with 11523 characters,
+and the built_in function-call counts, 170591 in all, are:
+= -- 28870
+> -- 521
+< -- 67
++ -- 11756
+- -- 208
+* -- 8194
+:= -- 27339
+add.period$ -- 125
+call.type$ -- 37
+change.case$ -- 221
+chr.to.int$ -- 36
+cite$ -- 37
+duplicate$ -- 1175
+empty$ -- 6791
+format.name$ -- 665
+if$ -- 42282
+int.to.chr$ -- 2
+int.to.str$ -- 1
+missing$ -- 0
+newline$ -- 401
+num.names$ -- 174
+pop$ -- 844
+preamble$ -- 1
+purify$ -- 141
+quote$ -- 0
+skip$ -- 17071
+stack$ -- 0
+substring$ -- 20632
+swap$ -- 384
+text.length$ -- 333
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 922
+warning$ -- 0
+while$ -- 517
+width$ -- 0
+write$ -- 844
+(There were 34 error messages)

@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  26 MAY 2026 10:18
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  25 JUN 2026 14:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**paper_ieee.tex
-(./paper_ieee.tex
+**paper_icdm.tex
+(./paper_icdm.tex
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
 (c:/texlive/2026/texmf-dist/tex/latex/ieeetran/IEEEtran.cls
@@ -509,8 +509,8 @@ Document Style - pseudocode environments for use with the `algorithmicx' style
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count340
 )
-(./paper_ieee.aux)
-\openout1 = `paper_ieee.aux'.
+(./paper_icdm.aux)
+\openout1 = `paper_icdm.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 49.
 LaTeX Font Info:    ... okay on input line 49.
@@ -556,9 +556,9 @@ e
 ))
 Package hyperref Info: Link coloring OFF on input line 49.
 
-(./paper_ieee.out) (./paper_ieee.out)
+(./paper_icdm.out) (./paper_icdm.out)
 \@outlinefile=\write3
-\openout3 = `paper_ieee.out'.
+\openout3 = `paper_icdm.out'.
 
 LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 6
 7.
@@ -663,7 +663,7 @@ pdfTeX warning (ext4): destination with the same identifier (name{table.7}) has
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
 l.550 	
-       ] (./paper_ieee.bbl)
+       ] (./paper_icdm.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -677,7 +677,7 @@ Before submitting the final camera ready copy, remember to:
 
 [10
 
-] (./paper_ieee.aux)
+] (./paper_icdm.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -686,7 +686,7 @@ L3 programming layer <2026-01-19>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-Package rerunfilecheck Info: File `paper_ieee.out' has not changed.
+Package rerunfilecheck Info: File `paper_icdm.out' has not changed.
 (rerunfilecheck)             Checksum: 1128FA054006AAE4224B3BA0D1366162;1163.
  ) 
 Here is how much of TeX's memory you used:
@@ -717,7 +717,7 @@ ive/2026/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/
 fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/ti
 mes/utmbi8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/times/utmr8a.pfb><c
 :/texlive/2026/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on paper_ieee.pdf (10 pages, 279074 bytes).
+Output written on paper_icdm.pdf (10 pages, 279071 bytes).
 PDF statistics:
  304 PDF objects out of 1000 (max. 8388607)
  243 compressed objects within 3 object streams

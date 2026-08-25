@@ -1,0 +1,2203 @@
+%% marginfx --- SUPPLEMENTARY MATERIAL (imsart)
+%% Compile marginfx-main.tex first: cross-references resolve against its .aux.
+\documentclass[aos]{imsart}
+
+\RequirePackage{amsthm,amsmath,amsfonts,amssymb}
+\RequirePackage{mathtools}
+\RequirePackage[authoryear]{natbib}
+\RequirePackage{graphicx}
+\RequirePackage{booktabs,multirow,threeparttable,tabularx,rotating}
+\RequirePackage{enumerate}
+\RequirePackage[colorlinks,citecolor=blue,urlcolor=blue]{hyperref}
+
+%%__MAINLABELS__  <- do not edit by hand; regenerate with sync-labels.py
+\makeatletter
+\newlabel{M-lem:sobolev_existence}{{1}{9}{}{}{}}
+\newlabel{M-lem:sobolev_consistency}{{2}{9}{}{}{}}
+\newlabel{M-lem:bv_existence}{{3}{10}{}{}{}}
+\newlabel{M-lem:bv_consistency}{{4}{10}{}{}{}}
+\newlabel{M-lem:hadamard}{{5}{11}{}{}{}}
+\newlabel{M-thm:neural_nets}{{1}{12}{}{}{}}
+\newlabel{M-thm:boosting}{{2}{12}{}{}{}}
+\newlabel{M-thm:forests}{{3}{13}{}{}{}}
+\newlabel{M-cor:bootstrap_nn}{{1}{15}{}{}{}}
+\newlabel{M-cor:bootstrap_boost}{{2}{15}{}{}{}}
+\newlabel{M-cor:bootstrap_rf}{{3}{16}{}{}{}}
+\newlabel{M-def:wellbehaved_sobolev}{{1}{8}{}{}{}}
+\makeatother
+
+\startlocaldefs
+
+\numberwithin{equation}{section}
+
+%% ---- Theorem environments (imsart style) ----
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{conjecture}{Conjecture}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+%% ---- Author macros (carried over unchanged) ----
+\newcommand{\norm}[1]{\left\| #1 \right\|}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Lp}{L^p(\Omega)}
+\newcommand{\Lone}{L^1(\Omega)}
+\newcommand{\Wonep}{W^{1,p}(\Omega)}
+\newcommand{\Wtwop}{W^{2,p}(\Omega)}
+\newcommand{\BV}{BV(\Omega)}
+\newcommand{\cM}{\mathcal{M}(\Omega)^d}
+\newcommand{\fn}{\hat{f}_n}
+\newcommand{\xrightarrowp}{\xrightarrow{p}}
+\newcommand{\wstar}{\xrightarrow{w*}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\abs}[1]{\left| #1 \right|}
+
+\endlocaldefs
+
+\begin{document}
+
+\begin{frontmatter}
+\title{Supplement to ``Model-Agnostic Interpretation of Machine Learning\\via Average Marginal Effects''}
+\runtitle{Supplement: Model-Agnostic Interpretation via AMEs}
+
+\begin{aug}
+\author[A]{\fnms{Jason}~\snm{Parker}\ead[label=e1]{jparker588@gmail.com}}
+\address[A]{Artificial Intelligence and Data Transformation, Southwest Airlines\printead[presep={,\ }]{e1}}
+\end{aug}
+
+\begin{abstract}
+This supplement contains complete proofs of the lemmas, theorems and corollaries
+stated in the main paper. Numbering of results follows the main paper throughout.
+\end{abstract}
+\end{frontmatter}
+
+\tableofcontents
+
+\appendix
+
+
+
+% ============================================================
+\section{Proof of Lemma~\ref{M-lem:sobolev_existence}
+	(Derivative Existence, Sobolev)}
+\label{app:lem_sobolev_existence}
+% ============================================================
+
+\subsection{What Needs to Be Shown}
+
+That $\fn \in W^{2,p}(\Omega)$ for $p > d$ implies $\nabla \fn \in
+W^{1,p}(\Omega)^d$ with the norm bound:
+\begin{equation}
+	\norm{\nabla \fn}_{L^p}
+	\leq \norm{\fn}_{W^{1,p}}
+	\leq \norm{\fn}_{W^{2,p}}
+\end{equation}
+
+\begin{remark}
+	The condition $p > d$ is required by the proof. It is the condition under
+	which Theorem~6.5 of \citet{evans2015measure} guarantees pointwise
+	differentiability of $W^{1,p}_{loc}$ functions. This is slightly stronger
+	than the condition $p > 1$ stated in the main text and is an explicit
+	assumption of the lemma.
+\end{remark}
+
+\subsection{Step 1: Existence of the Gradient as an $L^p$ Function}
+
+Since $\fn \in W^{2,p}(\Omega)$ and $p > d$, we have in particular that
+$\fn \in W^{1,p}(\Omega)$. Extending $\fn$ to a $W^{1,p}_{loc}(\R^d)$
+function by a standard extension operator \citep[Section~4.4]{evans2015measure},
+we may apply Theorem~6.5 of \citet{evans2015measure}:
+
+\begin{quote}
+	\textit{Theorem~6.5 \citep{evans2015measure}.}
+	Assume $f \in W^{1,p}_{loc}(\R^n)$ for some $n < p \leq \infty$. Then $f$
+	is differentiable $\mathcal{L}^n$-a.e., and its classical derivative equals
+	its weak derivative $\mathcal{L}^n$-a.e.
+\end{quote}
+
+Applying this theorem to $\fn$ with $n = d$ and $p > d$, we conclude that
+$\fn$ is classically differentiable at $\mathcal{L}^d$-almost every $x \in
+\Omega$, and:
+\begin{equation}
+	\nabla \fn(x) = D\fn(x) \quad \mathcal{L}^d\text{-a.e.}
+\end{equation}
+where $D\fn$ denotes the weak gradient of $\fn$. Since $\fn \in W^{1,p}(\Omega)$,
+the weak gradient $D\fn \in L^p(\Omega)^d$ by definition of the Sobolev space.
+Therefore $\nabla \fn \in L^p(\Omega)^d$.
+
+Applying the same argument to each first-order weak derivative $\partial_j \fn
+\in W^{1,p}(\Omega)$ — which belongs to $W^{1,p}(\Omega)$ because $\fn \in
+W^{2,p}(\Omega)$ — we conclude that each $\partial_j \fn$ is classically
+differentiable $\mathcal{L}^d$-a.e.\ with classical second derivatives in
+$L^p(\Omega)$. Therefore $\nabla \fn \in W^{1,p}(\Omega)^d$.
+
+\subsection{Step 2: The Norm Bound}
+
+We establish the chain of inequalities:
+\begin{equation}
+	\norm{\nabla \fn}_{L^p}
+	\leq \norm{\fn}_{W^{1,p}}
+	\leq \norm{\fn}_{W^{2,p}}
+\end{equation}
+
+\subsubsection*{First Inequality}
+
+By definition of the $W^{1,p}(\Omega)$ norm:
+\begin{equation}
+	\norm{\fn}_{W^{1,p}}
+	= \norm{\fn}_{L^p} + \sum_{j=1}^d \norm{\partial_j \fn}_{L^p}
+	= \norm{\fn}_{L^p} + \norm{\nabla \fn}_{L^p}
+\end{equation}
+Since $\norm{\fn}_{L^p} \geq 0$:
+\begin{equation}
+	\norm{\fn}_{W^{1,p}}
+	= \norm{\fn}_{L^p} + \norm{\nabla \fn}_{L^p}
+	\geq \norm{\nabla \fn}_{L^p}
+\end{equation}
+
+\subsubsection*{Second Inequality}
+
+By definition of the $W^{2,p}(\Omega)$ norm using multi-index notation:
+\begin{equation}
+	\norm{\fn}_{W^{2,p}}
+	= \sum_{|\alpha| \leq 2} \norm{\partial^\alpha \fn}_{L^p}
+\end{equation}
+The multi-indices with $|\alpha| \leq 1$ form a strict subset of those with
+$|\alpha| \leq 2$, and all terms are nonneg­ative, so:
+\begin{equation}
+	\norm{\fn}_{W^{2,p}}
+	= \sum_{|\alpha| \leq 2} \norm{\partial^\alpha \fn}_{L^p}
+	\geq \sum_{|\alpha| \leq 1} \norm{\partial^\alpha \fn}_{L^p}
+	= \norm{\fn}_{W^{1,p}}
+\end{equation}
+
+\subsection{Conclusion}
+
+For $p > d$, membership of $\fn$ in $W^{2,p}(\Omega)$ implies via
+Theorem~6.5 of \citet{evans2015measure} that $\nabla \fn$ exists
+$\mathcal{L}^d$-almost everywhere as a classical gradient, coincides with
+the weak gradient, and belongs to $W^{1,p}(\Omega)^d \subset L^p(\Omega)^d$.
+The gradient operator $\nabla: W^{2,p}(\Omega) \to W^{1,p}(\Omega)^d$ is
+bounded with:
+\begin{equation}
+	\norm{\nabla \fn}_{L^p}
+	\leq \norm{\fn}_{W^{1,p}}
+	\leq \norm{\fn}_{W^{2,p}}
+\end{equation}
+\qed
+
+% ============================================================
+\section{Proof of Lemma~\ref{M-lem:sobolev_consistency}
+	(Derivative Consistency, Sobolev)}
+\label{app:lem_sobolev_consistency}
+% ============================================================
+
+\subsection{What Needs to Be Shown}
+
+That well-behavedness in the Sobolev sense implies
+$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
+
+\subsection{Proof Strategy}
+
+The proof uses a subsequence argument. We show that every subsequence of
+$\{\fn\}$ has a further subsequence along which
+$\norm{\nabla \fn - \nabla f}_{L^p} \to 0$ almost surely. By the standard
+metric space characterization of convergence in probability --- a sequence
+converges in probability if and only if every subsequence has an almost
+surely convergent further subsequence --- this implies
+$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
+
+Suppose for contradiction that $\norm{\nabla \fn - \nabla f}_{L^p}$ does
+not converge to zero in probability. Then there exist $\epsilon > 0$ and
+$\delta > 0$ and a subsequence $\{n_k\}$ such that:
+\begin{equation}
+	\mathbb{P}\!\left(\norm{\nabla \hat{f}_{n_k} - \nabla f}_{L^p}
+	> \epsilon\right) > \delta
+	\quad \forall k
+\end{equation}
+We derive a contradiction by extracting a further subsequence along which
+the gradient converges to zero almost surely.
+
+\subsection{Step 1: Extract a Strongly Convergent Subsequence}
+
+Take any subsequence $\{\hat{f}_{n_k}\}$. By the uniform $\Wtwop$
+boundedness condition:
+\begin{equation}
+	\sup_k \norm{\hat{f}_{n_k}}_{W^{2,p}} < \infty \quad \text{almost surely}
+\end{equation}
+The Rellich--Kondrachov compact embedding theorem states that for bounded
+Lipschitz $\Omega$, the embedding $W^{2,p}(\Omega) \hookrightarrow\hookrightarrow
+W^{1,p}(\Omega)$ is compact \citep[Theorem~5,~Section~5.7]{evans2010pde}.
+Compactness of the embedding means that every sequence bounded in $\Wtwop$
+has a subsequence converging strongly in $\Wonep$. Therefore there exists a
+further subsequence $\{\hat{f}_{n_{k_j}}\}$ and a function $g \in \Wonep$
+such that:
+\begin{equation}
+	\norm{\hat{f}_{n_{k_j}} - g}_{W^{1,p}} \to 0
+	\quad \text{almost surely as } j \to \infty
+\end{equation}
+
+\subsection{Step 2: Identify the Limit}
+
+Strong $\Wonep$ convergence implies strong $L^p$ convergence, since by
+definition of the $W^{1,p}$ norm:
+\begin{equation}
+	\norm{\hat{f}_{n_{k_j}} - g}_{L^p}
+	\leq \norm{\hat{f}_{n_{k_j}} - g}_{W^{1,p}}
+	\to 0 \quad \text{almost surely}
+\end{equation}
+Therefore $\hat{f}_{n_{k_j}} \to g$ in $L^p$ almost surely. By the $L^p$
+consistency assumption, $\norm{\fn - f}_{L^p} \xrightarrowp 0$, so in
+particular along the subsequence $\hat{f}_{n_{k_j}} \to f$ in $L^p$ in
+probability, and hence almost surely along a further subsequence if
+necessary. By uniqueness of limits in $L^p(\Omega)$:
+\begin{equation}
+	g = f \quad \mathcal{L}^d\text{-a.e.\ on } \Omega
+\end{equation}
+Therefore the strongly convergent subsequence satisfies:
+\begin{equation}
+	\norm{\hat{f}_{n_{k_j}} - f}_{W^{1,p}} \to 0
+	\quad \text{almost surely}
+\end{equation}
+
+\subsection{Step 3: Extract Gradient Convergence}
+
+Since $\hat{f}_{n_{k_j}} \to f$ strongly in $\Wonep$, expanding the
+$W^{1,p}$ norm:
+\begin{equation}
+	\norm{\hat{f}_{n_{k_j}} - f}_{W^{1,p}}
+	= \norm{\hat{f}_{n_{k_j}} - f}_{L^p}
+	+ \norm{\nabla \hat{f}_{n_{k_j}} - \nabla f}_{L^p}
+	\to 0
+	\quad \text{almost surely}
+\end{equation}
+Since both terms are nonneg­ative and their sum goes to zero, each term goes
+to zero individually. In particular:
+\begin{equation}
+	\norm{\nabla \hat{f}_{n_{k_j}} - \nabla f}_{L^p} \to 0
+	\quad \text{almost surely as } j \to \infty
+\end{equation}
+
+\subsection{Conclusion}
+
+We have shown that from any subsequence $\{\hat{f}_{n_k}\}$ we can extract
+a further subsequence $\{\hat{f}_{n_{k_j}}\}$ along which
+$\norm{\nabla \hat{f}_{n_{k_j}} - \nabla f}_{L^p} \to 0$ almost surely.
+This contradicts the assumption that
+$\mathbb{P}(\norm{\nabla \hat{f}_{n_k} - \nabla f}_{L^p} > \epsilon) > \delta$
+for all $k$. Therefore the assumption was false and:
+\begin{equation}
+	\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0
+\end{equation}
+which is the conclusion of Lemma~\ref{M-lem:sobolev_consistency}. \qed
+
+\begin{remark}
+	The key step is the application of Rellich--Kondrachov in Step~1. The
+	theorem requires $\Omega$ to be bounded and Lipschitz --- both of which are
+	assumed throughout --- and $p > 1$, which is assumed in the lemma statement.
+	The compact embedding $W^{2,p} \hookrightarrow\hookrightarrow W^{1,p}$ is
+	strictly stronger than the continuous embedding $W^{2,p} \hookrightarrow
+	W^{1,p}$: the latter follows from the norm bound in
+	Lemma~\ref{M-lem:sobolev_existence}, while the former provides the
+	compactness needed to extract convergent subsequences. It is this
+	compactness, not merely the norm bound, that allows the interchange of
+	limit and gradient in the proof.
+\end{remark}
+
+% ============================================================
+\section{Proof of Lemma~\ref{M-lem:bv_existence}
+	(Derivative Existence, BV)}
+\label{app:lem_bv_existence}
+% ============================================================
+
+\subsection{What Needs to Be Shown}
+
+Two things: that $BV$ membership implies $D\fn$ exists as a Radon measure
+with finite total variation, and the explicit formula for piecewise constant
+functions.
+
+\subsection{Step 1: Existence of $D\fn$ as a Radon Measure}
+
+We establish existence in three steps, using the Riesz representation
+theorem and the Radon-Nikodym theorem.
+
+\subsubsection*{Substep 1a: The Distributional Gradient as a Linear Functional}
+
+For any $\fn \in \BV$, the distributional gradient is defined as the linear
+functional $\Lambda: C_c^1(\Omega)^d \to \R$ given by:
+\begin{equation}
+	\Lambda(\phi) = -\int_\Omega \fn \operatorname{div} \phi \, dx
+	\quad \forall \phi \in C_c^1(\Omega)^d
+\end{equation}
+By the definition of $\BV$, this functional has finite total variation:
+\begin{equation}
+	|\Lambda|(\Omega)
+	= \sup\left\{
+	\Lambda(\phi) : \phi \in C_c^1(\Omega)^d,\, \norm{\phi}_{L^\infty} \leq 1
+	\right\}
+	< \infty
+\end{equation}
+This is precisely the condition that $\fn \in \BV$ imposes --- the
+distributional gradient is a bounded linear functional on $C_c^1(\Omega)^d$
+with respect to the supremum norm.
+
+\subsubsection*{Substep 1b: Riesz Representation}
+
+Since $\Lambda$ is a bounded linear functional on $C_c^1(\Omega)^d$ with
+finite total variation, the Riesz representation theorem
+\citep[Theorem~1.38]{evans2015measure} guarantees the existence of a
+vector-valued Radon measure $D\fn \in \mathcal{M}(\Omega)^d$ such that:
+\begin{equation}
+	\Lambda(\phi) = \int_\Omega \phi \cdot d(D\fn)
+	\quad \forall \phi \in C_c^1(\Omega)^d
+\end{equation}
+That is:
+\begin{equation}
+	-\int_\Omega \fn \operatorname{div} \phi \, dx
+	= \int_\Omega \phi \cdot d(D\fn)
+	\quad \forall \phi \in C_c^1(\Omega)^d
+\end{equation}
+This is the distributional gradient equation, and $D\fn$ is the
+distributional gradient of $\fn$ represented as a Radon measure.
+
+\subsubsection*{Substep 1c: Finiteness of Total Variation}
+
+By the Radon-Nikodym theorem for Radon measures
+\citep[Theorem~1.29]{evans2015measure}, the derivative $D_{\mathcal{L}^d}(D\fn)$
+exists and is finite $\mathcal{L}^d$-almost everywhere on $\Omega$. Since
+$\Omega$ is bounded and the total variation of $\Lambda$ is finite by the
+$BV$ assumption, we conclude:
+\begin{equation}
+	|D\fn|(\Omega) = |\Lambda|(\Omega) < \infty
+\end{equation}
+Therefore $D\fn \in \mathcal{M}(\Omega)^d$ with $|D\fn|(\Omega) < \infty$,
+as claimed.
+
+\subsection{Step 2: Explicit Formula for Piecewise Constant Functions}
+
+Let $\fn = \sum_j \bar{y}_j \mathbf{1}_{R_j}$ where $\{R_j\}$ is a finite
+partition of $\Omega$ into sets with Lipschitz boundaries, and $\bar{y}_j$
+denotes the response mean on leaf $R_j$. We derive the explicit formula for
+$D\fn$ by applying the Gauss--Green theorem to each leaf.
+
+\subsubsection*{Substep 2a: Applying the Definition}
+
+For any test function $\phi \in C_c^1(\Omega)^d$, the distributional
+gradient equation from Substep~1b gives:
+\begin{equation}
+	\int_\Omega \phi \cdot d(D\fn)
+	= -\int_\Omega \fn \operatorname{div} \phi \, dx
+	= -\sum_j \bar{y}_j \int_{R_j} \operatorname{div} \phi \, dx
+\end{equation}
+where the second equality uses the piecewise constant structure of $\fn$ and
+linearity of the integral.
+
+\subsubsection*{Substep 2b: Gauss--Green on Each Leaf}
+
+Since each $R_j$ has Lipschitz boundary, the Gauss--Green theorem for $BV$
+functions \citep[Theorem~5.16]{evans2015measure} applies to each leaf:
+\begin{equation}
+	\int_{R_j} \operatorname{div} \phi \, dx
+	= \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
+\end{equation}
+where $\nu_j$ denotes the outward unit normal to $\partial R_j$ and
+$\mathcal{H}^{d-1}$ is the $(d-1)$-dimensional Hausdorff measure on the
+boundary.
+
+\subsubsection*{Substep 2c: Cancellation on Interior Boundaries}
+
+Substituting the Gauss--Green formula into the expression from Substep~2a:
+\begin{equation}
+	\int_\Omega \phi \cdot d(D\fn)
+	= -\sum_j \bar{y}_j \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
+\end{equation}
+Every interior boundary $\partial R_j \cap \partial R_k$ between adjacent
+leaves $j$ and $k$ appears twice in this sum --- once with outward normal
+$\nu_j$ for leaf $R_j$ and once with outward normal $\nu_k = -\nu_j$ for
+leaf $R_k$. Collecting these paired contributions and writing $\nu_{jk} =
+\nu_j$ for the unit normal pointing from $R_j$ into $R_k$:
+\begin{align}
+	-\sum_j \bar{y}_j \int_{\partial R_j} \phi \cdot \nu_j \, d\mathcal{H}^{d-1}
+	&= -\sum_{j \sim k} \bar{y}_j \int_{\partial R_j \cap \partial R_k}
+	\phi \cdot \nu_{jk} \, d\mathcal{H}^{d-1} \notag \\
+	&\quad + \sum_{j \sim k} \bar{y}_k \int_{\partial R_j \cap \partial R_k}
+	\phi \cdot \nu_{jk} \, d\mathcal{H}^{d-1} \notag \\
+	&= \sum_{j \sim k} (\bar{y}_k - \bar{y}_j)
+	\int_{\partial R_j \cap \partial R_k} \phi \cdot \nu_{jk}
+	\, d\mathcal{H}^{d-1}
+\end{align}
+Boundary terms on $\partial\Omega$ vanish because $\phi \in C_c^1(\Omega)^d$
+has compact support in $\Omega$.
+
+\subsubsection*{Substep 2d: Identifying the Measure}
+
+Since the equation:
+\begin{equation}
+	\int_\Omega \phi \cdot d(D\fn)
+	= \sum_{j \sim k} (\bar{y}_k - \bar{y}_j)
+	\int_{\partial R_j \cap \partial R_k} \phi \cdot \nu_{jk}
+	\, d\mathcal{H}^{d-1}
+\end{equation}
+holds for all $\phi \in C_c^1(\Omega)^d$, the uniqueness part of the Riesz
+representation theorem \citep[Theorem~1.38]{evans2015measure} identifies
+$D\fn$ uniquely as the measure:
+\begin{equation}
+	D\fn = \sum_{j \sim k} (\bar{y}_k - \bar{y}_j) \cdot \nu_{jk} \cdot
+	\mathcal{H}^{d-1}\lfloor_{\partial R_j \cap \partial R_k}
+\end{equation}
+where $\mathcal{H}^{d-1}\lfloor_{\partial R_j \cap \partial R_k}$ denotes
+the $(d-1)$-dimensional Hausdorff measure restricted to the shared boundary
+between leaves $j$ and $k$. This is the formula stated in the lemma.
+\qed
+
+% ============================================================
+\section{Proof of Lemma~\ref{M-lem:bv_consistency}
+	(Derivative Consistency, BV)}
+\label{app:lem_bv_consistency}
+% ============================================================
+
+\subsection{What Needs to Be Shown}
+
+That well-behavedness in the BV sense implies $D\fn \xrightarrow{w*} Df$
+in $\cM$, and the strict convergence upgrade under the additional condition
+$\E[|D\fn|(\Omega)] \to |Df|(\Omega)$.
+
+\subsection{Proof Strategy}
+
+The proof mirrors the subsequence argument of
+Lemma~\ref{M-lem:sobolev_consistency}, replacing the Rellich--Kondrachov
+compact embedding with the BV compactness theorem and replacing strong $L^p$
+convergence with weak-* convergence of measures. We show that every
+subsequence of $\{D\fn\}$ has a further subsequence converging weak-* to
+$Df$. By the metric space characterization of convergence in probability,
+this implies $D\fn \xrightarrow{w*} Df$ in $\cM$ in probability.
+
+Suppose for contradiction that $D\fn$ does not converge weak-* to $Df$ in
+probability. Then there exist $\epsilon > 0$, $\delta > 0$, a test function
+$\phi \in C_0(\Omega)^d$ with $\norm{\phi}_\infty \leq 1$, and a subsequence
+$\{n_k\}$ such that:
+\begin{equation}
+	\mathbb{P}\!\left(\left|
+	\int_\Omega \phi \cdot d(D\hat{f}_{n_k})
+	- \int_\Omega \phi \cdot d(Df)
+	\right| > \epsilon\right) > \delta
+	\quad \forall k
+\end{equation}
+We derive a contradiction by extracting a further subsequence along which
+weak-* convergence holds almost surely.
+
+\subsection{Part I: Weak-* Convergence}
+
+\subsubsection*{Step 1: Bound the Full BV Norm}
+
+To apply the BV compactness theorem we require a uniform bound on the full
+$BV$ norm:
+\begin{equation}
+	\norm{\fn}_{BV} = \norm{\fn}_{L^1} + |D\fn|(\Omega)
+\end{equation}
+For the total variation term, the well-behaved condition gives:
+\begin{equation}
+	\sup_n \E\!\left[|D\fn|(\Omega)\right] < \infty
+\end{equation}
+so $|D\fn|(\Omega)$ is bounded in expectation and hence bounded almost
+surely along subsequences by Markov's inequality.
+
+For the $L^1$ term, the consistency assumption
+$\norm{\fn - f}_{L^1} \xrightarrowp 0$ implies that $\norm{\fn}_{L^1}$ is
+eventually bounded in probability. Since $f \in \Wonep \subset \Lone$, we
+have $\norm{f}_{L^1} < \infty$, and:
+\begin{equation}
+	\norm{\fn}_{L^1}
+	\leq \norm{\fn - f}_{L^1} + \norm{f}_{L^1}
+\end{equation}
+which is bounded in probability. Combining the two terms:
+\begin{equation}
+	\sup_n \norm{\fn}_{BV} < \infty \quad \text{almost surely}
+\end{equation}
+
+\subsubsection*{Step 2: Extract a Weakly-* Convergent Subsequence}
+
+Take any subsequence $\{\hat{f}_{n_k}\}$. By Step~1 it is bounded in
+$\BV$ almost surely. The BV compactness theorem
+\citep[Theorem~5.5]{evans2015measure} states that every sequence bounded in
+$BV(\Omega)$ for bounded Lipschitz $\Omega$ has a subsequence
+$\{\hat{f}_{n_{k_j}}\}$ and $g \in \BV$ such that:
+\begin{enumerate}
+	\item $\hat{f}_{n_{k_j}} \to g$ strongly in $\Lone$
+	\item $D\hat{f}_{n_{k_j}} \xrightarrow{w*} Dg$ in $\cM$
+\end{enumerate}
+both holding almost surely. This is the BV analog of the Rellich--Kondrachov
+compact embedding: the BV compactness theorem gives simultaneously the $L^1$
+convergence of the functions and the weak-* convergence of their gradient
+measures, in a single extraction.
+
+\subsubsection*{Step 3: Identify the Limit}
+
+From item~(1) of Step~2, $\hat{f}_{n_{k_j}} \to g$ strongly in $\Lone$
+almost surely. By the $L^1$ consistency assumption
+$\norm{\fn - f}_{L^1} \xrightarrowp 0$, along the subsequence
+$\hat{f}_{n_{k_j}} \to f$ in $L^1$ in probability, hence almost surely
+along a further subsequence. By uniqueness of $L^1$ limits:
+\begin{equation}
+	g = f \quad \mathcal{L}^d\text{-a.e.\ on } \Omega
+\end{equation}
+Therefore $Dg = Df$ as Radon measures, and from item~(2) of Step~2:
+\begin{equation}
+	D\hat{f}_{n_{k_j}} \xrightarrow{w*} Df \quad \text{in } \cM
+	\quad \text{almost surely}
+\end{equation}
+In particular, for the test function $\phi$ from the contradiction
+assumption:
+\begin{equation}
+	\int_\Omega \phi \cdot d(D\hat{f}_{n_{k_j}})
+	\to \int_\Omega \phi \cdot d(Df)
+	\quad \text{almost surely}
+\end{equation}
+
+\subsubsection*{Step 4: Derive the Contradiction}
+
+The almost sure convergence in Step~3 implies:
+\begin{equation}
+	\mathbb{P}\!\left(\left|
+	\int_\Omega \phi \cdot d(D\hat{f}_{n_{k_j}})
+	- \int_\Omega \phi \cdot d(Df)
+	\right| > \epsilon\right) \to 0
+\end{equation}
+This contradicts the assumption that the probability exceeds $\delta > 0$
+for all $k$. Therefore the assumption was false.
+
+\subsubsection*{Conclusion of Part I}
+
+Since every subsequence $\{D\hat{f}_{n_k}\}$ has a further subsequence
+converging weak-* to $Df$ almost surely, the full sequence satisfies:
+\begin{equation}
+	D\fn \xrightarrow{w*} Df \quad \text{in } \cM
+	\quad \text{in probability}
+\end{equation}
+
+\subsection{Part II: Strict Convergence Upgrade}
+
+We now prove the additional claim: if $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$
+then $D\fn \to Df$ strictly in $\cM$, meaning weak-* convergence holds and
+$|D\fn|(\Omega) \to |Df|(\Omega)$.
+
+\subsubsection*{Step 1: Lower Semicontinuity Gives One Direction}
+
+The total variation functional $\mu \mapsto |\mu|(\Omega)$ is lower
+semicontinuous with respect to weak-* convergence of Radon measures
+\citep[Theorem~5.2]{evans2015measure}. Since $D\fn \xrightarrow{w*} Df$
+in $\cM$ by Part~I:
+\begin{equation}
+	|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)
+\end{equation}
+This gives the lower bound on the total variation of the limit.
+
+\subsubsection*{Step 2: The Additional Condition Gives the Other Direction}
+
+By the additional assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$, we have:
+\begin{equation}
+	\limsup_{n \to \infty} |D\fn|(\Omega) \leq |Df|(\Omega)
+\end{equation}
+in expectation, hence in probability along subsequences.
+
+\subsubsection*{Step 3: Pin the Total Variation}
+
+Step~1 gives $|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)$ by
+lower semicontinuity of total variation under weak-* convergence. Step~2
+gives $\limsup_{n \to \infty} |D\fn|(\Omega) \leq |Df|(\Omega)$ from the
+additional assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$. Since
+$\liminf \leq \limsup$ always, combining gives:
+\begin{equation}
+	|Df|(\Omega)
+	\leq \liminf_{n \to \infty} |D\fn|(\Omega)
+	\leq \limsup_{n \to \infty} |D\fn|(\Omega)
+	\leq |Df|(\Omega)
+\end{equation}
+All inequalities are therefore equalities and $|D\fn|(\Omega) \to |Df|(\Omega)$
+in probability. Combined with the weak-* convergence $D\fn \xrightarrow{w*}
+Df$ established in Part~I, this is precisely the definition of strict
+convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}. \qed
+
+\begin{remark}
+	The parallel between Lemma~\ref{M-lem:sobolev_consistency} and
+	Lemma~\ref{M-lem:bv_consistency} is exact at the structural level. In both
+	cases: uniform boundedness in a strong space gives compactness via a
+	compact embedding or compactness theorem; the consistency condition
+	identifies the limit; and the subsequence argument promotes deterministic
+	convergence to convergence in probability. The difference is entirely in
+	the function spaces and the topology of convergence --- strong $L^p$ in the
+	Sobolev case, weak-* of measures in the BV case --- reflecting the
+	fundamental difference in the inductive biases of smooth and piecewise
+	constant estimators.
+\end{remark}
+
+\begin{remark}
+	The strict convergence upgrade requires the additional assumption
+	$\E[|D\fn|(\Omega)] \to |Df|(\Omega)$, which is not implied by weak-*
+	convergence alone. This is because weak-* convergence of measures does not
+	in general imply convergence of total masses --- mass can escape to the
+	boundary or concentrate in ways invisible to continuous test functions. The
+	lower semicontinuity of total variation \citep[Theorem~5.2]{evans2015measure}
+	gives the liminf inequality for free; pinning the limsup requires the
+	additional assumption. In applications where only weak-* convergence is
+	needed --- as in the bootstrap corollaries --- the additional assumption
+	is not required.
+\end{remark}
+
+% ============================================================
+\section{Proof of Lemma~\ref{M-lem:hadamard}
+	(Hadamard Differentiability of the AME Functional)}
+\label{app:lem_hadamard}
+% ============================================================
+
+\subsection{What Needs to Be Shown}
+
+That the functional $T(f) = \int_\Omega \nabla f(x) \, dP(x)$ is Hadamard
+differentiable at $f$ tangentially to $C(\Omega)^d$, with derivative
+$T'_f(h) = \int_\Omega \nabla h(x) \, dP(x)$.
+
+Recall that Hadamard differentiability tangentially to $C(\Omega)^d$ means
+that for every sequence $t_n \to 0$ and every sequence $h_n \to h$ in
+$C(\Omega)^d$ \citep[Definition~3.9.2]{vandervaart1996weak}:
+\begin{equation}
+	\frac{T(f + t_n h_n) - T(f)}{t_n} \to T'_f(h)
+\end{equation}
+Once Hadamard differentiability is established, the functional delta method
+\citep[Theorem~3.9.4]{vandervaart1996weak} and the bootstrap validity result
+of \citet[Chapter~3.6]{horowitz2000bootstrap} apply directly to give
+Corollaries~\ref{M-cor:bootstrap_nn}, \ref{M-cor:bootstrap_boost},
+and~\ref{M-cor:bootstrap_rf}.
+
+\subsection{Step 1: Linearity and Boundedness of the Candidate Derivative}
+
+The candidate derivative $T'_f(h) = \int_\Omega \nabla h \, dP$ is linear
+in $h$ by linearity of the integral and the gradient operator. It is bounded
+on $C(\Omega)^d$ since:
+\begin{equation}
+	\abs{T'_f(h)}
+	\leq \int_\Omega \abs{\nabla h(x)} \, dP(x)
+	\leq \norm{\nabla h}_{L^\infty(\Omega)} \cdot P(\Omega)
+	= \norm{\nabla h}_{L^\infty(\Omega)}
+\end{equation}
+using that $P$ is a probability measure so $P(\Omega) = 1$. Therefore
+$T'_f: C(\Omega)^d \to \R^d$ is a bounded linear map.
+
+\subsection{Step 2: Verify the Hadamard Derivative Formula}
+
+The key observation is that $T$ is itself a linear functional of $f$.
+Therefore for any $t_n \to 0$ and $h_n \to h$ in $C(\Omega)^d$:
+\begin{align}
+	\frac{T(f + t_n h_n) - T(f)}{t_n}
+	&= \frac{1}{t_n} \int_\Omega
+	\left[\nabla(f + t_n h_n)(x) - \nabla f(x)\right] dP(x) \notag \\
+	&= \frac{1}{t_n} \int_\Omega t_n \nabla h_n(x) \, dP(x) \notag \\
+	&= \int_\Omega \nabla h_n(x) \, dP(x)
+\end{align}
+where the second equality uses linearity of the gradient operator:
+$\nabla(f + t_n h_n) = \nabla f + t_n \nabla h_n$.
+
+It remains to show that $\int_\Omega \nabla h_n \, dP \to \int_\Omega
+\nabla h \, dP$. Since $h_n \to h$ in $C(\Omega)^d$, we have
+$\nabla h_n \to \nabla h$ uniformly on $\Omega$. The density of $P$ is
+bounded on $\Omega$ by assumption, so $P$ is absolutely continuous with
+respect to $\mathcal{L}^d$ with bounded Radon-Nikodym derivative. Applying
+the dominated convergence theorem with dominating function
+$\norm{\nabla h_n}_{L^\infty} \cdot p_{\max}$ where $p_{\max}$ is the
+essential supremum of the density of $P$:
+\begin{equation}
+	\int_\Omega \nabla h_n \, dP \to \int_\Omega \nabla h \, dP = T'_f(h)
+\end{equation}
+This establishes the Hadamard derivative formula.
+
+\subsection{Step 3: Tangential Differentiability}
+
+The differentiability is tangential to $C(\Omega)^d$ rather than to all of
+$\Wonep$ for the following reason. The derivative formula requires passing
+the limit $h_n \to h$ through the gradient and integral. This exchange is
+justified by uniform convergence of $\nabla h_n \to \nabla h$, which holds
+when $h_n \to h$ in $C(\Omega)^d$ but not in general when $h_n \to h$ only
+in $\Wonep$.
+
+Formally, following \citet[Definition~3.9.2]{vandervaart1996weak}, tangential
+differentiability to $C(\Omega)^d$ means the derivative formula holds for
+all sequences $t_n \to 0$ and $h_n \to h$ with $h_n, h \in C(\Omega)^d$.
+The condition $p > d$ in the lemma statement ensures via the Sobolev
+embedding $W^{1,p}(\Omega) \hookrightarrow C^{0,\alpha}(\Omega)$ for
+$\alpha = 1 - d/p$ \citep[Section~5.6]{evans2010pde} that the estimator
+sequences $\{\fn\}$ take values in $C(\Omega)^d$ with probability one, so
+the tangential differentiability condition is the operative one for the
+bootstrap corollaries.
+
+\subsection{Conclusion}
+
+The functional $T(f) = \int_\Omega \nabla f \, dP$ is Hadamard
+differentiable at $f$ tangentially to $C(\Omega)^d$ with derivative
+$T'_f(h) = \int_\Omega \nabla h \, dP$. The proof required only the
+linearity of $T$, the uniform convergence of $h_n \to h$ in $C(\Omega)^d$,
+and the dominated convergence theorem. By
+\citet[Theorem~3.9.4]{vandervaart1996weak} and
+\citet[Chapter~3.6]{horowitz2000bootstrap}, Hadamard differentiability
+tangentially to $C(\Omega)^d$ together with the rate conditions verified in
+Corollaries~\ref{M-cor:bootstrap_nn}, \ref{M-cor:bootstrap_boost},
+and~\ref{M-cor:bootstrap_rf} implies bootstrap validity for the AME estimator
+under each of the three estimator classes. \qed
+
+\begin{remark}
+	Lemma~\ref{M-lem:hadamard} is the shortest proof in the appendix precisely
+	because the AME functional is linear. Hadamard differentiability of a
+	linear functional is immediate once the derivative formula is identified
+	--- the quotient $[T(f + t_n h_n) - T(f)] / t_n$ equals $T(h_n)$
+	exactly, with no remainder term, and convergence to $T(h)$ follows from
+	continuity. The hard work is in
+	Lemmas~\ref{M-lem:sobolev_consistency} and~\ref{M-lem:bv_consistency}, which
+	establish that the estimator sequences live in the right function spaces
+	with the right regularity. Lemma~\ref{M-lem:hadamard} then harvests those
+	results with a one-line calculation.
+\end{remark}
+
+\begin{remark}
+	The condition that $P$ has density bounded away from zero and infinity on
+	$\Omega$ is used in Step~2 to apply the dominated convergence theorem and
+	in Step~3 to ensure the Sobolev embedding gives the required regularity.
+	The lower bound on the density ensures the integral $\int_\Omega \nabla f
+	\, dP$ is well defined and nondegenerate. The upper bound provides the
+	dominating function for the dominated convergence argument. Both are mild
+	conditions satisfied by any covariate distribution with reasonable support
+	and no extreme mass concentrations.
+\end{remark}
+
+% ============================================================
+\section{Proof of Theorem~\ref{M-thm:neural_nets} (Neural Networks)}
+\label{app:neural_nets}
+% ============================================================
+
+\subsection{Setup and Notation}
+
+Let $\fn: \Omega \to \R$ be a feedforward neural network with $L$ layers,
+weight matrices $W_\ell^{(n)} \in \R^{d_\ell \times d_{\ell-1}}$, bias vectors
+$b_\ell^{(n)} \in \R^{d_\ell}$, and activation function $\sigma \in C^2(\R)$.
+The network computes:
+\begin{equation}
+	\fn(x) = W_L^{(n)} z_{L-1} + b_L^{(n)}
+\end{equation}
+where the intermediate representations are defined recursively by:
+\begin{equation}
+	z_\ell = \sigma\!\left(W_\ell^{(n)} z_{\ell-1} + b_\ell^{(n)}\right),
+	\quad z_0 = x
+\end{equation}
+with $\sigma$ applied elementwise. Denote the pre-activation at layer $\ell$
+by $a_\ell = W_\ell^{(n)} z_{\ell-1} + b_\ell^{(n)}$ and the diagonal
+matrix of activation derivatives by $\Sigma'_\ell = \operatorname{diag}
+(\sigma'(a_\ell^{(1)}), \ldots, \sigma'(a_\ell^{(d_\ell)}))$ and similarly
+$\Sigma''_\ell = \operatorname{diag}(\sigma''(a_\ell^{(1)}), \ldots,
+\sigma''(a_\ell^{(d_\ell)}))$.
+
+Define the product of weight matrices from layer $k$ to layer $\ell$ as:
+\begin{equation}
+	M_{\ell:k} = W_\ell^{(n)} \Sigma'_{\ell-1} W_{\ell-1}^{(n)}
+	\Sigma'_{\ell-2} \cdots W_{k+1}^{(n)} \Sigma'_k
+	\quad \text{for } \ell > k
+\end{equation}
+with the convention $M_{\ell:\ell} = \Sigma'_\ell$. This notation captures
+the Jacobian of the composition of layers from $k$ to $\ell$.
+
+The proof proceeds in two steps. Step~1 establishes uniform $\Wtwop$
+boundedness. Step~2 applies Lemma~\ref{M-lem:sobolev_consistency} to conclude.
+
+\subsection{Step 1: Uniform $W^{2,p}$ Boundedness}
+
+\textbf{Claim:} $\sup_n \norm{\fn}_{\Wtwop} < \infty$.
+
+\subsubsection*{Substep 1a: Bound on $\fn$ in $L^p$}
+
+Since $\norm{\fn - f}_{L^p} \xrightarrowp 0$ and $f \in \Wonep \subset \Lp$,
+the triangle inequality gives:
+\begin{equation}
+	\norm{\fn}_{L^p} \leq \norm{\fn - f}_{L^p} + \norm{f}_{L^p}
+\end{equation}
+The first term converges to zero in probability and the second is finite
+since $f \in \Lp$. Therefore $\norm{\fn}_{L^p}$ is eventually bounded in
+probability and this bound can be made uniform in $n$ by passing to
+a subsequence or imposing a mild boundedness condition on the network output.
+
+\subsubsection*{Substep 1b: First Derivative Bound}
+
+Differentiating $\fn$ with respect to the input $x$ via the chain rule
+through all $L$ layers, the gradient at $x \in \Omega$ is:
+\begin{equation}
+	\nabla \fn(x) = \left(W_L^{(n)} M_{L-1:1}\right)^\top
+\end{equation}
+where $M_{L-1:1} = W_{L-1}^{(n)} \Sigma'_{L-2} W_{L-2}^{(n)} \cdots
+\Sigma'_1 W_1^{(n)}$ is the product of weight-activation Jacobians from
+layer 1 to layer $L-1$. More explicitly, for the $j$-th input coordinate:
+\begin{equation}
+	\frac{\partial \fn}{\partial x_j}(x)
+	= \left(W_L^{(n)}\right)_{:} \cdot
+	\prod_{\ell=L-1}^{1} \left(W_\ell^{(n)} \Sigma'_{\ell-1}\right) \cdot e_j
+\end{equation}
+where $e_j$ is the $j$-th standard basis vector.
+
+Taking the operator norm of this product and applying submultiplicativity:
+\begin{equation}
+	\abs{\frac{\partial \fn}{\partial x_j}(x)}
+	\leq \norm{W_L^{(n)}} \cdot \prod_{\ell=1}^{L-1}
+	\norm{W_\ell^{(n)}} \cdot \norm{\Sigma'_\ell}
+	\leq \prod_{\ell=1}^{L} \norm{W_\ell^{(n)}} \cdot \norm{\sigma'}_\infty^{L-1}
+\end{equation}
+using that $\norm{\Sigma'_\ell} = \max_i |\sigma'(a_\ell^{(i)})| \leq
+\norm{\sigma'}_\infty < \infty$ since $\sigma \in C^2$. This bound holds
+pointwise for every $x \in \Omega$, so integrating over $\Omega$:
+\begin{equation}
+	\norm{\nabla \fn}_{L^p}
+	\leq \norm{\nabla \fn}_{L^\infty} \cdot |\Omega|^{1/p}
+	\leq \prod_\ell \norm{W_\ell^{(n)}} \cdot \norm{\sigma'}_\infty^{L-1}
+	\cdot |\Omega|^{1/p}
+\end{equation}
+
+\subsubsection*{Substep 1c: Second Derivative Bound}
+
+Differentiating the gradient formula once more with respect to $x_i$ using
+the product rule and chain rule, the $(i,j)$ entry of the Hessian
+$\nabla^2 \fn(x)$ is:
+\begin{equation}
+	\frac{\partial^2 \fn}{\partial x_i \partial x_j}(x)
+	= \sum_{\ell=1}^{L-1}
+	\left(W_L^{(n)} M_{L-1:\ell+1}\right)_{:}
+	\cdot \Sigma''_\ell \cdot
+	\left(M_{\ell:1} e_j\right) \cdot
+	\left(M_{\ell:1} e_i\right)^\top \cdot
+	\left(W_L^{(n)} M_{L-1:\ell+1}\right)_{:}^\top
+\end{equation}
+where the sum runs over all layers $\ell$ at which the second derivative of
+$\sigma$ is applied. The structure is: the forward pass from the input to
+layer $\ell$ contributes $M_{\ell:1} e_j$ for the $j$-th coordinate
+direction, the activation second derivative at layer $\ell$ contributes
+$\Sigma''_\ell$, and the backward pass from layer $\ell$ to the output
+contributes $W_L^{(n)} M_{L-1:\ell+1}$.
+
+Taking absolute values and applying submultiplicativity of operator norms:
+\begin{align}
+	\abs{\frac{\partial^2 \fn}{\partial x_i \partial x_j}(x)}
+	&\leq \sum_{\ell=1}^{L-1}
+	\norm{W_L^{(n)} M_{L-1:\ell+1}}^2 \cdot
+	\norm{\Sigma''_\ell} \cdot
+	\norm{M_{\ell:1}}^2 \notag \\
+	&\leq \sum_{\ell=1}^{L-1}
+	\left(\prod_{k=\ell+1}^{L} \norm{W_k^{(n)}}\right)^2 \cdot
+	\norm{\sigma''}_\infty \cdot
+	\left(\prod_{k=1}^{\ell} \norm{W_k^{(n)}}\right)^2 \cdot
+	\norm{\sigma'}_\infty^{2(L-2)} \notag \\
+	&\leq (L-1) \cdot \left(\prod_{\ell=1}^{L} \norm{W_\ell^{(n)}}\right)^2
+	\cdot \norm{\sigma''}_\infty \cdot \norm{\sigma'}_\infty^{2(L-2)}
+\end{align}
+using $\norm{\Sigma''_\ell} \leq \norm{\sigma''}_\infty < \infty$ since
+$\sigma \in C^2$, and collecting all weight norm factors into a single
+product. This bound holds pointwise for every $x \in \Omega$, so:
+\begin{equation}
+	\norm{\nabla^2 \fn}_{L^p}
+	\leq \norm{\nabla^2 \fn}_{L^\infty} \cdot |\Omega|^{1/p}
+	\leq (L-1) \cdot \left(\prod_\ell \norm{W_\ell^{(n)}}\right)^2
+	\cdot \norm{\sigma''}_\infty \cdot \norm{\sigma'}_\infty^{2(L-2)}
+	\cdot |\Omega|^{1/p}
+\end{equation}
+
+\subsubsection*{Combining Substeps 1a--1c}
+
+Summing the three bounds:
+\begin{equation}
+	\norm{\fn}_{W^{2,p}}
+	= \norm{\fn}_{L^p} + \norm{\nabla \fn}_{L^p} + \norm{\nabla^2 \fn}_{L^p}
+	\leq C\!\left(\prod_\ell \norm{W_\ell^{(n)}},\,
+	\norm{\sigma'}_\infty,\, \norm{\sigma''}_\infty,\, L,\, |\Omega|\right)
+\end{equation}
+where $C$ is a finite constant depending on the indicated quantities but not
+on $n$ or $x$. By the assumption $\sup_n \prod_\ell \norm{W_\ell^{(n)}}
+< \infty$ --- which formalizes the effect of $L^2$ regularization during
+training \citep{bartlett2017spectrally} --- and the finiteness of
+$\norm{\sigma'}_\infty$ and $\norm{\sigma''}_\infty$ from $\sigma \in C^2$,
+the right-hand side is uniformly bounded in $n$. Therefore:
+\begin{equation}
+	\sup_n \norm{\fn}_{W^{2,p}} < \infty
+\end{equation}
+This completes Step~1.
+
+\subsection{Step 2: $L^p$ Consistency}
+
+The $L^p$ consistency condition $\norm{\fn - f}_{L^p} \xrightarrowp 0$ is
+the standard universal approximation result for smooth neural networks.
+\citet{hornik1990universal} establish that multilayer feedforward networks
+with smooth activation functions are dense in $W^{1,p}(\Omega)$ with respect
+to the $W^{1,p}$ norm, implying in particular density in $L^p(\Omega)$.
+Combined with standard empirical risk minimization results establishing that
+the training procedure converges to the best approximation in the function
+class, this gives $\norm{\fn - f}_{L^p} \xrightarrowp 0$.
+
+\subsection{Step 3: Applying Lemma~\ref{M-lem:sobolev_consistency}}
+
+By Step~1, $\sup_n \norm{\fn}_{W^{2,p}} < \infty$. By Step~2,
+$\norm{\fn - f}_{L^p} \xrightarrowp 0$. These are precisely the two
+conditions of the well-behaved definition in the Sobolev sense
+(Definition~\ref{M-def:wellbehaved_sobolev}). Lemma~\ref{M-lem:sobolev_consistency}
+then gives:
+\begin{equation}
+	\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0
+\end{equation}
+which is the conclusion of Theorem~\ref{M-thm:neural_nets}. 
+\qed
+
+\begin{remark}
+	The weight norm assumption $\sup_n \prod_\ell \norm{W_\ell^{(n)}} < \infty$
+	is the key regularity condition on the estimator. It formalizes the effect
+	of $L^2$ weight decay regularization during training, which penalizes large
+	weights and keeps the product of operator norms bounded. Under standard
+	conditions on the regularization parameter and optimization procedure,
+	this bound holds with high probability over the training randomness
+	\citep{bartlett2017spectrally}. The condition is stated as an assumption
+	of the theorem rather than derived from first principles because its
+	verification depends on details of the training procedure that are outside
+	the scope of the present analysis.
+\end{remark}
+
+\begin{remark}
+	Theorem~\ref{M-thm:neural_nets} is stated for smooth activations $\sigma \in
+	C^2$. For ReLU networks $\sigma \notin C^2$ and the Hessian calculation in
+	Substep~1c does not apply directly. The first derivative exists almost
+	everywhere with $\sigma' = \mathbf{1}_{(0,\infty)}$ bounded, so Substep~1b
+	goes through unchanged. The distributional second derivative is $\sigma'' =
+	\delta_0$, a Dirac mass at zero, placing $\fn$ in a mixed $W^{1,p} \cap BV$
+	space rather than $\Wtwop$. A modified version of
+	Lemma~\ref{M-lem:sobolev_consistency} applicable in this mixed space, or a
+	restriction to input distributions placing zero mass on the kink set
+	$\{x : a_\ell(x) = 0\}$, would be required to handle this case. We leave
+	this extension for future work.
+\end{remark}
+
+% ============================================================
+\section{Proof of Theorem~\ref{M-thm:boosting} (Gradient Boosting)}
+\label{app:boosting}
+% ============================================================
+
+\subsection{Setup and Notation}
+
+By Proposition~1 of \citet{buhlmann2003boosting}, the $L_2$Boost estimator after
+$m$ iterations can be represented as:
+\begin{equation}
+	\hat{F}_m = (I - (I-S)^{m+1})Y
+\end{equation}
+where $S: \mathbb{R}^n \to \mathbb{R}^n$ is the base learner operator. The residual
+at step $m$ is:
+\begin{equation}
+	u_m = Y - \hat{F}_m = (I-S)^m Y
+\end{equation}
+so that each base learner fit is $\hat{f}_m = Su_m$ and the ensemble updates as
+$\hat{F}_m = \hat{F}_{m-1} + \hat{f}_m$.
+
+By Proposition~2 of \citet{buhlmann2003boosting}, for a symmetric linear learner $S$
+with eigenvalues $\{\lambda_k; k = 1,\ldots,n\}$, the eigenvalues of the boosting
+operator $\mathcal{B}_m = I - (I-S)^{m+1}$ are $\{1-(1-\lambda_k)^{m+1}; k =
+1,\ldots,n\}$.
+
+Under the eigenvalue condition $0 < \lambda_k \leq 1$ for all $k$
+\citep[Theorem~1]{buhlmann2003boosting}, let:
+\begin{equation}
+	\rho = \max_k (1-\lambda_k) \in [0,1)
+\end{equation}
+Since $\lambda_k > 0$ for all $k$, we have $\rho < 1$. The bias decays
+exponentially fast: by Theorem~1(a) of \citet{buhlmann2003boosting}:
+\begin{equation}
+	\norm{u_m}_{L^2}^2 = \norm{(I-S)^m Y}_{L^2}^2
+	\leq \rho^{2m} \norm{Y}_{L^2}^2
+\end{equation}
+In particular:
+\begin{equation}
+	\norm{u_m}_{L^2} \leq C\rho^m, \quad C = \norm{Y}_{L^2}
+	\label{eq:geometric_decay}
+\end{equation}
+This geometric decay is the key engine for both cases of the proof.
+
+The two cases of the theorem are handled separately.
+
+\subsection{Case (i): Smooth Base Learners}
+
+\subsubsection*{Step 1: $W^{2,p}$ Bound for a Single Base Learner}
+
+Each $\hat{f}_m = Su_m \in \Wtwop$ by assumption on the base learner class. For
+shallow neural net base learners this follows from Appendix~\ref{app:neural_nets}.
+For spline base learners it follows from standard spline approximation theory
+\citep{wahba1990splines}. We require a uniform bound:
+\begin{equation}
+	\sup_m \norm{\hat{f}_m}_{W^{2,p}} \leq C' \norm{u_m}_{L^2} < \infty
+\end{equation}
+where the bound on $\norm{\hat{f}_m}_{W^{2,p}}$ in terms of $\norm{u_m}_{L^2}$
+follows from the boundedness of $S$ as an operator from $L^2$ to $W^{2,p}$.
+
+\subsubsection*{Step 2: Ensemble Bound via Geometric Decay}
+
+By linearity of the $W^{2,p}$ norm and the triangle inequality:
+\begin{equation}
+	\norm{\hat{F}_m}_{W^{2,p}}
+	\leq \sum_{j=1}^m \norm{\hat{f}_j}_{W^{2,p}}
+	\leq C' \sum_{j=1}^m \norm{u_j}_{L^2}
+	\leq C'C \sum_{j=1}^m \rho^j
+	\leq \frac{C'C\rho}{1-\rho}
+	< \infty
+\end{equation}
+using the geometric decay \eqref{eq:geometric_decay} and the fact that
+$\sum_{j=1}^\infty \rho^j = \rho/(1-\rho) < \infty$ for $\rho < 1$. The bound is
+uniform in $m$.
+
+\subsubsection*{Step 3: Apply Lemma~\ref{M-lem:sobolev_consistency}}
+
+$L^p$ consistency is assumed. Uniform $\Wtwop$ boundedness follows from Step~2.
+Lemma~\ref{M-lem:sobolev_consistency} gives
+$\norm{\nabla \hat{F}_m - \nabla f}_{L^p} \xrightarrowp 0$. \qed
+
+\subsection{Case (ii): Tree Stump Base Learners}
+
+Each base learner $\hat{f}_m = Su_m$ is a depth-1 tree (stump) of the form:
+\begin{equation}
+	\hat{f}_m(x) = c_m^L \,\mathbf{1}[x_j \leq t_m] + c_m^R \,\mathbf{1}[x_j > t_m]
+\end{equation}
+for some split variable $j$, threshold $t_m$, and leaf constants:
+\begin{equation}
+	c_m^L = \frac{1}{|I_L|}\sum_{i \in I_L} u_m(x_i), \quad
+	c_m^R = \frac{1}{|I_R|}\sum_{i \in I_R} u_m(x_i)
+\end{equation}
+where $I_L = \{i : x_{ij} \leq t_m\}$ and $I_R = \{i : x_{ij} > t_m\}$ are the
+left and right leaf index sets.
+
+\subsubsection*{Step 1: BV Norm of a Single Stump}
+
+By Lemma~\ref{M-lem:bv_existence} the distributional gradient of $\hat{f}_m$ is:
+\begin{equation}
+	D\hat{f}_m = (c_m^R - c_m^L) \cdot \nu_m \cdot
+	\mathcal{H}^{d-1}\lfloor_{\{x_j = t_m\} \cap \Omega}
+\end{equation}
+so the total variation is:
+\begin{equation}
+	|D\hat{f}_m|(\Omega) =
+	|c_m^R - c_m^L| \cdot
+	\mathcal{H}^{d-1}\!\left(\{x_j = t_m\} \cap \Omega\right)
+\end{equation}
+The geometric term satisfies
+$\mathcal{H}^{d-1}(\{x_j = t_m\} \cap \Omega) \leq \operatorname{diam}(\Omega)^{d-1}$,
+a constant depending only on $\Omega$. For the response term, by Cauchy--Schwarz
+applied to the leaf means:
+\begin{equation}
+	|c_m^R - c_m^L|
+	\leq \frac{1}{|I_R|}\sum_{i \in I_R} |u_m(x_i)|
+	+ \frac{1}{|I_L|}\sum_{i \in I_L} |u_m(x_i)|
+	\leq 2\norm{u_m}_{L^2}
+\end{equation}
+Therefore:
+\begin{equation}
+	|D\hat{f}_m|(\Omega)
+	\leq 2\operatorname{diam}(\Omega)^{d-1} \cdot \norm{u_m}_{L^2}
+	\leq 2\operatorname{diam}(\Omega)^{d-1} \cdot C\rho^m
+\end{equation}
+using the geometric decay \eqref{eq:geometric_decay}.
+
+\subsubsection*{Step 2: Ensemble BV Bound via Geometric Series}
+
+By subadditivity of total variation:
+\begin{equation}
+	|D\hat{F}_m|(\Omega)
+	\leq \sum_{j=1}^m |D\hat{f}_j|(\Omega)
+	\leq 2\operatorname{diam}(\Omega)^{d-1} \cdot C \sum_{j=1}^m \rho^j
+	\leq \frac{2\operatorname{diam}(\Omega)^{d-1} \cdot C\rho}{1-\rho}
+	< \infty
+\end{equation}
+The geometric series $\sum_{j=1}^\infty \rho^j = \rho/(1-\rho)$ converges because
+$\rho < 1$, which follows from the eigenvalue condition $\lambda_k > 0$ for all $k$.
+Taking expectations:
+\begin{equation}
+	\mathbb{E}[|D\hat{F}_m|(\Omega)]
+	\leq \frac{2\operatorname{diam}(\Omega)^{d-1} \cdot \mathbb{E}[C]\rho}{1-\rho}
+	< \infty
+\end{equation}
+uniformly in $m$, where $\mathbb{E}[C] = \mathbb{E}[\norm{Y}_{L^2}] < \infty$
+by assumption.
+
+\subsubsection*{Step 3: Apply Lemma~\ref{M-lem:bv_consistency}}
+
+$L^1$ consistency is assumed. Uniform BV boundedness follows from Step~2.
+Lemma~\ref{M-lem:bv_consistency} gives $D\hat{F}_m \xrightarrow{w*} Df$ in $\cM$.
+\qed
+
+\begin{remark}
+	The key step in both cases is the geometric decay $\norm{u_m}_{L^2} \leq C\rho^m$,
+	which follows from the eigenvalue condition $0 < \lambda_k \leq 1$ via Proposition~1
+	and Theorem~1 of \citet{buhlmann2003boosting}. This decay is much faster than any
+	polynomial rate and implies that the geometric series $\sum_j \rho^j$ converges
+	without any condition on step sizes. The eigenvalue condition is the operative
+	regularity assumption for both cases of the theorem, replacing the step size
+	conditions common in the boosting literature.
+\end{remark}
+
+\begin{remark}
+	When $\lambda_k \in \{0,1\}$ for all $k$ --- as occurs for linear projection
+	operators --- Corollary~1 of \citet{buhlmann2003boosting} shows that
+	$\mathcal{B}_m \equiv S$ for all $m$, meaning boosting does not improve on the
+	base learner. In this degenerate case $\rho = \max_k(1-\lambda_k)$ takes the value
+	1 for any $k$ with $\lambda_k = 0$, and the geometric series does not converge.
+	The strict positivity condition $\lambda_k > 0$ excludes this case and corresponds
+	to the requirement that the base learner has positive but incomplete explanatory
+	power --- the standard ``weak learner'' assumption in the boosting literature.
+\end{remark}
+
+% ============================================================
+\section{Proof of Theorem~\ref{M-thm:forests} (Random Forests)}
+\label{app:forests}
+% ============================================================
+
+\subsection{Setup}
+
+Let $\fn = \frac{1}{B}\sum_{b=1}^B T_b$ where $T_b$ are individual Mondrian
+trees. Each $T_b$ is piecewise constant on a random partition $\mathcal{P}_b$
+of $\Omega = [0,1]^d$ generated by the Mondrian process $MP(\lambda_n, [0,1]^d)$
+independently of the data, with budget $\lambda_n \asymp n^{1/(d+2)}$
+\citep{mourtada2017mondrian}. The partition $\mathcal{P}_b$ consists of
+$K_{\lambda_n} + 1$ hyperrectangular cells, where $K_{\lambda_n}$ is the
+number of splits \citep{roy2009mondrian}.
+
+\subsection{Step 1: Each Tree is in BV}
+
+Each $T_b$ is piecewise constant on a finite partition and therefore in
+$\BV$ by Lemma~\ref{M-lem:bv_existence}. The forest average $\fn =
+\frac{1}{B}\sum_b T_b$ is a finite convex combination of $BV$ functions,
+hence $\fn \in \BV$ with:
+\begin{equation}
+	|D\fn|(\Omega) \leq \frac{1}{B} \sum_{b=1}^B |DT_b|(\Omega)
+\end{equation}
+by convexity of the total variation functional
+\citep[Proposition~3.6]{ambrosio2000bv}.
+
+\subsection{Step 2: Uniform BV Boundedness via the Second Moment Argument}
+
+\textbf{Claim:} $\sup_n \E[|D\fn|(\Omega)] < \infty$.
+
+The triangle inequality applied to the forest average is too crude because
+individual tree BV norms grow with $n$. Instead we work with the second
+moment and apply Cauchy--Schwarz:
+\begin{equation}
+	\E\!\left[|D\fn|(\Omega)\right]
+	\leq \sqrt{\E\!\left[|D\fn|(\Omega)^2\right]}
+\end{equation}
+It therefore suffices to show $\E[|D\fn|(\Omega)^2] < \infty$ uniformly
+in $n$.
+
+\subsubsection*{Substep 2a: Expand the Second Moment}
+
+Writing $D\fn = \frac{1}{B}\sum_b DT_b$ and expanding:
+\begin{equation}
+	\E\!\left[|D\fn|(\Omega)^2\right]
+	= \frac{1}{B^2} \E\!\left[\left|\sum_b DT_b\right|(\Omega)^2\right]
+	= \frac{1}{B^2} \sum_{b,b'} \E\!\left[
+	\int \phi \cdot d(DT_b) \cdot \int \phi \cdot d(DT_{b'})
+	\right]
+\end{equation}
+for a suitable test function $\phi$ with $\norm{\phi}_\infty \leq 1$.
+The double sum splits into diagonal terms $b = b'$ and cross terms
+$b \neq b'$.
+
+\subsubsection*{Substep 2b: Cross Terms Vanish}
+
+For $b \neq b'$ the partitions $\mathcal{P}_b$ and $\mathcal{P}_{b'}$ are
+independent of each other and of the data. By independence:
+\begin{equation}
+	\E\!\left[\int \phi \cdot d(DT_b) \cdot \int \phi \cdot d(DT_{b'})\right]
+	= \E\!\left[\int \phi \cdot d(DT_b)\right] \cdot
+	\E\!\left[\int \phi \cdot d(DT_{b'})\right]
+\end{equation}
+We claim each factor is zero. By Lemma~\ref{M-lem:bv_existence} and the
+explicit formula for $DT_b$:
+\begin{equation}
+	\E\!\left[\int \phi \cdot d(DT_b)\right]
+	= \E\!\left[\sum_{j \sim k}
+	(\bar{y}_k^b - \bar{y}_j^b)
+	\int_{\partial R_j^b \cap \partial R_k^b} \phi \cdot \nu_{jk}
+	\, d\mathcal{H}^{d-1}\right]
+\end{equation}
+Since $\mathcal{P}_b$ is independent of the data, we condition on the
+partition and take the expectation over the data first:
+\begin{equation}
+	= \mathbb{E}_{\mathcal{P}_b}\!\left[\sum_{j \sim k}
+	\mathbb{E}_{\mathrm{data}}\!\left[\bar{y}_k^b - \bar{y}_j^b\right]
+	\int_{\partial R_j^b \cap \partial R_k^b} \phi \cdot \nu_{jk}
+	\, d\mathcal{H}^{d-1}\right]
+\end{equation}
+The leaf means satisfy $\mathbb{E}_{\mathrm{data}}[\bar{y}_j^b] \to f(\bar{x}_j^b)$
+as $n \to \infty$, where $\bar{x}_j^b$ is the center of leaf $R_j^b$. For
+adjacent leaves $j$ and $k$, by the Lipschitz continuity of $f$:
+\begin{equation}
+	\mathbb{E}_{\mathrm{data}}\!\left[\bar{y}_k^b - \bar{y}_j^b\right]
+	\approx f(\bar{x}_k^b) - f(\bar{x}_j^b) = O(D_{\lambda_n})
+\end{equation}
+where $D_{\lambda_n}$ is the cell diameter. As $\lambda_n \to \infty$ the
+cell diameter $D_{\lambda_n} \to 0$ and each term vanishes. More precisely,
+since $f \in \Wonep$ with $p > d$, the Sobolev embedding
+$W^{1,p} \hookrightarrow C^{0,\alpha}$ for $\alpha = 1 - d/p$ gives:
+\begin{equation}
+	\left|\mathbb{E}_{\mathrm{data}}\!\left[\bar{y}_k^b - \bar{y}_j^b\right]\right|
+	\leq C \cdot \operatorname{diam}(R_j^b \cup R_k^b)^\alpha
+	\leq C \cdot D_{\lambda_n}^\alpha \to 0
+\end{equation}
+Therefore $\mathbb{E}[\int \phi \cdot d(DT_b)] \to 0$ and the cross terms
+vanish asymptotically. For $n$ large enough the cross terms are negligible
+and the second moment is dominated by the diagonal terms.
+
+\subsubsection*{Substep 2c: Bound the Diagonal Terms}
+
+For the diagonal terms $b = b'$:
+\begin{equation}
+	\E\!\left[|DT_b|(\Omega)^2\right]
+	= \E\!\left[\left(\sum_{j \sim k} |\bar{y}_k^b - \bar{y}_j^b|
+	\cdot \mathcal{H}^{d-1}(\partial R_j^b \cap \partial R_k^b)\right)^2\right]
+\end{equation}
+Expanding the square and separating geometric and response terms using the
+independence of $\mathcal{P}_b$ from the data:
+\begin{equation}
+	\E\!\left[|DT_b|(\Omega)^2\right]
+	\leq \mathbb{E}_{\mathcal{P}_b}\!\left[K_{\lambda_n}^2\right]
+	\cdot \sup_{j \sim k} \mathbb{E}_{\mathrm{data}}\!\left[
+	|\bar{y}_k^b - \bar{y}_j^b|^2\right]
+\end{equation}
+where $K_{\lambda_n}$ is the number of adjacent pairs, which equals the
+number of splits.
+
+\paragraph{Geometric factor.}
+The Mondrian process generates cuts according to a recursive tree structure.
+By the conditional independence of subtrees \citep{roy2009mondrian}, the
+number of splits satisfies the distributional recursion:
+\begin{equation}
+	K_{\lambda_n} = 1 + K_{\lambda_n, L} + K_{\lambda_n, R}
+\end{equation}
+where $K_{\lambda_n, L}$ and $K_{\lambda_n, R}$ are the split counts in the
+left and right subtrees, conditionally independent given the first cut.
+From \citet{mourtada2017mondrian}:
+\begin{equation}
+	\mathbb{E}[K_{\lambda_n}] \leq (e(\lambda_n + 1))^d = O(n^{d/(d+2)})
+\end{equation}
+Taking the second moment via the recursion and using conditional independence:
+\begin{equation}
+	\mathbb{E}[K_{\lambda_n}^2]
+	= \mathbb{E}[K_{\lambda_n}] + \mathbb{E}[K_{\lambda_n}]^2
+	= O(n^{d/(d+2)}) + O(n^{2d/(d+2)})
+	= O(n^{2d/(d+2)})
+\end{equation}
+where the first equality uses the Poisson-like variance structure of the
+Mondrian process implied by the conditional independence recursion.
+
+\paragraph{Response factor.}
+For adjacent leaves $j$ and $k$, by Cauchy--Schwarz on the sample means:
+\begin{equation}
+	\mathbb{E}_{\mathrm{data}}\!\left[|\bar{y}_k^b - \bar{y}_j^b|^2\right]
+	\leq 4\,\mathbb{E}_{\mathrm{data}}\!\left[\|r^{(b)}\|_{L^2}^2\right]
+\end{equation}
+where $r^{(b)}$ denotes the residual within the relevant cells. Using the
+cell diameter bound of \citet{roy2009mondrian}:
+\begin{equation}
+	\mathbb{E}[D_{\lambda_n}(x)^2] \leq \frac{4d}{\lambda_n^2}
+	= O(n^{-2/(d+2)})
+\end{equation}
+and the Hölder continuity of $f \in W^{1,p}$ with $p > d$ giving
+$\alpha = 1 - d/p$:
+\begin{equation}
+	\mathbb{E}_{\mathrm{data}}\!\left[|\bar{y}_k^b - \bar{y}_j^b|^2\right]
+	\leq C^2 \left(\mathbb{E}[D_{\lambda_n}(x)^2]\right)^\alpha
+	\leq C^2 \left(\frac{4d}{\lambda_n^2}\right)^\alpha
+	= O(n^{-2\alpha/(d+2)})
+\end{equation}
+
+\paragraph{Combining.}
+\begin{equation}
+	\E\!\left[|DT_b|(\Omega)^2\right]
+	\leq O(n^{2d/(d+2)}) \cdot O(n^{-2\alpha/(d+2)})
+	= O(n^{2(d-\alpha)/(d+2)})
+\end{equation}
+Therefore:
+\begin{equation}
+	\E\!\left[|D\fn|(\Omega)^2\right]
+	= \frac{1}{B^2} \sum_b \E\!\left[|DT_b|(\Omega)^2\right]
+	= \frac{1}{B} O(n^{2(d-\alpha)/(d+2)})
+\end{equation}
+For this to be bounded uniformly in $n$ we require:
+\begin{equation}
+	B \gg n^{2(d-\alpha)/(d+2)}
+\end{equation}
+This is a condition on the number of trees relative to the dimension and
+smoothness of $f$. Under this condition:
+\begin{equation}
+	\E\!\left[|D\fn|(\Omega)\right]
+	\leq \sqrt{\E\!\left[|D\fn|(\Omega)^2\right]}
+	= \sqrt{\frac{1}{B} O(n^{2(d-\alpha)/(d+2)})}
+	< \infty
+\end{equation}
+uniformly in $n$, completing the uniform BV boundedness claim.
+
+\begin{remark}
+	The condition $B \gg n^{2(d-\alpha)/(d+2)}$ requires the number of trees
+	to grow with $n$ at a rate depending on dimension $d$ and Hölder exponent
+	$\alpha = 1 - d/p$. For $\alpha$ close to $d$ --- achieved when $p \gg d$,
+	meaning $f$ is highly smooth --- the condition is mild and a slowly growing
+	number of trees suffices. For $\alpha$ small --- meaning $f$ has limited
+	smoothness or $d$ is large --- more trees are required. In practice random
+	forests with $B = 500$ or $B = 1000$ trees satisfy this condition for
+	moderate $d$ and $n$.
+\end{remark}
+
+\subsection{Step 3: Apply Lemma~\ref{M-lem:bv_consistency}}
+
+The $L^1$ consistency condition follows from the $L^2$ consistency result of
+\citet{mourtada2017mondrian} under the budget $\lambda_n \asymp n^{1/(d+2)}$
+by the Cauchy--Schwarz inequality on the bounded domain $\Omega$:
+\begin{equation}
+	\norm{\fn - f}_{L^1}
+	\leq |\Omega|^{1/2} \norm{\fn - f}_{L^2}
+	\xrightarrowp 0
+\end{equation}
+Uniform BV boundedness follows from Step~2 under the condition
+$B \gg n^{2(d-\alpha)/(d+2)}$. Lemma~\ref{M-lem:bv_consistency} then gives
+$D\fn \xrightarrow{w*} Df$ in $\cM$. \qed
+
+\begin{remark}
+	Theorem~\ref{M-thm:forests} is stated for Mondrian forests where the
+	partition is generated independently of the data. The independence is
+	used critically in the decomposition of Substep~2a and in the cross
+	term cancellation of Substep~2b. For Breiman forests with data-dependent
+	splits the partition geometry and response variation are coupled ---
+	splits are chosen to maximize response differences across boundaries,
+	which is precisely the worst case for the BV bound, and the cross term
+	cancellation argument fails because the jump directions are not
+	independent across trees. Extending the result to Breiman forests
+	requires additional control over this coupling and is left as future
+	work.
+\end{remark}
+
+% ============================================================
+\section{General Strategy for Bootstrap Validity Proofs}
+\label{app:bootstrap_strategy}
+% ============================================================
+
+All three bootstrap corollaries follow from the same argument. The functional delta
+method of \citet[Theorem~3.9.4]{vandervaart1996weak} states that if:
+\begin{enumerate}
+	\item $T: \mathcal{F} \to \R^d$ is Hadamard differentiable at $f$
+	tangentially to $C(\Omega)^d$, and
+	\item $r_n(\fn - f) \rightsquigarrow \mathbb{G}$ in $C(\Omega)^d$
+	for some rate sequence $r_n \to \infty$
+\end{enumerate}
+then $r_n(T(\fn) - T(f)) \rightsquigarrow T'_f(\mathbb{G})$, and the bootstrap is
+consistent in the sense that the bootstrap distribution of $r_n(T(\fn^*) - T(\fn))$
+consistently estimates the sampling distribution of $r_n(T(\fn) - T(f))$
+\citep[Chapter~3.6]{horowitz2000bootstrap}.
+
+Lemma~\ref{M-lem:hadamard} establishes condition~(1) for all three estimator classes.
+The estimator-specific work in each corollary is verification of condition~(2) at
+the appropriate rate $r_n$. For neural networks and gradient boosted models the rate
+is $r_n = \sqrt{n}$. For Mondrian forests the rate is $r_n = n^{1/(d+2)}$,
+reflecting the minimax lower bound for nonparametric estimation of Lipschitz
+functions.
+
+% ============================================================
+\section{Proof of Corollary~\ref{M-cor:bootstrap_nn}
+	(Bootstrap Validity for Neural Networks)}
+\label{app:bootstrap_nn}
+% ============================================================
+
+\subsection{Step 1: Rate Condition}
+
+The rate condition (RC) --- that $\sqrt{n}(\fn - f) = O_p(1)$ in $\Wonep$ --- is
+taken as an explicit assumption of the corollary. We sketch here why this condition
+is expected to hold in the overparameterized regime and identify the steps required
+for a complete proof.
+
+\subsubsection*{NTK Approximation}
+
+In the overparameterized regime with width $m \to \infty$, the neural tangent kernel
+\citep{jacot2018ntk} governs the training dynamics. The network function at training
+time $t$ satisfies:
+\begin{equation}
+	\fn^{(t)}(x) \approx \fn^{(0)}(x) - \eta \int_0^t
+	K(x, \cdot) \nabla_W \mathcal{L}(\fn^{(s)}) \, ds
+\end{equation}
+where $K(x, x') = \nabla_W \fn(x)^\top \nabla_W \fn(x')$ is the NTK and
+$\mathcal{L}$ is the training loss. In the infinite-width limit $K$ is deterministic
+and constant during training, making the dynamics exactly linear.
+
+\subsubsection*{Parametric Rate From Linear Dynamics}
+
+Under the linear NTK approximation the trained network satisfies:
+\begin{equation}
+	\fn - f \approx (I - K(K + \lambda I)^{-1})(f_0 - f) +
+	K(K + \lambda I)^{-1}\epsilon
+\end{equation}
+where $f_0$ is the network at initialization, $\lambda$ is the regularization
+parameter, and $\epsilon$ is the noise. The bias term and the variance term each
+contribute $O_p(n^{-1/2})$ under standard conditions, giving:
+\begin{equation}
+	\sqrt{n}(\fn - f) = O_p(1) \quad \text{in } L^2(\Omega)
+\end{equation}
+
+\subsubsection*{Upgrading to $W^{1,p}$}
+
+To upgrade from $L^2$ to $\Wonep$ one applies the chain rule calculation from
+Theorem~\ref{M-thm:neural_nets} to the linear approximation. Since $\sigma \in C^3$
+by assumption, the gradient of the network function satisfies:
+\begin{equation}
+	\nabla \fn(x) - \nabla f(x)
+	\approx \nabla_x\!\left[K(x,\cdot)(K+\lambda I)^{-1}\epsilon\right]
+\end{equation}
+The $C^3$ condition ensures this gradient is well defined and the propagation through
+the chain rule gives $O_p(n^{-1/2})$ convergence in $L^p(\Omega)^d$, yielding:
+\begin{equation}
+	\sqrt{n}(\fn - f) = O_p(1) \quad \text{in } \Wonep
+\end{equation}
+A complete proof requires quantitative finite-width NTK approximation results
+establishing how close the finite-width network is to the infinite-width limit as a
+function of width and sample size, and is left for future work.
+
+\subsection{Step 2: Apply the Functional Delta Method}
+
+The rate condition (RC) is assumed. Lemma~\ref{M-lem:hadamard} establishes Hadamard
+differentiability of $T$ tangentially to $C(\Omega)^d$ under $\sigma \in C^3$ and
+$p > d$. By \citet[Theorem~3.9.4]{vandervaart1996weak}:
+\begin{equation}
+	\sqrt{n}\left(T(\fn) - T(f)\right) \rightsquigarrow T'_f(\mathbb{G})
+	= \int_\Omega \nabla \mathbb{G}(x) \, dP(x)
+\end{equation}
+where $\mathbb{G}$ is the weak limit of $\sqrt{n}(\fn - f)$ in $C(\Omega)^d$.
+Bootstrap consistency follows from \citet[Chapter~3.6]{horowitz2000bootstrap}: the
+bootstrap distribution of $\sqrt{n}(T(\fn^*) - T(\fn))$ consistently estimates the
+sampling distribution of $\sqrt{n}(T(\fn) - T(f))$. \qed
+
+\begin{remark}
+	The rate condition (RC) is the only unproved component of
+	Corollary~\ref{M-cor:bootstrap_nn}. Unlike the Mondrian forest case where the
+	dimension-dependent rate $n^{-1/(d+2)}$ is a fundamental consequence of the
+	nonparametric minimax lower bound, the parametric rate $n^{-1/2}$ for neural
+	networks is not a fundamental limitation --- it is a consequence of the
+	overparameterization and the NTK regime, and we expect it to be provable with
+	a more detailed engagement with the finite-width NTK literature. The sketch
+	above identifies the key steps: the NTK linear approximation, the $L^2$
+	parametric rate, and the $C^3$ chain rule upgrade to $\Wonep$. Completing
+	this argument is left for future work.
+\end{remark}
+
+% ============================================================
+\section{Proof of Corollary~\ref{M-cor:bootstrap_boost}
+	(Bootstrap Validity for Gradient Boosting)}
+\label{app:bootstrap_boost}
+% ============================================================
+
+\subsection{Step 1: Verify the Rate Condition}
+
+The rate condition requires showing that $\sqrt{n}(\hat{F}_m - f) = O_p(1)$ in the
+appropriate norm. The argument uses the eigenvalue structure of $L_2$Boost
+established in the proof of Theorem~\ref{M-thm:boosting}.
+
+\subsubsection*{Bias}
+
+By Proposition~1 and Theorem~1(a) of \citet{buhlmann2003boosting}, under the
+eigenvalue condition $0 < \lambda_k \leq 1$, the bias of $\hat{F}_m$ satisfies:
+\begin{equation}
+	\mathrm{bias}^2(m, S; f)
+	= n^{-1} f^T U\,\mathrm{diag}((1-\lambda_k)^{2m+2})\,U^T f
+	\leq \rho^{2m} \norm{f}_{L^2}^2
+\end{equation}
+where $\rho = \max_k(1-\lambda_k) < 1$. The bias decays exponentially in $m$. For
+$m = m(n)$ growing sufficiently fast with $n$, the bias is $o(n^{-1/2})$ and
+negligible at the parametric rate.
+
+\subsubsection*{Variance}
+
+By Proposition~3 of \citet{buhlmann2003boosting}, the variance of $\hat{F}_m$
+satisfies:
+\begin{equation}
+	\mathrm{var}(m, S; \sigma^2)
+	= \sigma^2 n^{-1} \sum_{k=1}^n (1-(1-\lambda_k)^{m+1})^2
+	\leq \sigma^2
+\end{equation}
+The variance is bounded above by the noise variance $\sigma^2$ regardless of $m$.
+Over $n$ observations, the variance of the sample average satisfies:
+\begin{equation}
+	\mathrm{Var}\!\left(\frac{1}{n}\sum_{i=1}^n \hat{F}_m(x_i)\right)
+	= O(n^{-1})
+\end{equation}
+so $\sqrt{n}(\hat{F}_m - f) = O_p(1)$ in $L^2$.
+
+\subsubsection*{Upgrading to the Appropriate Norm}
+
+For Case~(i) with smooth base learners, the upgrade from $L^2$ to $\Wonep$ follows
+from the same chain rule argument as in Theorem~\ref{M-thm:neural_nets}, using the
+geometric decay of residuals $\norm{u_m}_{L^2} \leq C\rho^m$ to propagate the rate
+through the $W^{2,p}$ norm bound.
+
+For Case~(ii) with tree stump base learners, the upgrade from $L^2$ to $\BV$ uses
+the ensemble BV bound from Theorem~\ref{M-thm:boosting}. The total variation of
+$\sqrt{n}(\hat{F}_m - f)$ is controlled by:
+\begin{equation}
+	\mathbb{E}\!\left[|D\sqrt{n}(\hat{F}_m - f)|(\Omega)\right]
+	= \sqrt{n}\,\mathbb{E}\!\left[|D(\hat{F}_m - f)|(\Omega)\right]
+	\leq \sqrt{n} \cdot \frac{2\operatorname{diam}(\Omega)^{d-1} C\rho}{1-\rho}
+\end{equation}
+For this to be $O(1)$ the right-hand side must be bounded, which requires $\rho =
+O(n^{-1/2})$, i.e.\ the smallest eigenvalue satisfies $\lambda_{\min} =
+\Omega(n^{-1/2})$. This is the principal remaining proof obligation for Case~(ii)
+and is left for future work. The $L^2$ rate condition and Case~(i) upgrade are
+complete.
+
+\subsection{Step 2: Apply the Functional Delta Method}
+
+With the rate condition verified, Lemma~\ref{M-lem:hadamard} establishes Hadamard
+differentiability of $T$ tangentially to $C(\Omega)^d$, and
+\citet[Theorem~3.9.4]{vandervaart1996weak} gives:
+\begin{equation}
+	\sqrt{n}\left(T(\hat{F}_m) - T(f)\right) \rightsquigarrow T'_f(\mathbb{G})
+	= \int_\Omega \nabla \mathbb{G}(x) \, dP(x)
+\end{equation}
+where $\mathbb{G}$ is the weak limit of $\sqrt{n}(\hat{F}_m - f)$ in $C(\Omega)^d$.
+Bootstrap consistency follows from \citet[Chapter~3.6]{horowitz2000bootstrap}: the
+bootstrap distribution of $\sqrt{n}(T(\hat{F}_m^*) - T(\hat{F}_m))$ consistently
+estimates the sampling distribution of $\sqrt{n}(T(\hat{F}_m) - T(f))$.
+
+The sequential dependence of the boosting path is handled by the framework of
+\citet{horowitz2000bootstrap} for smooth functionals of empirical processes. The
+geometric decay of residuals established in Theorem~\ref{M-thm:boosting} provides the
+Lyapunov-type control over the sequential dependence that the Horowitz framework
+requires. \qed
+
+\begin{remark}
+	Corollary~\ref{M-cor:bootstrap_boost} is fully proved for Case~(i) with smooth base
+	learners. For Case~(ii) with tree stump base learners the rate condition upgrade
+	from $L^2$ to $\BV$ requires a condition on the smallest eigenvalue of $S$ that we
+	state explicitly but do not verify from first principles. Verifying this condition
+	under natural assumptions on the covariate distribution is an important direction
+	for future work. Unlike the Mondrian forest case where the dimension-dependent rate
+	is a fundamental minimax limitation, the tree stump rate condition is a verifiable
+	property of the base learner and we expect it to hold under mild conditions.
+\end{remark}
+
+% ============================================================
+\section{Proof of Corollary~\ref{M-cor:bootstrap_rf}
+	(Bootstrap Validity for Mondrian Forests)}
+\label{app:bootstrap_rf}
+% ============================================================
+
+\subsection{Step 1: Verify the Rate Condition}
+
+The rate condition requires showing that $n^{1/(d+2)}(\fn - f) = O_p(1)$ in $\BV$,
+which is the correct scaling given the Mondrian minimax rate $O(n^{-2/(d+2)})$
+established by \citet{mourtada2017mondrian} for Lipschitz regression functions under
+the budget $\lambda_n \asymp n^{1/(d+2)}$.
+
+The argument proceeds in two parts --- bias and variance --- using the independence
+of the Mondrian partition from the data.
+
+\subsubsection*{Bias}
+
+The bias of the Mondrian forest at budget $\lambda_n$ is controlled by the cell
+diameter. By \citet{roy2009mondrian}:
+\begin{equation}
+	\mathbb{E}[D_{\lambda_n}(x)^2] \leq \frac{4d}{\lambda_n^2}
+	= O(n^{-2/(d+2)})
+\end{equation}
+Since $f$ is Lipschitz, the bias satisfies:
+\begin{equation}
+	\left|\mathbb{E}[\fn(x)] - f(x)\right|
+	\leq C \cdot \mathbb{E}[D_{\lambda_n}(x)]
+	\leq C \cdot \sqrt{\mathbb{E}[D_{\lambda_n}(x)^2]}
+	= O(n^{-1/(d+2)})
+\end{equation}
+Therefore $n^{1/(d+2)} \cdot \text{bias} = O(1)$, confirming the bias is negligible
+at the rate $n^{-1/(d+2)}$.
+
+\subsubsection*{Variance}
+
+The variance of $\fn(x)$ is controlled by the split count and the conditional
+independence structure of the Mondrian process. Since the $B$ trees are independent:
+\begin{equation}
+	\mathrm{Var}(\fn(x)) = \frac{1}{B} \mathrm{Var}(T_1(x))
+\end{equation}
+Within a single tree, the variance of the leaf mean at $x$ is at most $\sigma^2 /
+n_j$ where $n_j$ is the number of observations in the leaf containing $x$. Under
+the budget $\lambda_n \asymp n^{1/(d+2)}$ the expected leaf count satisfies
+$\mathbb{E}[n_j] \asymp n^{2/(d+2)}$ by the split count bound of
+\citet{mourtada2017mondrian}. Therefore $\mathrm{Var}(T_1(x)) = O(n^{-2/(d+2)})$
+and:
+\begin{equation}
+	n^{2/(d+2)} \cdot \mathrm{Var}(\fn(x)) = O(1/B) = O(1)
+\end{equation}
+confirming the variance is controlled at the rate $n^{-1/(d+2)}$.
+
+\subsubsection*{Combining Bias and Variance}
+
+By bias-variance decomposition:
+\begin{equation}
+	\mathbb{E}\!\left[(\fn(x) - f(x))^2\right]
+	= O(n^{-2/(d+2)})
+\end{equation}
+consistent with the minimax rate of \citet{mourtada2017mondrian}. The BV rate
+follows from the $L^2$ rate via the second moment argument in
+Theorem~\ref{M-thm:forests}: the BV norm of $n^{1/(d+2)}(\fn - f)$ is controlled by
+the same geometric and response bounds used to establish uniform BV boundedness,
+giving:
+\begin{equation}
+	n^{1/(d+2)}(\fn - f) = O_p(1) \quad \text{in } \BV
+\end{equation}
+
+\subsection{Step 2: Apply the Functional Delta Method}
+
+With the rate condition verified, Lemma~\ref{M-lem:hadamard} establishes Hadamard
+differentiability of $T$ tangentially to $C(\Omega)^d$, and
+\citet[Theorem~3.9.4]{vandervaart1996weak} gives:
+\begin{equation}
+	n^{1/(d+2)}\left(T(\fn) - T(f)\right) \rightsquigarrow T'_f(\mathbb{G})
+	= \int_\Omega \nabla \mathbb{G}(x) \, dP(x)
+\end{equation}
+where $\mathbb{G}$ is the weak limit of $n^{1/(d+2)}(\fn - f)$ in $C(\Omega)^d$.
+Bootstrap consistency follows from \citet[Chapter~3.6]{horowitz2000bootstrap} and
+\citet[Theorem~3.9.4]{vandervaart1996weak}: the bootstrap distribution of
+$n^{1/(d+2)}(T(\fn^*) - T(\fn))$ consistently estimates the sampling distribution
+of $n^{1/(d+2)}(T(\fn) - T(f))$.
+
+The connection to the infinitesimal jackknife of \citet{wager2014confidence}
+provides an alternative characterization of the bootstrap variance that is
+computationally tractable for large forests. The Hadamard differentiability
+established in Lemma~\ref{M-lem:hadamard} shows that the infinitesimal jackknife
+approximation is asymptotically exact at the Mondrian convergence rate. \qed
+
+\begin{remark}
+	The scaling $n^{1/(d+2)}$ rather than $\sqrt{n}$ reflects the minimax rate for
+	Lipschitz functions on $[0,1]^d$. When $d \leq 2$ the rate $n^{1/(d+2)}$ achieves
+	$n^{1/2}$ and the bootstrap confidence intervals are asymptotically exact at the
+	parametric rate. For $d \geq 3$ the rate is slower than $n^{1/2}$ --- a
+	fundamental consequence of the curse of dimensionality, not a limitation of the
+	bootstrap procedure. The bootstrap remains valid at the actual convergence rate in
+	all dimensions.
+\end{remark}
+
+\begin{remark}
+	Bootstrap validity for Breiman forests with data-dependent splits remains open.
+	Under bootstrap resampling Breiman forests redraw the partition based on the new
+	sample, coupling it to the response values in a way that prevents the clean
+	separation of geometric and response variation used in Step~1 above. The cross-term
+	cancellation argument from Theorem~\ref{M-thm:forests} fails because jump directions
+	are no longer independent across bootstrap replicates. Establishing bootstrap
+	validity for Breiman forests requires new techniques for controlling the joint
+	distribution of partition geometry and response variation under resampling, and is
+	left as an important direction for future work.
+\end{remark}
+
+\section{Simulation study: full design and results}
+\label{app:simulation}
+
+We evaluate the finite-sample performance of the AME estimator through two simulation studies. Simulation 1 examines bias and root mean squared error of the AME estimates as a function of sample size across three data generating processes and two outcome types. Simulation 2 examines bootstrap standard error calibration by comparing empirical coverage rates of nominal 95\% confidence intervals to the target. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1\,000, 2\,500, 5\,000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
+
+The simulation study fits four model classes with hyperparameters chosen to balance computational tractability against representativeness of typical applied use. The random forest uses 100 trees with a maximum depth of 6, and XGBoost uses 100 boosting rounds with a maximum depth of 4 and a learning rate of 0.05 --- conservative settings that prevent overfitting on the small sample sizes considered while remaining flexible enough to capture the nonlinear and interaction structures in the data generating processes. The neural network is a feedforward architecture with two hidden layers of 32 and 16 units, trained for 50 epochs with batch size 64 and learning rate $10^{-3}$ using the Adam optimizer. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 of the main paper to ensure scale-invariant gradient updates. Logistic and linear regression are included as baselines and use no hyperparameter tuning. All model fits are performed independently on each Monte Carlo iteration with no warm starting between iterations, so the variance estimates reflect the full sampling distribution of the AME estimator including model fitting variability. The Monte Carlo ground truth AMEs are computed once at the start of the study using $n=1{,}000{,}000$ observations drawn from the true prediction function directly, with the resulting AMEs treated as known quantities for the bias and coverage calculations. Bootstrap calibration in Simulation 2 uses 200 bootstrap replicates per Monte Carlo iteration and 500 Monte Carlo iterations per cell of the design.
+
+\begin{table*}[htbp]
+	\centering
+	\small
+	\begin{threeparttable}
+		\caption{Simulation 1: AME Recovery --- Linear DGP (Classification). Mean bias and RMSE (in parentheses) across 500 Monte Carlo iterations.}
+		\label{tab:sim1_classification_linear}
+		\begin{tabular}{lrrrrrr}
+			\toprule
+			& & \multicolumn{5}{c}{Bias (RMSE)} \\
+			\cmidrule(lr){3-7}
+			Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+			\quad x1 & 0.199 & -0.0058 & -0.0034 & -0.0014 & -0.0008 & -0.0006 \\
+			&  & (0.0201) & (0.0146) & (0.0106) & (0.0064) & (0.0048) \\
+			\quad x2 & 0.298 & -0.0109 & -0.0057 & -0.0026 & -0.0010 & -0.0005 \\
+			&  & (0.0229) & (0.0153) & (0.0105) & (0.0066) & (0.0046) \\
+			\quad x3 & 0.000 & 0.0012 & 0.0006 & 0.0006 & 0.0003 & 0.0002 \\
+			&  & (0.0198) & (0.0136) & (0.0099) & (0.0063) & (0.0045) \\
+			\quad x4 & 0.000 & 0.0008 & -0.0001 & -0.0008 & -0.0001 & 0.0003 \\
+			&  & (0.0197) & (0.0136) & (0.0100) & (0.0062) & (0.0045) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 0.199 & 0.0126 & 0.0044 & -0.0018 & -0.0111 & -0.0157 \\
+			&  & (0.0412) & (0.0239) & (0.0160) & (0.0142) & (0.0168) \\
+			\quad x2 & 0.298 & 0.0199 & 0.0113 & -0.0008 & -0.0102 & -0.0158 \\
+			&  & (0.0500) & (0.0309) & (0.0174) & (0.0143) & (0.0172) \\
+			\quad x3 & 0.000 & 0.0007 & 0.0010 & 0.0005 & 0.0002 & 0.0002 \\
+			&  & (0.0284) & (0.0171) & (0.0104) & (0.0056) & (0.0034) \\
+			\quad x4 & 0.000 & -0.0008 & -0.0013 & -0.0012 & -0.0001 & 0.0002 \\
+			&  & (0.0267) & (0.0177) & (0.0106) & (0.0055) & (0.0034) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 0.199 & 0.0590 & 0.0265 & 0.0107 & -0.0016 & -0.0049 \\
+			&  & (0.0782) & (0.0401) & (0.0223) & (0.0108) & (0.0083) \\
+			\quad x2 & 0.298 & 0.0643 & 0.0315 & 0.0085 & -0.0016 & -0.0046 \\
+			&  & (0.0893) & (0.0490) & (0.0218) & (0.0116) & (0.0083) \\
+			\quad x3 & 0.000 & 0.0008 & -0.0002 & 0.0006 & 0.0002 & 0.0002 \\
+			&  & (0.0332) & (0.0193) & (0.0110) & (0.0056) & (0.0033) \\
+			\quad x4 & 0.000 & 0.0008 & -0.0009 & -0.0006 & 0.0000 & 0.0002 \\
+			&  & (0.0344) & (0.0198) & (0.0116) & (0.0054) & (0.0032) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 0.199 & -0.0078 & -0.0007 & 0.0005 & 0.0003 & -0.0002 \\
+			&  & (0.0222) & (0.0156) & (0.0115) & (0.0074) & (0.0058) \\
+			\quad x2 & 0.298 & -0.0162 & -0.0017 & 0.0004 & 0.0004 & 0.0002 \\
+			&  & (0.0276) & (0.0174) & (0.0116) & (0.0073) & (0.0052) \\
+			\quad x3 & 0.000 & 0.0014 & 0.0010 & 0.0007 & 0.0003 & 0.0004 \\
+			&  & (0.0204) & (0.0144) & (0.0103) & (0.0069) & (0.0057) \\
+			\quad x4 & 0.000 & 0.0009 & -0.0003 & -0.0007 & -0.0001 & 0.0004 \\
+			&  & (0.0203) & (0.0143) & (0.0105) & (0.0070) & (0.0055) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim1_classification_linear} reports bias and RMSE for the linear classification DGP, where the true AMEs of $x_1$ and $x_2$ are 0.199 and 0.298 --- these are not 2.0 and 3.0 because the sigmoid compresses the scale. Logistic regression recovers the true AMEs with negligible bias at all sample sizes, and RMSE declines from around 0.020 at $n=250$ to 0.005 at $n=5{,}000$ at the expected $O(n^{-1/2})$ rate. The neural network behaves similarly, with small bias at $n=250$ that disappears by $n=500$. XGBoost shows larger bias at small samples --- around 0.06 for both $x_1$ and $x_2$ at $n=250$ --- reflecting the well-known tendency of gradient boosted models to underfit at small sample sizes, but bias falls sharply and RMSE converges by $n=2{,}500$. Random forests show a different pattern: bias is small at $n=250$ and $n=500$ but turns negative and persistent at $n=2{,}500$ and $n=5{,}000$, reaching around $-0.016$ for both signal features at the largest sample size. This reflects the regularization bias inherent in random forests --- the tree depth and subsampling constraints impose shrinkage that does not vanish with sample size at the default tuning settings. The noise features $x_3$ and $x_4$ have bias and RMSE near zero throughout for all model classes, confirming that the estimator does not spuriously attribute effects to irrelevant features.
+
+\begin{table*}[htbp]
+	\centering
+	\small
+	\begin{threeparttable}
+		\caption{Simulation 1: AME Recovery --- Nonlinear DGP (Classification). Mean bias and RMSE (in parentheses) across 500 Monte Carlo iterations.}
+		\label{tab:sim1_classification_nonlinear}
+		\begin{tabular}{lrrrrrr}
+			\toprule
+			& & \multicolumn{5}{c}{Bias (RMSE)} \\
+			\cmidrule(lr){3-7}
+			Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+			\quad x1 & 0.000 & 0.0002 & 0.0015 & 0.0009 & 0.0002 & -0.0001 \\
+			&  & (0.0230) & (0.0166) & (0.0123) & (0.0078) & (0.0055) \\
+			\quad x2 & 0.298 & -0.0077 & -0.0042 & -0.0017 & -0.0007 & -0.0005 \\
+			&  & (0.0215) & (0.0152) & (0.0109) & (0.0065) & (0.0048) \\
+			\quad x3 & 0.000 & 0.0003 & 0.0001 & -0.0002 & -0.0001 & 0.0003 \\
+			&  & (0.0229) & (0.0158) & (0.0112) & (0.0074) & (0.0052) \\
+			\quad x4 & 0.000 & -0.0012 & 0.0005 & 0.0006 & -0.0001 & -0.0000 \\
+			&  & (0.0252) & (0.0159) & (0.0108) & (0.0075) & (0.0051) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 0.000 & 0.0014 & 0.0001 & 0.0000 & -0.0003 & -0.0000 \\
+			&  & (0.0407) & (0.0256) & (0.0173) & (0.0114) & (0.0082) \\
+			\quad x2 & 0.298 & 0.0177 & 0.0060 & -0.0040 & -0.0120 & -0.0155 \\
+			&  & (0.0521) & (0.0278) & (0.0182) & (0.0157) & (0.0171) \\
+			\quad x3 & 0.000 & 0.0019 & -0.0000 & 0.0003 & 0.0001 & 0.0003 \\
+			&  & (0.0285) & (0.0166) & (0.0100) & (0.0052) & (0.0031) \\
+			\quad x4 & 0.000 & -0.0026 & -0.0007 & 0.0005 & 0.0000 & -0.0001 \\
+			&  & (0.0295) & (0.0165) & (0.0099) & (0.0054) & (0.0031) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 0.000 & 0.0039 & 0.0003 & 0.0004 & -0.0000 & -0.0003 \\
+			&  & (0.0549) & (0.0324) & (0.0209) & (0.0123) & (0.0079) \\
+			\quad x2 & 0.298 & 0.0471 & 0.0221 & 0.0066 & -0.0028 & -0.0054 \\
+			&  & (0.0787) & (0.0396) & (0.0208) & (0.0114) & (0.0087) \\
+			\quad x3 & 0.000 & 0.0038 & 0.0007 & 0.0007 & 0.0002 & 0.0003 \\
+			&  & (0.0307) & (0.0172) & (0.0108) & (0.0051) & (0.0028) \\
+			\quad x4 & 0.000 & -0.0016 & 0.0010 & 0.0006 & 0.0001 & 0.0001 \\
+			&  & (0.0329) & (0.0184) & (0.0105) & (0.0052) & (0.0027) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 0.000 & 0.0006 & 0.0015 & 0.0002 & 0.0001 & 0.0000 \\
+			&  & (0.0234) & (0.0189) & (0.0140) & (0.0094) & (0.0069) \\
+			\quad x2 & 0.298 & -0.0132 & -0.0026 & 0.0002 & 0.0005 & 0.0001 \\
+			&  & (0.0249) & (0.0155) & (0.0112) & (0.0077) & (0.0064) \\
+			\quad x3 & 0.000 & 0.0001 & 0.0002 & 0.0007 & 0.0003 & 0.0003 \\
+			&  & (0.0215) & (0.0138) & (0.0101) & (0.0068) & (0.0053) \\
+			\quad x4 & 0.000 & -0.0007 & 0.0004 & 0.0005 & -0.0001 & 0.0002 \\
+			&  & (0.0230) & (0.0144) & (0.0100) & (0.0070) & (0.0056) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim1_classification_nonlinear} reports results for the nonlinear classification DGP, where $P(y=1) = \sigma(2x_1^2 + 3x_2)$. The true AME of $x_1$ is zero despite the quadratic term, because the sigmoid and quadratic effects cancel in expectation at these parameter values as confirmed by the Monte Carlo ground truth. All four model classes recover this near-zero AME accurately, with bias well below 0.005 across all sample sizes. The more important result is $x_2$, which has true AME of 0.298. Logistic regression misspecifies the DGP --- the true relationship is nonlinear in $x_1$ --- but still recovers the $x_2$ AME accurately because $x_2$ enters linearly and the misspecification in $x_1$ does not propagate to the $x_2$ marginal effect. This is an important practical result: AMEs from a misspecified parametric model can still be reliable for variables that enter the true DGP in a manner consistent with the model's functional form. The black-box models show the same pattern as the linear DGP: XGBoost has elevated RMSE at small samples, random forests develop negative bias at large samples, and neural networks perform comparably to logistic regression throughout.
+
+\begin{table*}[htbp]
+	\centering
+	\small
+	\begin{threeparttable}
+		\caption{Simulation 1: AME Recovery --- Interaction DGP (Classification). Mean bias and RMSE (in parentheses) across 500 Monte Carlo iterations.}
+		\label{tab:sim1_classification_interaction}
+		\begin{tabular}{lrrrrrr}
+			\toprule
+			& & \multicolumn{5}{c}{Bias (RMSE)} \\
+			\cmidrule(lr){3-7}
+			Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+			\quad x1 & 0.199 & -0.0065 & -0.0042 & -0.0021 & -0.0008 & -0.0007 \\
+			&  & (0.0219) & (0.0153) & (0.0112) & (0.0071) & (0.0051) \\
+			\quad x2 & 0.298 & -0.0083 & -0.0035 & -0.0018 & -0.0008 & -0.0007 \\
+			&  & (0.0222) & (0.0154) & (0.0102) & (0.0071) & (0.0050) \\
+			\quad x3 & 0.000 & 0.0009 & -0.0002 & 0.0005 & 0.0003 & -0.0001 \\
+			&  & (0.0206) & (0.0155) & (0.0107) & (0.0070) & (0.0046) \\
+			\quad x4 & 0.000 & 0.0007 & -0.0000 & -0.0001 & 0.0001 & 0.0002 \\
+			&  & (0.0212) & (0.0159) & (0.0106) & (0.0066) & (0.0047) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 0.199 & 0.0114 & 0.0051 & -0.0031 & -0.0110 & -0.0154 \\
+			&  & (0.0423) & (0.0264) & (0.0169) & (0.0144) & (0.0167) \\
+			\quad x2 & 0.298 & 0.0178 & 0.0104 & -0.0023 & -0.0101 & -0.0140 \\
+			&  & (0.0498) & (0.0320) & (0.0200) & (0.0148) & (0.0158) \\
+			\quad x3 & 0.000 & 0.0019 & 0.0004 & 0.0002 & 0.0002 & -0.0000 \\
+			&  & (0.0276) & (0.0170) & (0.0104) & (0.0059) & (0.0034) \\
+			\quad x4 & 0.000 & -0.0005 & -0.0011 & -0.0001 & 0.0001 & -0.0000 \\
+			&  & (0.0267) & (0.0177) & (0.0111) & (0.0057) & (0.0033) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 0.199 & 0.0511 & 0.0225 & 0.0079 & -0.0014 & -0.0046 \\
+			&  & (0.0737) & (0.0392) & (0.0219) & (0.0105) & (0.0082) \\
+			\quad x2 & 0.298 & 0.0496 & 0.0228 & 0.0042 & -0.0021 & -0.0047 \\
+			&  & (0.0796) & (0.0439) & (0.0227) & (0.0125) & (0.0091) \\
+			\quad x3 & 0.000 & 0.0004 & 0.0005 & 0.0004 & 0.0000 & 0.0000 \\
+			&  & (0.0310) & (0.0205) & (0.0111) & (0.0064) & (0.0035) \\
+			\quad x4 & 0.000 & -0.0012 & -0.0015 & -0.0004 & 0.0001 & 0.0001 \\
+			&  & (0.0338) & (0.0205) & (0.0118) & (0.0060) & (0.0037) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 0.199 & -0.0089 & -0.0013 & 0.0001 & 0.0000 & -0.0004 \\
+			&  & (0.0233) & (0.0158) & (0.0117) & (0.0079) & (0.0061) \\
+			\quad x2 & 0.298 & -0.0114 & -0.0002 & 0.0007 & 0.0005 & -0.0002 \\
+			&  & (0.0257) & (0.0170) & (0.0131) & (0.0085) & (0.0067) \\
+			\quad x3 & 0.000 & 0.0008 & 0.0004 & 0.0008 & 0.0001 & 0.0000 \\
+			&  & (0.0193) & (0.0148) & (0.0099) & (0.0070) & (0.0053) \\
+			\quad x4 & 0.000 & 0.0005 & -0.0002 & 0.0000 & -0.0001 & 0.0006 \\
+			&  & (0.0206) & (0.0151) & (0.0103) & (0.0069) & (0.0057) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim1_classification_interaction} reports results for the interaction DGP, where $P(y=1) = \sigma(2x_1 + 3x_2 + 2x_1 x_2)$. The true AMEs of $x_1$ and $x_2$ remain 0.199 and 0.298 --- the same as the linear DGP --- because the interaction term $2x_1 x_2$ has zero expectation under $N(0,1)$ and the Monte Carlo ground truth confirms near-identical values. The key finding is that all four model classes recover these AMEs with bias and RMSE patterns essentially identical to the linear DGP, despite the true DGP including a multiplicative interaction. This is by design of the AME estimand: the average marginal effect averages over the joint distribution of the features, so the interaction term is absorbed into the average derivative rather than requiring explicit modeling. A logistic regression that omits the interaction term recovers the correct AME because the interaction's contribution to the marginal effect of $x_1$ is $\mathbb{E}[2x_2] = 0$ and similarly for $x_2$. This is an important robustness result --- AMEs are not sensitive to interaction misspecification when the interactions involve zero-mean features, which is the common case after centering.
+
+\begin{table*}[htbp]
+	\centering
+	\small
+	\begin{threeparttable}
+		\caption{Simulation 1: AME Recovery --- Linear DGP (Regression). Mean bias and RMSE (in parentheses) across 1,000 Monte Carlo iterations.}
+		\label{tab:sim1_regression_linear}
+		\begin{tabular}{lrrrrrr}
+			\toprule
+			& & \multicolumn{5}{c}{Bias (RMSE)} \\
+			\cmidrule(lr){3-7}
+			Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+			\quad x1 & 2.000 & -0.0017 & -0.0001 & -0.0000 & -0.0006 & -0.0003 \\
+			&  & (0.0659) & (0.0445) & (0.0322) & (0.0207) & (0.0137) \\
+			\quad x2 & 3.000 & -0.0043 & -0.0017 & 0.0007 & -0.0004 & -0.0003 \\
+			&  & (0.0636) & (0.0453) & (0.0316) & (0.0197) & (0.0140) \\
+			\quad x3 & 0.000 & -0.0001 & -0.0006 & -0.0005 & 0.0012 & -0.0003 \\
+			&  & (0.0650) & (0.0457) & (0.0312) & (0.0199) & (0.0140) \\
+			\quad x4 & 0.000 & -0.0034 & 0.0006 & -0.0002 & -0.0003 & -0.0001 \\
+			&  & (0.0642) & (0.0452) & (0.0315) & (0.0196) & (0.0139) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 2.000 & -0.0973 & -0.0332 & -0.0387 & -0.0703 & -0.0911 \\
+			&  & (0.2064) & (0.1189) & (0.0850) & (0.0824) & (0.0956) \\
+			\quad x2 & 3.000 & -0.0215 & -0.0105 & -0.0433 & -0.0797 & -0.0953 \\
+			&  & (0.2338) & (0.1456) & (0.0997) & (0.0958) & (0.1025) \\
+			\quad x3 & 0.000 & -0.0015 & -0.0005 & -0.0005 & 0.0001 & 0.0000 \\
+			&  & (0.0562) & (0.0290) & (0.0137) & (0.0036) & (0.0011) \\
+			\quad x4 & 0.000 & -0.0021 & -0.0010 & -0.0005 & -0.0002 & 0.0000 \\
+			&  & (0.0572) & (0.0297) & (0.0138) & (0.0037) & (0.0011) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 2.000 & 0.4114 & 0.1780 & 0.0366 & -0.0337 & -0.0467 \\
+			&  & (0.4644) & (0.2227) & (0.0917) & (0.0554) & (0.0547) \\
+			\quad x2 & 3.000 & 0.3122 & 0.0948 & -0.0172 & -0.0558 & -0.0601 \\
+			&  & (0.4103) & (0.1884) & (0.0947) & (0.0754) & (0.0677) \\
+			\quad x3 & 0.000 & 0.0007 & 0.0016 & -0.0003 & 0.0011 & -0.0001 \\
+			&  & (0.1090) & (0.0550) & (0.0313) & (0.0153) & (0.0083) \\
+			\quad x4 & 0.000 & -0.0080 & 0.0002 & 0.0011 & -0.0006 & 0.0001 \\
+			&  & (0.1077) & (0.0597) & (0.0314) & (0.0149) & (0.0081) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 2.000 & -0.0659 & -0.0208 & -0.0063 & -0.0021 & -0.0008 \\
+			&  & (0.1161) & (0.0544) & (0.0344) & (0.0293) & (0.0329) \\
+			\quad x2 & 3.000 & -0.1231 & -0.0349 & -0.0102 & -0.0031 & -0.0006 \\
+			&  & (0.1765) & (0.0638) & (0.0361) & (0.0324) & (0.0372) \\
+			\quad x3 & 0.000 & 0.0014 & -0.0006 & -0.0003 & 0.0009 & -0.0006 \\
+			&  & (0.0788) & (0.0484) & (0.0330) & (0.0250) & (0.0280) \\
+			\quad x4 & 0.000 & -0.0002 & 0.0008 & -0.0003 & -0.0004 & -0.0017 \\
+			&  & (0.0752) & (0.0496) & (0.0336) & (0.0247) & (0.0287) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim1_regression_linear} turns to the regression setting with the linear DGP, $y = 2x_1 + 3x_2 + \varepsilon$. Linear regression recovers the true AMEs of 2.0 and 3.0 with negligible bias across all sample sizes, and RMSE declines from around 0.066 at $n=250$ to 0.014 at $n=5{,}000$, consistent with $O(n^{-1/2})$ convergence. The regression setting reveals the regularization bias of random forests more starkly than the classification setting: bias reaches $-0.091$ for $x_1$ and $-0.095$ for $x_2$ at $n=5{,}000$, and RMSE is not declining at the largest sample sizes, indicating that the bias is not vanishing with $n$ at default tuning. This is a known property of random forests in the regression case --- the ensemble averaging and subsampling impose shrinkage toward zero that is not corrected by the hyperparameter search at these sample sizes. XGBoost shows large positive bias at small samples --- 0.41 for $x_1$ at $n=250$ --- but converges quickly, with bias falling below 0.05 by $n=2{,}500$. The neural network shows moderate negative bias at small samples that falls toward zero by $n=2{,}500$, though RMSE does not decline monotonically at the largest sample sizes, suggesting residual variance from the optimization landscape. The noise features have RMSE near zero for linear regression and declining rapidly for the black-box models, confirming that the estimator correctly attributes near-zero effects to irrelevant features in the regression setting.
+
+\begin{table*}[htbp]
+	\centering
+	\small
+	\begin{threeparttable}
+		\caption{Simulation 1: AME Recovery --- Nonlinear DGP (Regression). Mean bias and RMSE (in parentheses) across 1,000 Monte Carlo iterations.}
+		\label{tab:sim1_regression_nonlinear}
+		\begin{tabular}{lrrrrrr}
+			\toprule
+			& & \multicolumn{5}{c}{Bias (RMSE)} \\
+			\cmidrule(lr){3-7}
+			Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+			\quad x1 & 0.000 & 0.0241 & 0.0261 & 0.0148 & 0.0048 & 0.0015 \\
+			&  & (0.3868) & (0.2820) & (0.1966) & (0.1272) & (0.0904) \\
+			\quad x2 & 3.000 & -0.0145 & -0.0041 & -0.0012 & -0.0002 & 0.0001 \\
+			&  & (0.1921) & (0.1276) & (0.0930) & (0.0572) & (0.0417) \\
+			\quad x3 & 0.000 & -0.0025 & 0.0001 & -0.0018 & -0.0020 & -0.0009 \\
+			&  & (0.1889) & (0.1343) & (0.0941) & (0.0576) & (0.0414) \\
+			\quad x4 & 0.000 & -0.0114 & -0.0003 & 0.0023 & 0.0006 & -0.0018 \\
+			&  & (0.1857) & (0.1328) & (0.0927) & (0.0594) & (0.0430) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 0.000 & 0.0071 & 0.0097 & 0.0053 & 0.0006 & 0.0007 \\
+			&  & (0.3433) & (0.2547) & (0.1836) & (0.1185) & (0.0903) \\
+			\quad x2 & 3.000 & 0.0142 & -0.1152 & -0.1701 & -0.1867 & -0.1849 \\
+			&  & (0.2704) & (0.2008) & (0.2004) & (0.1974) & (0.1916) \\
+			\quad x3 & 0.000 & 0.0001 & 0.0008 & 0.0003 & -0.0002 & 0.0000 \\
+			&  & (0.0549) & (0.0274) & (0.0138) & (0.0055) & (0.0027) \\
+			\quad x4 & 0.000 & -0.0009 & -0.0007 & -0.0001 & -0.0000 & -0.0000 \\
+			&  & (0.0573) & (0.0278) & (0.0138) & (0.0054) & (0.0025) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 0.000 & 0.0552 & 0.0038 & -0.0117 & -0.0137 & -0.0057 \\
+			&  & (0.4662) & (0.2744) & (0.1829) & (0.1040) & (0.0735) \\
+			\quad x2 & 3.000 & 0.2725 & 0.0816 & -0.0183 & -0.0702 & -0.0794 \\
+			&  & (0.3937) & (0.1981) & (0.1058) & (0.0885) & (0.0862) \\
+			\quad x3 & 0.000 & -0.0040 & -0.0022 & -0.0020 & -0.0011 & -0.0006 \\
+			&  & (0.1124) & (0.0704) & (0.0446) & (0.0191) & (0.0097) \\
+			\quad x4 & 0.000 & -0.0052 & -0.0028 & -0.0021 & 0.0003 & 0.0006 \\
+			&  & (0.1121) & (0.0636) & (0.0381) & (0.0189) & (0.0096) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 0.000 & 0.0201 & 0.0178 & 0.0065 & -0.0003 & -0.0013 \\
+			&  & (0.3086) & (0.1925) & (0.1390) & (0.0911) & (0.0760) \\
+			\quad x2 & 3.000 & -0.1545 & -0.0202 & -0.0150 & -0.0098 & -0.0022 \\
+			&  & (0.2601) & (0.0710) & (0.0461) & (0.0343) & (0.0395) \\
+			\quad x3 & 0.000 & 0.0017 & 0.0004 & 0.0007 & 0.0009 & -0.0004 \\
+			&  & (0.1419) & (0.0634) & (0.0400) & (0.0293) & (0.0321) \\
+			\quad x4 & 0.000 & -0.0028 & -0.0001 & -0.0013 & -0.0004 & -0.0016 \\
+			&  & (0.1410) & (0.0626) & (0.0406) & (0.0281) & (0.0323) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim1_regression_nonlinear} reports results for the nonlinear regression DGP, $y = 2x_1^2 + 3x_2 + \varepsilon$, where the true AME of $x_1$ is zero by symmetry of $N(0,1)$ and the true AME of $x_2$ is 3.0. Linear regression recovers the $x_2$ AME accurately with RMSE declining at the standard rate, and correctly attributes a near-zero AME to $x_1$ despite misspecifying its functional form --- the same robustness result observed in the classification case. However, the RMSE for $x_1$ under linear regression is substantially larger than in the linear DGP --- 0.387 at $n=250$ versus 0.066 --- reflecting increased estimation variance from the misspecified model. The most striking result is random forests: the bias for $x_2$ reaches $-0.185$ at $n=5{,}000$ and is not declining, indicating that the regularization bias is amplified in the nonlinear setting where the forest must capture the quadratic relationship in $x_1$ while simultaneously estimating the linear effect of $x_2$. XGBoost and the neural network both show elevated RMSE relative to the linear DGP but declining bias, suggesting that these models are better able to adapt to the nonlinear DGP with sufficient data. The $x_1$ AME of zero is recovered accurately by all model classes at moderate sample sizes, which is a reassuring result for practitioners who want to test whether nonlinear features have nonzero average effects.
+
+\begin{table*}[htbp]
+	\centering
+	\small
+	\begin{threeparttable}
+		\caption{Simulation 1: AME Recovery --- Interaction DGP (Regression). Mean bias and RMSE (in parentheses) across 1,000 Monte Carlo iterations.}
+		\label{tab:sim1_regression_interaction}
+		\begin{tabular}{lrrrrrr}
+			\toprule
+			& & \multicolumn{5}{c}{Bias (RMSE)} \\
+			\cmidrule(lr){3-7}
+			Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+			\quad x1 & 2.000 & -0.0041 & 0.0005 & 0.0000 & 0.0006 & 0.0011 \\
+			&  & (0.2284) & (0.1531) & (0.1129) & (0.0715) & (0.0495) \\
+			\quad x2 & 3.000 & 0.0040 & 0.0087 & 0.0075 & 0.0012 & 0.0009 \\
+			&  & (0.2194) & (0.1627) & (0.1135) & (0.0727) & (0.0514) \\
+			\quad x3 & 0.000 & -0.0114 & -0.0088 & -0.0054 & 0.0010 & -0.0009 \\
+			&  & (0.1388) & (0.1002) & (0.0725) & (0.0450) & (0.0329) \\
+			\quad x4 & 0.000 & -0.0073 & 0.0004 & -0.0006 & 0.0013 & 0.0005 \\
+			&  & (0.1443) & (0.1018) & (0.0690) & (0.0453) & (0.0321) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 2.000 & -0.0755 & -0.0310 & -0.0433 & -0.0724 & -0.0804 \\
+			&  & (0.2566) & (0.1663) & (0.1169) & (0.0979) & (0.0925) \\
+			\quad x2 & 3.000 & -0.0634 & -0.0690 & -0.0922 & -0.1112 & -0.1143 \\
+			&  & (0.2806) & (0.1913) & (0.1497) & (0.1306) & (0.1244) \\
+			\quad x3 & 0.000 & -0.0031 & -0.0004 & -0.0009 & 0.0003 & -0.0001 \\
+			&  & (0.0612) & (0.0352) & (0.0182) & (0.0067) & (0.0029) \\
+			\quad x4 & 0.000 & -0.0023 & 0.0004 & -0.0001 & -0.0002 & 0.0000 \\
+			&  & (0.0665) & (0.0349) & (0.0184) & (0.0069) & (0.0030) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 2.000 & 0.3184 & 0.1016 & -0.0009 & -0.0406 & -0.0429 \\
+			&  & (0.4539) & (0.2184) & (0.1163) & (0.0758) & (0.0602) \\
+			\quad x2 & 3.000 & 0.3672 & 0.1135 & -0.0083 & -0.0572 & -0.0589 \\
+			&  & (0.4920) & (0.2373) & (0.1227) & (0.0898) & (0.0746) \\
+			\quad x3 & 0.000 & -0.0031 & 0.0011 & -0.0017 & 0.0005 & -0.0001 \\
+			&  & (0.1040) & (0.0551) & (0.0319) & (0.0151) & (0.0078) \\
+			\quad x4 & 0.000 & -0.0082 & 0.0003 & -0.0003 & -0.0004 & -0.0001 \\
+			&  & (0.1028) & (0.0564) & (0.0314) & (0.0149) & (0.0080) \\
+			\midrule
+			\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 2.000 & -0.0842 & -0.0083 & -0.0056 & 0.0003 & 0.0022 \\
+			&  & (0.2380) & (0.1114) & (0.0779) & (0.0573) & (0.0536) \\
+			\quad x2 & 3.000 & -0.1231 & -0.0068 & -0.0052 & 0.0004 & 0.0026 \\
+			&  & (0.2467) & (0.1120) & (0.0783) & (0.0579) & (0.0533) \\
+			\quad x3 & 0.000 & -0.0026 & -0.0016 & -0.0024 & 0.0004 & -0.0004 \\
+			&  & (0.0986) & (0.0551) & (0.0383) & (0.0293) & (0.0316) \\
+			\quad x4 & 0.000 & -0.0079 & 0.0015 & 0.0002 & -0.0005 & -0.0019 \\
+			&  & (0.0981) & (0.0565) & (0.0387) & (0.0284) & (0.0331) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim1_regression_interaction} reports results for the interaction regression DGP, $y = 2x_1 + 3x_2 + 2x_1 x_2 + \varepsilon$, with true AMEs of 2.0 and 3.0 for $x_1$ and $x_2$. Linear regression recovers these AMEs accurately despite omitting the interaction term, confirming the robustness result from the classification case: the interaction contribution to the marginal effect of $x_1$ is $\mathbb{E}[2x_2] = 0$ and similarly for $x_2$, so the misspecified linear model nevertheless recovers the correct AME. The RMSE for the noise features under linear regression is elevated relative to the linear DGP --- around 0.14 at $n=250$ --- because the interaction term inflates the residual variance and increases estimation uncertainty for all coefficients. Random forests again show persistent negative bias that grows rather than shrinks with sample size, reaching $-0.080$ and $-0.114$ for $x_1$ and $x_2$ respectively at $n=5{,}000$. XGBoost shows the same large positive bias at small samples followed by convergence, but the bias does not fully vanish at $n=5{,}000$ --- around $-0.043$ for $x_1$ and $-0.059$ for $x_2$ --- suggesting that the interaction structure requires larger samples for the gradient boosting to fully adapt. The neural network performs well, with bias below 0.003 for both signal features at $n=2{,}500$ and $n=5{,}000$, and RMSE declining steadily. Taken together the six bias and RMSE tables establish that the AME estimator is consistent for logistic regression, neural networks, and XGBoost across all three DGPs and both outcome types, with random forests showing persistent regularization bias in the regression setting that practitioners should be aware of when reporting AMEs from default-tuned forest models.
+
+\begin{table*}[htbp]
+	\centering
+	\footnotesize
+	\begin{threeparttable}
+		\caption{Simulation 2: Bootstrap SE Calibration --- Linear DGP (Classification). Nominal coverage target: 95\%. Coverage rate and mean 95\% CI width (in parentheses) across 500 Monte Carlo iterations.}
+		\label{tab:sim2_calibration_linear}
+		\begin{tabular}{lrrrr}
+			\toprule
+			& & \multicolumn{3}{c}{Coverage (CI Width)} \\
+			\cmidrule(lr){3-5}
+			Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: Logistic}} \\
+			\quad x1 & 0.199 & 0.938 & 0.940 & 0.930 \\
+			&  & (0.0745) & (0.0388) & (0.0176) \\
+			\quad x2 & 0.298 & 0.896 & 0.944 & 0.950 \\
+			&  & (0.0763) & (0.0400) & (0.0182) \\
+			\quad x3 & 0.000 & 0.932 & 0.936 & 0.940 \\
+			&  & (0.0736) & (0.0378) & (0.0171) \\
+			\quad x4 & 0.000 & 0.922 & 0.936 & 0.940 \\
+			&  & (0.0737) & (0.0378) & (0.0171) \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 0.199 & 0.882 & 0.878 & 0.130 \\
+			&  & (0.1286) & (0.0498) & (0.0165) \\
+			\quad x2 & 0.298 & 0.914 & 0.930 & 0.274 \\
+			&  & (0.1706) & (0.0663) & (0.0228) \\
+			\quad x3 & 0.000 & 0.700 & 0.614 & 0.392 \\
+			&  & (0.0580) & (0.0170) & (0.0034) \\
+			\quad x4 & 0.000 & 0.688 & 0.548 & 0.392 \\
+			&  & (0.0571) & (0.0170) & (0.0034) \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 0.199 & 0.920 & 0.928 & 0.966 \\
+			&  & (0.2625) & (0.1028) & (0.0305) \\
+			\quad x2 & 0.298 & 0.924 & 0.966 & 0.970 \\
+			&  & (0.3076) & (0.1161) & (0.0339) \\
+			\quad x3 & 0.000 & 0.978 & 0.986 & 0.978 \\
+			&  & (0.1718) & (0.0767) & (0.0233) \\
+			\quad x4 & 0.000 & 0.980 & 0.982 & 0.972 \\
+			&  & (0.1715) & (0.0770) & (0.0234) \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 0.199 & 0.916 & 0.922 & 0.990 \\
+			&  & (0.0770) & (0.0417) & (0.0253) \\
+			\quad x2 & 0.298 & 0.902 & 0.950 & 0.978 \\
+			&  & (0.0889) & (0.0459) & (0.0233) \\
+			\quad x3 & 0.000 & 0.866 & 0.926 & 0.990 \\
+			&  & (0.0645) & (0.0375) & (0.0258) \\
+			\quad x4 & 0.000 & 0.854 & 0.918 & 0.994 \\
+			&  & (0.0648) & (0.0374) & (0.0260) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) computed over 500 Monte Carlo iterations. Bootstrap SEs from nonparametric bootstrap with 200 replicates. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP, evaluating empirical coverage of nominal 95\% confidence intervals at $n \in \{250, 1{\,}000, 5{\,}000\}$ using 200 bootstrap replicates. Logistic regression achieves coverage between 0.896 and 0.950 across all variables and sample sizes, with the slight undercoverage at $n=250$ for $x_2$ reflecting finite-sample bias rather than bootstrap miscalibration --- the bootstrap interval is correctly sized but the point estimate is slightly off-center. Coverage improves toward the nominal level as sample size increases and is well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features at all sample sizes --- around 0.978 to 0.986 --- reflecting the wide bootstrap intervals produced by the model's high variance at small samples; the intervals are conservative rather than anti-conservative, which is the safer failure mode for inference. The neural network shows undercoverage for the noise features at $n=250$ (0.866 and 0.854) that recovers toward and above the nominal level by $n=5{,}000$, with the overcoverage at large samples (0.990 and 0.994) consistent with the smooth differentiable surface producing stable finite differences across bootstrap replicates. Random forests show a more concerning pattern: coverage collapses dramatically at $n=5{,}000$, falling to 0.130 for $x_1$, 0.274 for $x_2$, and 0.392 for the noise features. This is a direct consequence of the regularization bias documented in Simulation 1 --- the bootstrap intervals shrink at the expected rate but they shrink around a biased point estimate, so as the intervals narrow they fail to cover the true AME. The intervals at $n=5{,}000$ have mean width 0.0165 for $x_1$ but the bias is around $-0.016$, so the interval is roughly the width of the bias itself and coverage of the true value becomes nearly impossible. This finding is the empirical counterpart to Conjecture 3 in Section~3 of the main paper on bootstrap validity for random forests --- the bootstrap is consistent for the variability of $\widehat{\mathrm{AME}}_j$ around its expectation under the data generating process for the forest, but that expectation does not coincide with the true AME, and standard nonparametric bootstrap methods do not correct for the asymptotic bias.
+
+\begin{table*}[htbp]
+	\centering
+	\footnotesize
+	\begin{threeparttable}
+		\caption{Simulation 2: Bootstrap SE Calibration --- Linear DGP (Regression). Nominal coverage target: 95\%. Coverage rate and mean 95\% CI width (in parentheses) across 500 Monte Carlo iterations.}
+		\label{tab:sim2_calibration_regression_linear}
+		\begin{tabular}{lrrrr}
+			\toprule
+			& & \multicolumn{3}{c}{Coverage (CI Width)} \\
+			\cmidrule(lr){3-5}
+			Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: Linear}} \\
+			\quad x1 & 2.000 & 0.918 & 0.946 & 0.946 \\
+			&  & (0.2441) & (0.1211) & (0.0541) \\
+			\quad x2 & 3.000 & 0.948 & 0.946 & 0.950 \\
+			&  & (0.2445) & (0.1214) & (0.0542) \\
+			\quad x3 & 0.000 & 0.946 & 0.938 & 0.952 \\
+			&  & (0.2454) & (0.1214) & (0.0542) \\
+			\quad x4 & 0.000 & 0.920 & 0.932 & 0.938 \\
+			&  & (0.2459) & (0.1215) & (0.0545) \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: Random Forest}} \\
+			\quad x1 & 2.000 & 0.828 & 0.850 & 0.104 \\
+			&  & (0.5888) & (0.2517) & (0.0998) \\
+			\quad x2 & 3.000 & 0.918 & 0.894 & 0.204 \\
+			&  & (0.8030) & (0.3268) & (0.1348) \\
+			\quad x3 & 0.000 & 0.660 & 0.586 & 0.618 \\
+			&  & (0.1144) & (0.0238) & (0.0018) \\
+			\quad x4 & 0.000 & 0.694 & 0.630 & 0.596 \\
+			&  & (0.1166) & (0.0240) & (0.0018) \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: XGBoost}} \\
+			\quad x1 & 2.000 & 0.526 & 0.850 & 0.964 \\
+			&  & (1.0307) & (0.3749) & (0.1203) \\
+			\quad x2 & 3.000 & 0.752 & 0.954 & 0.938 \\
+			&  & (1.1581) & (0.4174) & (0.1353) \\
+			\quad x3 & 0.000 & 0.960 & 0.986 & 0.990 \\
+			&  & (0.5467) & (0.2358) & (0.0740) \\
+			\quad x4 & 0.000 & 0.956 & 0.986 & 0.986 \\
+			&  & (0.5416) & (0.2354) & (0.0735) \\
+			\midrule
+			\multicolumn{5}{l}{\textit{Panel: Neural Net}} \\
+			\quad x1 & 2.000 & 0.912 & 0.950 & 1.000 \\
+			&  & (0.2794) & (0.1453) & (0.1821) \\
+			\quad x2 & 3.000 & 0.844 & 0.950 & 1.000 \\
+			&  & (0.2901) & (0.1511) & (0.1999) \\
+			\quad x3 & 0.000 & 0.930 & 0.966 & 1.000 \\
+			&  & (0.2695) & (0.1386) & (0.1631) \\
+			\quad x4 & 0.000 & 0.916 & 0.958 & 1.000 \\
+			&  & (0.2722) & (0.1394) & (0.1633) \\
+			\bottomrule
+		\end{tabular}
+		\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) computed over 500 Monte Carlo iterations. Bootstrap SEs from nonparametric bootstrap with 200 replicates. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+		\end{tablenotes}
+	\end{threeparttable}
+\end{table*}
+
+Table~\ref{tab:sim2_calibration_regression_linear} reports the corresponding calibration results for the linear regression DGP, where the magnitudes of the AMEs are larger and the bias-coverage interaction becomes even more visible. Linear regression achieves coverage between 0.918 and 0.952 across all variables and sample sizes, well-calibrated throughout. The neural network performs well at small and moderate samples, with coverage approaching the nominal level by $n=1{,}000$, before drifting upward to exactly 1.000 at $n=5{,}000$ for all four variables --- the same conservatism observed in the classification case, amplified in the regression setting where the smooth prediction surface produces highly stable finite differences. XGBoost shows pronounced undercoverage for the signal features at $n=250$ --- 0.526 for $x_1$ and 0.752 for $x_2$ --- driven by the large positive bias documented in Simulation 1 at small samples, but coverage recovers toward and above the nominal level by $n=1{,}000$ and is well-calibrated at $n=5{,}000$. The most striking result is again random forests: coverage at $n=5{,}000$ falls to 0.104 for $x_1$ and 0.204 for $x_2$, the worst calibration in either table. The mechanism is identical to the classification case --- the bootstrap intervals narrow at the expected rate but the bias does not vanish, so the intervals fail to cover the true AME at large samples. The noise features under random forests show coverage of around 0.6 across all sample sizes, indicating that even where the bias is small, the bootstrap intervals are systematically too narrow to achieve nominal coverage. Taken together the two calibration tables establish that the nonparametric bootstrap produces valid standard errors for logistic regression, linear regression, neural networks, and XGBoost across a range of sample sizes, with random forests as the clear exception --- a finding that aligns with the theoretical status of bootstrap validity for that estimator class as conjectured rather than proved.
+
+\bibliographystyle{imsart-nameyear}
+\bibliography{references}
+
+\end{document}

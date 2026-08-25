@@ -1,0 +1,56 @@
+\contentsline {section}{\numberline {A}Proof of Lemma~\ref {M-lem:sobolev_existence} (Derivative Existence, Sobolev)}{2}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}What Needs to Be Shown}{2}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Step 1: Existence of the Gradient as an $L^p$ Function}{2}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}Step 2: The Norm Bound}{3}{subsection.A.3}%
+\contentsline {subsection}{\numberline {A.4}Conclusion}{3}{subsection.A.4}%
+\contentsline {section}{\numberline {B}Proof of Lemma~\ref {M-lem:sobolev_consistency} (Derivative Consistency, Sobolev)}{3}{appendix.B}%
+\contentsline {subsection}{\numberline {B.1}What Needs to Be Shown}{3}{subsection.B.1}%
+\contentsline {subsection}{\numberline {B.2}Proof Strategy}{3}{subsection.B.2}%
+\contentsline {subsection}{\numberline {B.3}Step 1: Extract a Strongly Convergent Subsequence}{4}{subsection.B.3}%
+\contentsline {subsection}{\numberline {B.4}Step 2: Identify the Limit}{4}{subsection.B.4}%
+\contentsline {subsection}{\numberline {B.5}Step 3: Extract Gradient Convergence}{4}{subsection.B.5}%
+\contentsline {subsection}{\numberline {B.6}Conclusion}{4}{subsection.B.6}%
+\contentsline {section}{\numberline {C}Proof of Lemma~\ref {M-lem:bv_existence} (Derivative Existence, BV)}{5}{appendix.C}%
+\contentsline {subsection}{\numberline {C.1}What Needs to Be Shown}{5}{subsection.C.1}%
+\contentsline {subsection}{\numberline {C.2}Step 1: Existence of $D\hat {f}_n$ as a Radon Measure}{5}{subsection.C.2}%
+\contentsline {subsection}{\numberline {C.3}Step 2: Explicit Formula for Piecewise Constant Functions}{5}{subsection.C.3}%
+\contentsline {section}{\numberline {D}Proof of Lemma~\ref {M-lem:bv_consistency} (Derivative Consistency, BV)}{7}{appendix.D}%
+\contentsline {subsection}{\numberline {D.1}What Needs to Be Shown}{7}{subsection.D.1}%
+\contentsline {subsection}{\numberline {D.2}Proof Strategy}{7}{subsection.D.2}%
+\contentsline {subsection}{\numberline {D.3}Part I: Weak-* Convergence}{7}{subsection.D.3}%
+\contentsline {subsection}{\numberline {D.4}Part II: Strict Convergence Upgrade}{8}{subsection.D.4}%
+\contentsline {section}{\numberline {E}Proof of Lemma~\ref {M-lem:hadamard} (Hadamard Differentiability of the AME Functional)}{9}{appendix.E}%
+\contentsline {subsection}{\numberline {E.1}What Needs to Be Shown}{9}{subsection.E.1}%
+\contentsline {subsection}{\numberline {E.2}Step 1: Linearity and Boundedness of the Candidate Derivative}{9}{subsection.E.2}%
+\contentsline {subsection}{\numberline {E.3}Step 2: Verify the Hadamard Derivative Formula}{9}{subsection.E.3}%
+\contentsline {subsection}{\numberline {E.4}Step 3: Tangential Differentiability}{10}{subsection.E.4}%
+\contentsline {subsection}{\numberline {E.5}Conclusion}{10}{subsection.E.5}%
+\contentsline {section}{\numberline {F}Proof of Theorem~\ref {M-thm:neural_nets} (Neural Networks)}{11}{appendix.F}%
+\contentsline {subsection}{\numberline {F.1}Setup and Notation}{11}{subsection.F.1}%
+\contentsline {subsection}{\numberline {F.2}Step 1: Uniform $W^{2,p}$ Boundedness}{11}{subsection.F.2}%
+\contentsline {subsection}{\numberline {F.3}Step 2: $L^p$ Consistency}{13}{subsection.F.3}%
+\contentsline {subsection}{\numberline {F.4}Step 3: Applying Lemma~\ref {M-lem:sobolev_consistency}}{13}{subsection.F.4}%
+\contentsline {section}{\numberline {G}Proof of Theorem~\ref {M-thm:boosting} (Gradient Boosting)}{13}{appendix.G}%
+\contentsline {subsection}{\numberline {G.1}Setup and Notation}{13}{subsection.G.1}%
+\contentsline {subsection}{\numberline {G.2}Case (i): Smooth Base Learners}{14}{subsection.G.2}%
+\contentsline {subsection}{\numberline {G.3}Case (ii): Tree Stump Base Learners}{14}{subsection.G.3}%
+\contentsline {section}{\numberline {H}Proof of Theorem~\ref {M-thm:forests} (Random Forests)}{15}{appendix.H}%
+\contentsline {subsection}{\numberline {H.1}Setup}{15}{subsection.H.1}%
+\contentsline {subsection}{\numberline {H.2}Step 1: Each Tree is in BV}{16}{subsection.H.2}%
+\contentsline {subsection}{\numberline {H.3}Step 2: Uniform BV Boundedness via the Second Moment Argument}{16}{subsection.H.3}%
+\contentsline {paragraph}{\numberline {H.3.0.1}Geometric factor.}{17}{paragraph.H.3.0.1}%
+\contentsline {paragraph}{\numberline {H.3.0.2}Response factor.}{17}{paragraph.H.3.0.2}%
+\contentsline {paragraph}{\numberline {H.3.0.3}Combining.}{17}{paragraph.H.3.0.3}%
+\contentsline {subsection}{\numberline {H.4}Step 3: Apply Lemma~\ref {M-lem:bv_consistency}}{18}{subsection.H.4}%
+\contentsline {section}{\numberline {I}General Strategy for Bootstrap Validity Proofs}{18}{appendix.I}%
+\contentsline {section}{\numberline {J}Proof of Corollary~\ref {M-cor:bootstrap_nn} (Bootstrap Validity for Neural Networks)}{19}{appendix.J}%
+\contentsline {subsection}{\numberline {J.1}Step 1: Rate Condition}{19}{subsection.J.1}%
+\contentsline {subsection}{\numberline {J.2}Step 2: Apply the Functional Delta Method}{19}{subsection.J.2}%
+\contentsline {section}{\numberline {K}Proof of Corollary~\ref {M-cor:bootstrap_boost} (Bootstrap Validity for Gradient Boosting)}{20}{appendix.K}%
+\contentsline {subsection}{\numberline {K.1}Step 1: Verify the Rate Condition}{20}{subsection.K.1}%
+\contentsline {subsection}{\numberline {K.2}Step 2: Apply the Functional Delta Method}{21}{subsection.K.2}%
+\contentsline {section}{\numberline {L}Proof of Corollary~\ref {M-cor:bootstrap_rf} (Bootstrap Validity for Mondrian Forests)}{21}{appendix.L}%
+\contentsline {subsection}{\numberline {L.1}Step 1: Verify the Rate Condition}{21}{subsection.L.1}%
+\contentsline {subsection}{\numberline {L.2}Step 2: Apply the Functional Delta Method}{22}{subsection.L.2}%
+\contentsline {section}{\numberline {M}Simulation study: full design and results}{22}{appendix.M}%
+\contentsline {section}{References}{32}{section*.43}%

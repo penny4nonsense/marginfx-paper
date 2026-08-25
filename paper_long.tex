@@ -41,6 +41,8 @@
 \newtheorem{conjecture}{Conjecture}
 \newtheorem{remark}{Remark}
 \newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{proposition}{Proposition}
 
 
 % Custom commands for asymptotic theory section
@@ -58,22 +60,51 @@
 \newcommand{\wstar}{\xrightarrow{w*}}
 \newcommand{\Prob}{\mathbb{P}}
 \newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\Dh}{\Delta_{j,h}}
+\newcommand{\Ptwo}[1]{\norm{#1}_{P,2}}
 
 \begin{document}
 	
-	\title{Model-Agnostic Interpretation of Machine Learning via Average Marginal Effects}
-	\author{Jason Parker}
-	\date{May 2026}
+	\title{Model-Agnostic Interpretation of Machine Learning\\via Average Marginal Effects}
+	\author{Jason Parker\thanks{Email: \texttt{jparker588@gmail.com}.}}
+	\date{August 2026}
 	
 	\maketitle
 	\thispagestyle{fancy}
 	
 	\begin{abstract}
-		\noindent We propose a framework for interpreting any supervised machine learning model through average marginal effects, a standard inferential tool in the econometrics of nonlinear models. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether the prediction function is a neural network, a gradient boosted model, a random forest, or any other supervised learner --- and produces a coefficient table directly analogous to the output of a parametric regression, with estimates, standard errors, and hypothesis tests. Standard errors are obtained via a nonparametric bootstrap with full model refitting on each replicate, capturing uncertainty about both model specification and estimation. The framework nests the classical generalized linear model result as a special case.
-		
-		The theoretical contribution is twofold. First, we establish gradient consistency for neural networks in Sobolev space $W^{1,p}$, for gradient boosted models and Mondrian forests in the space of functions of bounded variation, and identify the obstruction to extending these results to Breiman forests. Second, we prove bootstrap validity for all three estimator classes via the Hadamard differentiability of the average marginal effect functional and the functional delta method, providing the first rigorous inferential foundation for machine learning average marginal effects. These results together imply that the interpretability--accuracy tradeoff is not fundamental: it is an artifact of requiring parametric assumptions to make interpretation rigorous, and it dissolves once those assumptions are dropped.
-		
-		Empirical validation on three datasets spanning binary classification and continuous regression demonstrates that average marginal effects are stable across model classes, that bootstrap standard errors narrow as model fit improves, and that Breiman random forests produce less stable gradient estimates than the other estimator classes --- consistent with the theoretical result that gradient consistency for Breiman forests is harder to establish. Practitioners requiring random forest average marginal effects are advised to consider Mondrian forests, for which both gradient consistency and bootstrap validity are proved. Existing interpretability methods including SHAP values 		and partial dependence plots lack the inferential apparatus the proposed framework provides: they produce point estimates with no associated sampling distributions and no basis for hypothesis testing.
+		\noindent We propose a framework for interpreting any supervised machine learning
+		model through average marginal effects, the standard inferential tool in the
+		econometrics of nonlinear models. The estimand is the window average marginal
+		effect --- the average centered finite difference of the regression function
+		at a fixed, interpretable step --- which is well defined for learners with no
+		differentiability anywhere and recovers the classical average derivative as
+		the window shrinks. Because the functional is linear in the regression
+		function, it admits an exact Riesz representation obtained by a change of
+		variables, with no boundary terms and no density derivatives, and the
+		resulting orthogonal score has estimation bias exactly equal to a product of
+		two $L^2$ errors. A cross-fitted debiased estimator is therefore root-$n$
+		consistent and asymptotically normal whenever the learner and a
+		Riesz-regression estimate of the representer converge faster than $n^{-1/4}$
+		in $L^2$ --- rather than at the parametric rate in a function-space norm ---
+		attains the semiparametric efficiency bound, and returns a coefficient table
+		directly analogous to parametric regression output without resampling; the
+		classical generalized linear model result is nested as a special case, and
+		binary contrasts arise from the same representation with inverse propensity
+		weights. The score is doubly robust: when the representer is known or
+		parametrically estimable --- designed experiments, randomized treatments,
+		simulation designs --- inference remains valid with no consistency
+		requirement on the learner, covering the fixed-complexity settings in which
+		off-the-shelf learners converge to pseudo-true limits. A pairing identity
+		characterizes, apparently for the first time,
+		what the marginal effect of a tree-based model measures: the jump measure of
+		the fitted surface integrated against a locally averaged covariate density.
+		Gradient consistency results for neural networks in Sobolev spaces and for
+		boosted trees and Mondrian forests in the space of functions of bounded
+		variation delineate when uncorrected plug-in effects are already consistent.
+		Experiments on three datasets and simulations illustrate the framework and
+		display the regularization-bias mechanism that the orthogonal correction
+		removes.
 	\end{abstract}
 	
 	\section{Introduction}
@@ -123,14 +154,15 @@
 	a single metric such as the average marginal effect. The present paper takes the
 	opposite position: we argue that the average marginal effect is precisely the right
 	summary quantity, that it has a rigorous population-level interpretation inherited
-	from the econometric literature, and that valid inference is achievable via a
-	nonparametric bootstrap with full model refitting. \cite{lowe2024fmeffects}
+	from the econometric literature, and that valid, semiparametrically efficient
+	inference is achievable via a debiased, cross-fitted estimator with an explicit
+	influence function. \cite{lowe2024fmeffects}
 	provide the \texttt{fmeffects} R package implementing this descriptive framework,
 	demonstrating the practical demand for marginal-effect-style interpretation of
-	machine learning models, but without the theoretical justification --- no gradient
-	consistency, no bootstrap validity, no characterization of when the marginal effects
-	are well-defined --- that the present paper provides through the Hadamard
-	differentiability of the AME functional and the functional delta method.
+	machine learning models, but without the theoretical justification --- no population estimand, no
+	efficiency theory, no characterization of when the marginal effects are
+	well-defined --- that the present paper provides through the Riesz representation
+	of the effect functional and semiparametric efficiency theory.
 	
 	The econometric literature has solved exactly this inferential problem for parametric
 	models through average marginal effects \citep{greene2012, wooldridge2010}. For a
@@ -149,48 +181,93 @@
 	it has been restricted to parametric models: to compute $\partial f / \partial x_j$
 	analytically, one must know the functional form of $f$.
 	
+	A separate literature, largely disjoint from both the interpretability and the
+	applied marginal effects traditions, has studied the population version of this
+	quantity directly. The average derivative $\E[\partial_j f(X)]$ was introduced as
+	an estimand in its own right by \citet{hardle1989} and \citet{powell1989}, its
+	semiparametric efficiency bounds were derived by \citet{newey1993}, and the modern
+	debiased machine learning program \citep{chernozhukov2018dml,
+	chernozhukov2022riesz} shows how to estimate linear functionals of a regression
+	function at the parametric rate using flexible learners as nuisance estimators.
+	The present paper is deliberately positioned at the junction of these
+	literatures, and its delta relative to each is stated in one sentence: the
+	debiasing literature tells one how to estimate $\E[\partial_j f(X)]$ efficiently
+	when the derivative exists and the learner is treated as a black-box nuisance;
+	this paper establishes what the estimand \emph{is} when the learner is not
+	differentiable --- the window effect, with an exact finite-difference Riesz
+	representation requiring no boundary conditions and no density derivatives --- and
+	shows that a single orthogonal score then covers smooth and piecewise constant
+	learners, continuous and discrete regressors, within one construction. Conversely,
+	relative to the interpretability literature, the contribution is to replace
+	descriptive scores with an estimand--estimator--efficiency-bound triple of the
+	classical kind.
+	
 	This paper removes that restriction. We propose a framework for computing average
 	marginal effects for any supervised machine learning model, requiring only that the
-	prediction function $\hat{f}$ can be evaluated at a point. The average marginal
-	effect of variable $j$ is defined as the expectation of the partial derivative of
-	$f$ with respect to $x_j$, averaged over the empirical distribution of the features.
-	For models where the derivative is not available in closed form --- which includes
-	tree-based models, for which classical derivatives do not exist everywhere --- we
-	estimate it via a centered finite difference with an adaptive step size scaled to
-	the spread of each feature. Standard errors are obtained via a nonparametric
-	bootstrap \citep{efron1979, efrontibshirani1993} that refits the model, including
-	hyperparameter selection, on each bootstrap sample, capturing uncertainty about model
-	specification as well as estimation. The result is a coefficient table --- estimate,
-	standard error, and significance level --- directly analogous to the output of a
-	parametric regression but with no restrictions on the functional form of $\hat{f}$.
-	The framework nests the classical GLM result as a special case: when $\hat{f}$ is a
-	logistic regression, the estimator recovers the classical AME automatically. When
-	$\hat{f}$ is XGBoost or a random forest or a neural network, the same formula applies
-	and produces output on the same scale and with the same interpretation.
+	prediction function $\hat{f}$ can be evaluated at a point. The estimand is the
+	\emph{window average marginal effect}: the expectation of a centered finite
+	difference of the regression function at a fixed step $h$ scaled to the spread of
+	each feature, trimmed away from the boundary of the support. Treating the finite
+	difference as the estimand rather than as a numerical approximation to a
+	derivative is what makes genuine model-agnosticism possible --- the window effect
+	is well defined for tree-based models, for which classical derivatives do not
+	exist anywhere --- while the classical average derivative is recovered as the
+	$h \to 0$ limit whenever the regression function has one weak derivative, so
+	nothing is given up relative to the econometric tradition. Estimation combines
+	the plug-in average of finite differences with an orthogonal correction term
+	built from an explicit Riesz representer, computed by cross-fitting; standard
+	errors come from the estimated influence function in a single pass, with no
+	resampling required, and a multiplier bootstrap is available at no additional
+	model fits when a resampling distribution is wanted. The result is a coefficient
+	table --- estimate, standard error, and significance level --- directly analogous
+	to the output of a parametric regression but with no restrictions on the
+	functional form of $\hat{f}$. The framework nests the classical GLM result as a
+	special case: when $\hat{f}$ is a logistic regression, the estimator recovers the
+	classical AME automatically. When $\hat{f}$ is XGBoost or a random forest or a
+	neural network, the same formula applies and produces output on the same scale
+	and with the same interpretation, and for binary regressors the construction
+	specializes to augmented inverse probability weighting with the regressor in the
+	role of the treatment.
 	
-	The theoretical contribution of the paper proceeds in two parts. The first establishes
-	gradient consistency for three classes of supervised learners, providing the
-	asymptotic foundation for the proposed estimator. For neural networks, which live in
-	Sobolev space $W^{1,p}$, gradient consistency follows from uniform $W^{2,p}$
-	boundedness and $L^p$ consistency via the Rellich--Kondrachov compact embedding
-	theorem \citep{evans2010pde, hornik1990universal}. For gradient boosted models with
-	tree base learners, the natural function space is the space of functions of bounded
-	variation \citep{ambrosio2000bv}, where gradients exist as Radon measures and
-	consistency is established via the BV compactness theorem \citep{buhlmann2003boosting,
-		mason2000boosting}. For random forests, gradient consistency is proved for the
-	Mondrian forest variant \citep{lakshminarayanan2014mondrian, mourtada2017mondrian}
-	and conjectured for Breiman forests \citep{breiman2001rf, scornet2015forests}, with
-	the obstruction to a full proof identified precisely. The second part establishes
-	bootstrap validity for each of the three estimator classes. The key result is the
-	Hadamard differentiability of the AME functional
-	\citep[Chapter~3.9]{vandervaart1996weak}, which shows that the AME varies smoothly
-	under perturbations of the underlying estimator in the appropriate function space
-	sense. Combined with rate conditions for each estimator class and the functional delta
-	method, this yields bootstrap validity as a corollary for neural networks, gradient
-	boosted models, and Mondrian forests. Bootstrap validity for Breiman forests remains
-	open for the same reason that gradient consistency is harder to establish --- the
-	data-dependent splitting rule couples partition geometry to response variation in a
-	way that resists clean analysis.
+	The theoretical contribution proceeds in three parts, which answer in turn the
+	questions of inference, optimality, and interpretation. First, because the window
+	functional is linear in the regression function, a change of variables yields an
+	exact Riesz representation with a bounded, explicitly computable representer ---
+	no integration by parts, no boundary terms, and no derivatives of the covariate
+	density --- and the bias of the resulting orthogonal moment is exactly a product
+	of two $L^2$ estimation errors. A cross-fitted estimator built on this score is
+	root-$n$ consistent and asymptotically normal whenever the learner and a
+	Riesz-regression estimate of the representer each converge faster than
+	$n^{-1/4}$ in $L^2$ --- a condition of the kind modern learning theory actually
+	verifies, in place of the parametric-rate function-space convergence that a
+	delta-method treatment would demand and that no growing-complexity learner
+	satisfies. Second, the score is the efficient influence function: the estimator
+	attains the semiparametric efficiency bound for the window effect, whose variance
+	decomposes into the heterogeneity of the effect and a noise term amplified by the
+	representer, making the cost of narrow windows explicit. The score is moreover
+	doubly robust: with a known or parametrically estimated representer --- simulation
+	designs, designed experiments, randomized treatments --- inference remains valid
+	with no consistency requirement on the learner at all, covering the
+	fixed-complexity defaults under which off-the-shelf learners converge to
+	pseudo-true limits rather than to the truth. Third, a pairing
+	identity characterizes what the marginal effect of a non-differentiable model
+	measures: for any estimator of bounded variation --- every tree-based model ---
+	the window effect equals the jump measure of the fitted surface integrated
+	against a locally averaged covariate density, an exact geometric description of
+	the population quantity that a forest's coefficient tracks. Supporting this
+	interpretation theory, gradient consistency is established for neural networks
+	\citep{hornik1990universal} in the Sobolev space $W^{1,p}$, via the
+	Rellich--Kondrachov compact embedding theorem \citep{evans2010pde}, and for
+	gradient boosted models with tree base learners and Mondrian forests
+	\citep{lakshminarayanan2014mondrian, mourtada2017mondrian} in the space of
+	functions of bounded variation \citep{ambrosio2000bv}, via the BV compactness
+	theorem. For Breiman forests \citep{breiman2001rf, scornet2015forests},
+	gradient consistency is conjectured rather than proved, with the obstruction
+	identified precisely; because the inference theory requires gradient
+	consistency for no class, this leaves two Breiman questions of unequal
+	difficulty --- valid inference needs only an $L^2$ rate from the forest, while
+	the gradient question, which bears on interpretation rather than on coverage,
+	remains a function-space problem and remains open.
 	
 	We validate the framework empirically on three datasets spanning binary classification
 	in social science, binary classification in finance, and continuous regression: the
@@ -207,11 +284,13 @@
 	supports conclusions that the SHAP framework cannot. An additional empirical finding
 	is that Breiman random forests produce less stable AME estimates than the other
 	estimator classes, consistent with the theoretical result that gradient consistency
-	for Breiman forests is harder to establish than for Mondrian forests. Practitioners
-	who require random forest AMEs are therefore advised to consider Mondrian forests,
-	for which both gradient consistency and bootstrap validity are proved.
+	for Breiman forests is harder to establish than for Mondrian forests. The
+	simulation study traces this instability to its source: uncorrected plug-in
+	intervals for forests collapse in coverage at large samples because they
+	concentrate around a regularization-biased center --- precisely the first-order
+	bias term that the orthogonal correction removes.
 	
-	The remainder of the paper is organized as follows. Section~2 defines the estimand, presents the estimator, and establishes its relationship to classical average marginal effects for the GLM family. Section~3 establishes gradient consistency and bootstrap validity for neural networks, gradient boosted models, and Mondrian forests, and identifies the obstruction to extending these results to Breiman forests. Section~4 presents the three empirical applications. Section~5 presents simulation evidence on 	finite-sample performance. Section~6 concludes.
+	The remainder of the paper is organized as follows. Section~2 defines the estimand, presents the estimator, and establishes its relationship to classical average marginal effects for the GLM family. Section~3 develops the asymptotic theory: the window estimand and its Riesz representation, the orthogonal score with cross-fitting, root-$n$ asymptotic normality and semiparametric efficiency, the pairing identity for estimators of bounded variation, gradient consistency for three learner classes, and the nuisance rates that the conditions require. Section~4 presents the three empirical applications. Section~5 presents simulation evidence on 	finite-sample performance. Section~6 concludes.
 	
 	\section{Method}
 	
@@ -229,7 +308,7 @@
 	\begin{equation}
 		\mathrm{AME}_j = \mathbb{E}\left[\frac{\partial f}{\partial x_j}(\mathbf{x})\right]
 	\end{equation}
-	where the expectation is taken over the marginal distribution of $\mathbf{x}$ under $P$. This is the estimand. The conditions under which $\partial f / \partial x_j$ exists and under which the sample estimator defined below converges to $\mathrm{AME}_j$ are established in Section~4.
+	where the expectation is taken over the marginal distribution of $\mathbf{x}$ under $P$. This is the classical target. The operational estimand of the paper is its finite-window counterpart, the \emph{window average marginal effect} $\theta_{j,h} = \mathbb{E}[w(\mathbf{x})\,\{f(\mathbf{x} + h e_j) - f(\mathbf{x} - h e_j)\}/2h]$, where $h > 0$ is a fixed step scaled to the spread of $x_j$ and $w$ is a trimming weight that excludes points within $h$ of the boundary of the support. The window effect is well defined for any bounded prediction function --- no derivative need exist anywhere, which is what a genuinely model-agnostic estimand requires --- and it converges to $\mathrm{AME}_j$ as $h \to 0$ whenever $f$ has one weak derivative. Both facts, and the conditions under which the estimators below converge, are established in Section~3.
 	
 	\subsection{Estimation}
 	
@@ -241,13 +320,13 @@
 	\begin{equation}
 		\frac{\partial \hat{f}}{\partial x_j}\bigg|_{\mathbf{x}_i} \approx \frac{\hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} + h_j)}\right) - \hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} - h_j)}\right)}{2h_j}
 	\end{equation}
-	where $\mathbf{x}_i^{(j,v)}$ denotes the vector $\mathbf{x}_i$ with the $j$-th component replaced by $v$. The centered finite difference is preferred over a one-sided difference because its approximation error is $O(h_j^2)$ rather than $O(h_j)$, which becomes material when $h_j$ is not negligibly small.
+	where $\mathbf{x}_i^{(j,v)}$ denotes the vector $\mathbf{x}_i$ with the $j$-th component replaced by $v$. The centered finite difference is preferred over a one-sided difference because its approximation error relative to the pointwise derivative is $O(h_j^2)$ rather than $O(h_j)$, which becomes material when $h_j$ is not negligibly small. Relative to the window estimand $\theta_{j,h}$ the centered difference involves no approximation at all: it is the defining operation of the estimand, computed exactly, and $h_j$ is a reported feature of the target --- the perturbation scale at which effects are measured --- rather than a numerical tolerance.
 	
 	The step size $h_j$ is chosen adaptively as:
 	\begin{equation}
 		h_j = \max\!\left(10^{-4},\; 0.05 \cdot \hat{\sigma}_j\right)
 	\end{equation}
-	where $\hat{\sigma}_j$ is the sample standard deviation of the $j$-th feature. Scaling $h_j$ to the spread of $x_j$ ensures the finite difference is neither so small as to introduce numerical instability nor so large as to obscure local behavior. The floor of $10^{-4}$ guards against degenerate cases where $\hat{\sigma}_j \approx 0$.
+	where $\hat{\sigma}_j$ is the sample standard deviation of the $j$-th feature. Scaling $h_j$ to the spread of $x_j$ ensures the finite difference is neither so small as to introduce numerical instability nor so large as to obscure local behavior. The floor of $10^{-4}$ guards against degenerate cases where $\hat{\sigma}_j \approx 0$. Observations within $h_j$ of the boundary of the observed support receive trimming weight zero, so that $\hat{f}$ is never evaluated at points where the regression function is unidentified; the trimmed shell carries probability mass of order $h_j$, and with the default step this exclusion is small. Untrimmed evaluation --- the default in earlier implementations --- silently extrapolates the fitted model outside the support, and the trimming weight should be understood as the repair of that extrapolation rather than as a restriction of the method.
 	
 	For binary or categorical variables the partial derivative does not exist and the finite difference is replaced by a contrast. The marginal effect for observation $i$ is:
 	\begin{equation}
@@ -269,77 +348,144 @@
 	
 	\subsection{Inference}
 	
-	Standard errors are obtained via a nonparametric bootstrap \citep{efron1979, efrontibshirani1993}. Let $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}_{i=1}^n$ denote the observed sample and let $\hat{\lambda}$ denote the hyperparameters of $\hat{f}$ selected by cross-validation on $\mathcal{D}$. For $b = 1, \dots, B$:
-	\begin{enumerate}[(1)]
-		\item Draw a bootstrap sample $\mathcal{D}^{(b)}$ by sampling $n$ observations from $\mathcal{D}$ with replacement, sampling $(\mathbf{x}_i, y_i)$ pairs jointly to preserve the joint distribution of features and outcome.
-		\item Initialize the hyperparameter search at $\hat{\lambda}$ and refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ with hyperparameters $\hat{\lambda}^{(b)}$ selected by cross-validation.
-		\item Compute $\widehat{\mathrm{AME}}_j^{(b)}$ using $\hat{f}^{(b)}$ evaluated at the original sample $\mathcal{D}$.
-	\end{enumerate}
-	The bootstrap standard error is:
+	Inference is based on a debiased, cross-fitted estimator whose formal analysis is
+	the subject of Section~3; here we describe the procedure. Partition the sample
+	into $K$ folds ($K = 5$ by default). For each fold $k$, using only the
+	observations outside the fold: (1) fit the learner $\hat{f}^{(-k)}$ exactly as it
+	would be fit in any application, including hyperparameter selection by
+	cross-validation; (2) fit an estimate $\hat{\alpha}^{(-k)}$ of the Riesz
+	representer of the window effect --- an explicit weight function characterized in
+	Section~3 --- by minimizing an empirical quadratic loss that requires only
+	evaluating candidate functions at the shifted points $\mathbf{x}_i \pm h_j e_j$,
+	with no density estimation of any kind. The estimate of $\theta_{j,h}$ averages,
+	over the held-out observations of every fold, the finite difference of the
+	out-of-fold learner plus a correction term:
 	\begin{equation}
-		\widehat{\mathrm{se}}_j = \sqrt{\frac{1}{B-1}\sum_{b=1}^B \left(\widehat{\mathrm{AME}}_j^{(b)} - \bar{\mathrm{AME}}_j\right)^2}
+		\hat{\theta}_{j,h} = \frac{1}{n} \sum_{k=1}^{K} \sum_{i \in I_k} \left[
+		w(\mathbf{x}_i)\,
+		\frac{\hat{f}^{(-k)}\!\left(\mathbf{x}_i^{(j,\, x_{ij} + h_j)}\right)
+		- \hat{f}^{(-k)}\!\left(\mathbf{x}_i^{(j,\, x_{ij} - h_j)}\right)}{2 h_j}
+		+ \hat{\alpha}^{(-k)}(\mathbf{x}_i)\,
+		\bigl(y_i - \hat{f}^{(-k)}(\mathbf{x}_i)\bigr)
+		\right]
 	\end{equation}
-	where $\bar{\mathrm{AME}}_j = B^{-1}\sum_{b=1}^B \widehat{\mathrm{AME}}_j^{(b)}$.
+	The first term is the plug-in average of Section~2.2 computed on held-out data;
+	the second term removes, at first order, the bias that regularization of the
+	learner transmits to the plug-in average --- each held-out residual, weighted by
+	the representer, testifies to how the learner is locally mis-calibrated where
+	that mis-calibration matters for the marginal effect. For binary and categorical
+	variables the same formula applies with the contrast in place of the finite
+	difference and inverse propensity weights in the role of the representer.
 	
-	Several design choices warrant comment. Sampling $(\mathbf{x}_i, y_i)$ pairs jointly preserves the joint distribution of features and outcome that $\hat{f}$ is trained to approximate; resampling features and outcomes independently would destroy this dependence structure. Refitting $\hat{f}^{(b)}$ with hyperparameter selection on each bootstrap sample ensures that the bootstrap standard errors capture uncertainty about model specification, not only estimation uncertainty conditional on a fixed architecture. Initializing the hyperparameter search at $\hat{\lambda}$ rather than from scratch makes this computationally feasible --- the original model serves as a warm start, substantially reducing the cost of cross-validation on each replicate. Finally, evaluating $\hat{f}^{(b)}$ at the original sample $\mathcal{D}$ rather than the bootstrap sample $\mathcal{D}^{(b)}$ follows standard practice for smooth functionals of the empirical distribution \citep{efrontibshirani1993} and ensures that $\widehat{\mathrm{AME}}_j^{(b)}$ depends on the bootstrap draw only through $\hat{f}^{(b)}$, which simplifies the asymptotic analysis in Section~4. Analysis of the variant that evaluates at $\mathcal{D}^{(b)}$ is left to future work.
+	Standard errors require no resampling: the summands above, centered at
+	$\hat{\theta}_{j,h}$, are estimates of the influence function values, and the
+	standard error is the sample standard deviation of those values divided by
+	$\sqrt{n}$. The coefficient table --- estimate, standard error, $t$-statistic,
+	and $p$-value for each feature --- is therefore produced by $K$ model fits in
+	total, in place of the hundreds of refits that a bootstrap requires; Section~3
+	establishes that the resulting confidence intervals are asymptotically valid and
+	that the estimator attains the semiparametric efficiency bound. When a full
+	resampling distribution is wanted --- for simultaneous confidence bands across
+	features, for example --- a multiplier bootstrap that perturbs the estimated
+	influence function values with i.i.d.\ mean-zero weights is available at no
+	additional model fits.
+	
+	The package additionally retains a nonparametric model-refitting bootstrap
+	\citep{efron1979, efrontibshirani1993} as a \emph{diagnostic} for specification
+	and hyperparameter-selection uncertainty, which the asymptotic theory conditions
+	away. Let $\hat{\lambda}$ denote the hyperparameters selected by cross-validation
+	on the observed sample $\mathcal{D}$. For $b = 1, \dots, B$: draw
+	$\mathcal{D}^{(b)}$ by resampling $(\mathbf{x}_i, y_i)$ pairs jointly with
+	replacement; refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ with hyperparameter
+	search warm-started at $\hat{\lambda}$; and recompute the plug-in average
+	marginal effect. The dispersion of the replicates measures how sensitive the
+	reported effects are to the joint variability of resampling, refitting, and
+	hyperparameter selection, and large dispersion is a useful warning that the
+	fitted model is unstable. It is not, however, a substitute for the influence
+	function standard errors above, for reasons Section~3 makes precise: the
+	refitting bootstrap recenters at the fitted model and is therefore blind to the
+	regularization bias that the correction term removes --- a blindness whose
+	consequences for coverage are documented for random forests in Section~5 --- and,
+	because each replicate is evaluated at the original sample, it omits the
+	component of sampling variance that comes from averaging a heterogeneous effect
+	over a finite sample of covariate values.
 	
 	\section{Asymptotic Theory}
 	\label{sec:theory}
 	
 	\subsection{Overview}
 	
-	The method agnostic interpretation framework rests on a theoretical foundation that
-	connects the gradients of machine learning estimators to the gradients of the true
-	underlying function. This section establishes that foundation. We show that for three
-	estimator classes---neural networks, gradient boosted models, and random
-	forests---the gradient of the estimator $\fn$ converges asymptotically to the gradient
-	of the true function $f$, and that bootstrap standard errors for the resulting average
-	marginal effects are asymptotically valid. The average marginal effects presented in
-	Section~3 are therefore consistently estimating population quantities with well defined
-	interpretations, not heuristic approximations, and inference on those quantities is
-	justified.
+	The asymptotic theory must deliver three things. First, a population estimand that
+	is well defined for any supervised learner, including learners such as trees and
+	forests whose prediction functions are not differentiable anywhere. Second, valid
+	root-$n$ inference on that estimand under conditions that flexible machine learning
+	estimators can actually satisfy --- in particular, without requiring the learner
+	itself to converge at the parametric rate, a condition that fails whenever the
+	complexity of the function class grows with the sample size. Third, an account of
+	what the gradient of a fitted model measures: when the average marginal effect of a
+	fitted forest is computed, what population quantity is that number tracking? This
+	section delivers the three in turn.
 	
-	The connection between the theory and the method is direct. The average marginal
-	effect of variable $j$ is defined as:
-	\begin{equation}
-		\widehat{AME}_j = \frac{1}{n} \sum_{i=1}^n \frac{\partial \fn}{\partial x_j}(x_i)
-		\label{eq:ame}
-	\end{equation}
-	For this quantity to be meaningful as an estimate of a population parameter, two
-	things must be true. First, the gradient $\frac{\partial \fn}{\partial x_j}$ must
-	exist and be well defined---it must be estimating something real rather than an
-	artifact of the particular model fitted. Second, it must converge to the
-	corresponding gradient of the true function $f$ as the sample size grows. Without
-	these guarantees, the average marginal effects are descriptive statistics about the
-	fitted model rather than estimates of population quantities. The theorems in this
-	section provide exactly these guarantees. The corollaries then establish that
-	bootstrap standard errors correctly characterize the uncertainty in those estimates.
+	The organizing observation is structural: the average marginal effect is a
+	\emph{linear} functional of the regression function. Linearity has three
+	consequences that together carry the entire theory. First, the functional admits an
+	exact Riesz representation --- there is an explicit, bounded weight function
+	$\alpha_h$ such that averaging the finite difference of any function against the
+	covariate distribution equals averaging the function itself against $\alpha_h$
+	(Lemma~\ref{lem:riesz}). The representation is obtained by a change of variables
+	rather than integration by parts, so no boundary terms arise and no derivative of
+	the covariate density is ever needed. Second, the estimation bias of a debiased
+	moment built from this representation is \emph{exactly} a product of two estimation
+	errors (Lemma~\ref{lem:orth}) --- not a product plus a linearization remainder, as
+	for nonlinear functionals, but an identity. Root-$n$ inference therefore requires
+	only that the product of the $L^2$ errors of two nuisance estimates be
+	$o_p(n^{-1/2})$ --- for instance, both converging faster than $n^{-1/4}$ --- rather
+	than root-$n$ convergence of the learner in any norm
+	(Theorem~\ref{thm:main}). Third, the resulting estimator attains the semiparametric
+	efficiency bound for the estimand (Theorem~\ref{thm:efficiency}): among all regular
+	estimators, none has smaller asymptotic variance.
 	
-	The key insight is that the appropriate notion of gradient consistency depends on the
-	function space the estimator naturally inhabits, which in turn reflects the inductive
-	bias of the estimator class. This is not merely a technical observation---it reflects
-	something fundamental about what each estimator class is doing. Neural networks with
-	smooth activation functions produce smooth estimators whose gradients are ordinary
-	$L^p$ functions, and the appropriate framework is Sobolev space theory
-	\citep{evans2010pde}. Random forests produce piecewise constant estimators whose
-	gradients are concentrated on leaf boundaries rather than distributed across the
-	domain, and the appropriate framework is the theory of functions of bounded variation
-	\citep{ambrosio2000bv}. Gradient boosted models occupy a middle ground depending on
-	the base learner. The average marginal effects computed in Section~3 are the same
-	operation---averaging the gradient over the sample---but the theoretical justification
-	for that operation differs across estimator classes in a way that reflects their
-	fundamentally different structures.
+	The estimand the theory analyzes is exactly the quantity the estimator of Section~2
+	computes: the average of a centered finite difference at a fixed step $h$, which we
+	call the \emph{window average marginal effect}. Treating $h$ as part of the estimand
+	rather than as a numerical approximation to a derivative has two payoffs. The window
+	effect is well defined for any bounded prediction function --- no differentiability
+	anywhere --- which is what makes a genuinely model-agnostic theory possible. And the
+	classical average derivative is recovered as the $h \to 0$ limit whenever the true
+	regression function has one weak derivative (Proposition~\ref{prop:hlimit}), so
+	nothing classical is given up. A trimming weight confines the evaluation points to
+	the interior of the support; the binary and categorical contrasts of Section~2 fit
+	the same template, with the change of variables running over a two-point support and
+	the representer reducing to inverse-probability weights
+	(Remark~\ref{rem:binary}).
 	
-	This observation also clarifies why existing approaches to model interpretation lack
-	the theoretical foundation developed here. Methods such as SHAP values and partial
-	dependence plots are not computing gradients of the estimator in any well defined
-	function space sense, and consequently there is no analog of the results below that
-	would establish what population quantity they are estimating or at what rate. The
-	average marginal effect framework, by contrast, is precisely defined as a gradient
-	operation, and the results below establish that this operation is doing what
-	practitioners intuitively expect it to do.
+	The interpretation question is answered by a pairing identity
+	(Theorem~\ref{thm:pairing}). For any estimator of bounded variation --- which
+	includes every tree-based model --- the window average marginal effect of the
+	\emph{fitted} model equals the integral of a locally averaged covariate density
+	against the distributional gradient of the fitted model: for a tree, a sum of leaf
+	boundary jumps weighted by the boundary's share of smoothed covariate mass. This
+	makes precise, apparently for the first time, which population quantity the marginal
+	effect of a piecewise constant learner measures. The Sobolev and BV lemmas of
+	Section~\ref{sec:interpretation} then characterize the regime in which the learner's own
+	gradient converges to the population gradient --- the strongest interpretability
+	guarantee available, and the condition under which the uncorrected plug-in estimator
+	of Section~2 is already consistent. Those results describe when the correction term
+	is a refinement; the inference theory of Theorem~\ref{thm:main} does not depend on
+	them.
 	
-	Full proofs of all results are provided in the Appendix.
+	The relationship between the debiased estimator and the plug-in-plus-bootstrap
+	procedure of Section~2 is worth stating plainly. The plug-in average is the first
+	component of the orthogonal score; the correction term
+	$\alpha_h(x_i)\,(y_i - \hat{f}(x_i))$ removes, at first order, the bias transmitted
+	to the average marginal effect by regularization of the learner. The simulation
+	evidence in Section~5 displays exactly this mechanism: random forest confidence
+	intervals built from the uncorrected plug-in collapse to near-zero coverage at large
+	$n$ because the intervals concentrate around a regularization-biased center --- the
+	bias term the correction is constructed to remove. The model-refitting bootstrap of
+	Section~2 remains a useful diagnostic for specification uncertainty, but the
+	inferential guarantees of this section attach to the debiased estimator and its
+	influence function, not to the uncorrected plug-in.
 	
 	\subsection{Notation and Preliminaries}
 	
@@ -350,6 +496,38 @@
 	Lipschitz, which ensures the compactness and embedding results we rely on are
 	available. These are mild regularity conditions satisfied by any compact covariate
 	space with reasonable boundary behavior.
+	
+	Throughout, $(\mathbf{x}_i, y_i)_{i=1}^n$ are independent draws from $P$, the joint
+	distribution of $(X, Y)$; with mild abuse of notation $P$ also denotes the marginal
+	distribution of the covariates, with $\norm{g}_{P,2}^2 = \E[g(X)^2]$ the
+	corresponding $L^2$ norm. We fix a coordinate $j \in \{1, \dots, d\}$ for the
+	remainder of the section and suppress it from the notation where no confusion
+	arises. For a step size $h > 0$, define the centered difference operator:
+	\begin{equation}
+		\Dh g(x) = \frac{g(x + h e_j) - g(x - h e_j)}{2h}
+	\end{equation}
+	where $e_j$ is the $j$-th coordinate vector, and let
+	$\Omega_{j,h} = \{x \in \Omega : x + h e_j \in \Omega \text{ and }
+	x - h e_j \in \Omega\}$ denote the set of points whose shifted evaluations remain in
+	the domain. A \emph{trimming weight} is a measurable function
+	$w : \Omega \to [0,1]$ with $\operatorname{supp}(w) \subseteq \Omega_{j,h}$; it
+	confines the finite difference to points where both shifted arguments lie inside the
+	support, so that the prediction function is never evaluated where the regression
+	function is unidentified. The following conditions are maintained throughout the
+	section.
+	
+	\begin{assumption}
+		\label{ass:sampling}
+		The data are i.i.d.\ draws from $P$ with $\E[Y^2] < \infty$ and
+		$\mathrm{Var}(Y \mid X = x) \leq \bar{\sigma}^2 < \infty$ for $P$-almost every
+		$x$. The covariate distribution admits a density $p$ on $\Omega$ with
+		$0 < p_{\min} \leq p(x) \leq p_{\max} < \infty$ for all $x \in \Omega$.
+	\end{assumption}
+	
+	The density bounds are the same condition previously used to define the average
+	marginal effect functional and are standard in the average derivative literature
+	\citep{powell1989, newey1993}. They enter the theory only through the ratio
+	$p_{\max}/p_{\min}$, which bounds the Riesz representer below.
 	
 	We work with two function spaces depending on the estimator class. The choice of
 	function space is not arbitrary---each space is the natural habitat of the estimator
@@ -423,39 +601,402 @@
 	consistency condition is the standard requirement that the estimator converges to the
 	truth and is available from existing results in each case.
 	
-	We also state the rate condition required for the bootstrap corollaries. Let $P$
-	denote the marginal distribution of the covariates $x$.
+	\subsection{The Window Estimand and Its Riesz Representation}
+	\label{sec:window}
 	
-	\begin{definition}[Rate Condition]
-		\label{def:rate}
-		We say that $\fn$ satisfies the \emph{rate condition} if:
+	\begin{definition}[Window Average Marginal Effect]
+		\label{def:window}
+		Fix $h > 0$ and a trimming weight $w$ with
+		$\operatorname{supp}(w) \subseteq \Omega_{j,h}$. The \emph{window average
+		marginal effect} of variable $j$ at scale $h$ is:
 		\begin{equation}
-			\sqrt{n}\left(\fn - f\right) = O_p(1)
+			\theta_h(f) = \E\left[w(X)\, \Dh f(X)\right]
 		\end{equation}
-		in the appropriate norm --- $\Wonep$ for estimators well-behaved in the Sobolev
-		sense, and $\BV$ for estimators well-behaved in the BV sense.
 	\end{definition}
 	
-	The rate condition requires that $\fn$ converges to $f$ at the parametric rate
-	$n^{-1/2}$. This is stronger than consistency alone and is the condition that makes
-	the functional delta method applicable. It is verified for each estimator class in
-	the corollaries below.
+	Up to the trimming weight, $\theta_h(f)$ is exactly the population counterpart of
+	the quantity the estimator of Section~2 computes: the finite difference at step $h$
+	is not a numerical approximation to a derivative that the theory then ignores, but
+	the defining operation of the estimand itself. The step size is a fixed feature of
+	the estimand, chosen and reported by the analyst exactly as a bandwidth is, and the
+	default $h_j = 0.05\,\hat{\sigma}_j$ of Section~2 corresponds to asking how the
+	predicted outcome responds to displacements of a twentieth of a standard deviation
+	--- an economically interpretable perturbation scale. Two features deserve emphasis.
+	First, $\theta_h(f)$ is well defined for any bounded measurable $f$: no
+	differentiability is assumed anywhere, which is what permits a single estimand to
+	cover neural networks and regression trees simultaneously. Second, the trimming
+	weight repairs a defect of the untrimmed implementation, which evaluates
+	$\hat{f}$ at points $x_i \pm h e_j$ that may fall outside the support of the
+	covariates, where the regression function is not identified; $w$ excises a boundary
+	shell of probability mass $O(h)$ and confines every evaluation to the region where
+	$f$ means something.
 	
-	\subsection{Core Lemmas}
+	The estimand admits an exact dual representation, which is the engine of everything
+	that follows. Extend $q = wp$ by zero outside $\Omega$.
 	
-	The theoretical results rest on five lemmas. Lemmas~\ref{lem:sobolev_existence}
-	through~\ref{lem:bv_consistency} establish derivative existence and consistency in
-	each function space. Lemma~\ref{lem:hadamard} establishes the Hadamard
-	differentiability of the AME functional, which is the key condition for bootstrap
-	validity. All five lemmas are proved in the Appendix and applied across all three
-	estimator classes.
+	\begin{lemma}[Riesz Representation]
+		\label{lem:riesz}
+		Let Assumption~\ref{ass:sampling} hold and define:
+		\begin{equation}
+			\alpha_h(u) = \frac{q(u - h e_j) - q(u + h e_j)}{2h\, p(u)},
+			\qquad u \in \Omega
+		\end{equation}
+		Then for every $g \in L^1(P)$:
+		\begin{equation}
+			\E\left[w(X)\, \Dh g(X)\right] = \E\left[\alpha_h(X)\, g(X)\right]
+			\label{eq:riesz}
+		\end{equation}
+		Moreover $\norm{\alpha_h}_\infty \leq p_{\max} / (h\, p_{\min})$ and
+		$\E[\alpha_h(X)] = 0$.
+	\end{lemma}
+	
+	The proof is a change of variables in each half of the finite difference and nothing
+	more. This is worth dwelling on, because it is the point at which the present theory
+	parts ways with the classical average derivative literature. For the derivative
+	functional $\E[\partial_j f(X)]$, the analogous representation is obtained by
+	integration by parts, the representer is the negative score $-\partial_j \log p$ of
+	the covariate density, and a boundary term appears that must be killed by assuming
+	the density vanishes on the boundary --- an assumption incompatible with a density
+	bounded away from zero on a compact support, and the reason
+	\citet{powell1989} pass to density-weighted variants. For the window functional the
+	integration by parts is replaced by exact summation: no boundary term ever arises,
+	because the trimming weight guarantees that every shifted evaluation point stays
+	inside $\Omega$. The representer involves the density only through ratios of its
+	values at points $2h$ apart --- no derivative of $p$, and hence no density
+	derivative estimation, is ever required. The mean-zero property follows from
+	applying \eqref{eq:riesz} to $g \equiv 1$, and the uniform bound makes $\alpha_h$ a
+	bounded weight function, in contrast to the unbounded score-based representers of
+	the derivative functional. The cost of the exactness is the factor $h^{-1}$ in the
+	bound: smaller windows mean noisier representers, the familiar bias--variance logic
+	of a bandwidth, here appearing in the variance of the efficient influence function
+	rather than in a smoothing bias.
+	
+	The classical estimand is recovered in the small-window limit.
+	
+	\begin{proposition}[Recovery of the Average Derivative]
+		\label{prop:hlimit}
+		Let $f \in W^{1,1}(\Omega)$ and let $w$ be a trimming weight with
+		$\operatorname{supp}(w) \subseteq \Omega_{j,h_0}$ for some $h_0 > 0$. Then:
+		\begin{equation}
+			\lim_{h \downarrow 0} \theta_h(f)
+			= \E\left[w(X)\, \partial_j f(X)\right]
+		\end{equation}
+		If moreover $(w_m)_{m \geq 1}$ is a sequence of trimming weights with
+		$w_m \uparrow 1$ $P$-almost everywhere, then
+		$\E[w_m\, \partial_j f] \to \E[\partial_j f] = \mathrm{AME}_j$.
+	\end{proposition}
+	
+	One weak derivative --- the minimal regularity under which the classical estimand
+	exists at all --- is thus the only condition separating the window effect from the
+	average derivative. Nothing about the fitted model appears in
+	Proposition~\ref{prop:hlimit}: the double limit concerns the estimand, not the
+	estimator, and in practice one fixes $h$ and reports the window effect, treating the
+	proposition as the license to interpret it as a derivative summary when the truth is
+	smooth.
+	
+	\begin{remark}[Binary and Categorical Variables]
+		\label{rem:binary}
+		For a binary $X_j \in \{0,1\}$ the contrast estimand of Section~2 is
+		$\theta^{\mathrm{bin}} = \E[w(X_{-j})\{f(X_{-j}, 1) - f(X_{-j}, 0)\}]$, and the
+		same change-of-variables argument --- with the integral over $x_j$ replaced by a
+		sum over its two support points --- yields the representer:
+		\begin{equation}
+			\alpha^{\mathrm{bin}}(u) = w(u_{-j})\left[
+			\frac{\mathbf{1}\{u_j = 1\}}{\pi(u_{-j})}
+			- \frac{\mathbf{1}\{u_j = 0\}}{1 - \pi(u_{-j})}\right],
+			\qquad \pi(x_{-j}) = \Prob(X_j = 1 \mid X_{-j} = x_{-j})
+		\end{equation}
+		These are inverse propensity weights, and the resulting orthogonal score is the
+		augmented inverse probability weighting score of \citet{robins1994} with $X_j$
+		in the role of the treatment. The overlap condition
+		$\varepsilon \leq \pi \leq 1 - \varepsilon$ plays exactly the role the trimming
+		weight plays in the continuous case, and every result of
+		Section~\ref{sec:inference} applies verbatim with
+		$(\alpha_h, \theta_h)$ replaced by
+		$(\alpha^{\mathrm{bin}}, \theta^{\mathrm{bin}})$. Continuous, binary, and
+		categorical effects are thus instances of one construction rather than a
+		definition and two patches.
+	\end{remark}
+	
+	\subsection{Orthogonal Score, Cross-Fitting, and Efficient Inference}
+	\label{sec:inference}
+	
+	The Riesz representation converts the estimand into a moment condition with an
+	exact second-order bias. Define, for candidate functions
+	$\tilde{f}, \tilde{\alpha}$ and scalar $\theta$, the score:
+	\begin{equation}
+		\psi(x, y; \tilde{f}, \tilde{\alpha}, \theta)
+		= w(x)\, \Dh \tilde{f}(x)
+		+ \tilde{\alpha}(x)\,\bigl(y - \tilde{f}(x)\bigr) - \theta
+		\label{eq:score}
+	\end{equation}
+	At the truth, $\E[\psi(X, Y; f, \alpha_h, \theta_h(f))] = 0$: the first term has
+	mean $\theta_h(f)$ by definition and the correction term has conditional mean zero.
+	The content of the construction is what happens away from the truth.
+	
+	\begin{lemma}[Exact Product Bias]
+		\label{lem:orth}
+		Let Assumption~\ref{ass:sampling} hold and let
+		$\tilde{f} \in L^2(\Omega)$, $\tilde{\alpha} \in L^2(P)$. Then:
+		\begin{equation}
+			\E\left[\psi(X, Y; \tilde{f}, \tilde{\alpha}, \theta_h(f))\right]
+			= \E\left[\bigl(\alpha_h(X) - \tilde{\alpha}(X)\bigr)
+			\bigl(\tilde{f}(X) - f(X)\bigr)\right]
+		\end{equation}
+		In particular the bias is bounded by
+		$\Ptwo{\alpha_h - \tilde{\alpha}} \cdot \Ptwo{\tilde{f} - f}$.
+	\end{lemma}
+	
+	Lemma~\ref{lem:orth} is an identity, not an expansion: because $\theta_h$ is linear
+	in $f$, the moment bias equals the product of the two nuisance errors with no
+	linearization remainder whatsoever. Neyman orthogonality --- the vanishing of the
+	Gateaux derivative of the moment in each nuisance direction at the truth
+	\citep{chernozhukov2018dml} --- is the special case obtained by setting one error to
+	zero, but the exact form is stronger and is what makes the subsequent analysis
+	short. The practical meaning: an error in the fitted learner harms the estimate only
+	to the extent that the representer is also misestimated, and vice versa. It is this
+	multiplication of errors, not any smoothness of the learner, that buys the
+	parametric rate.
+	
+	The estimator combines the score with cross-fitting. Partition
+	$\{1, \dots, n\}$ into $K$ folds $I_1, \dots, I_K$ of approximately equal size
+	($K = 5$ is the package default), and for each $k$ let
+	$\hat{f}^{(-k)}$ and $\hat{\alpha}^{(-k)}$ be estimates of $f$ and $\alpha_h$
+	computed from the observations outside fold $k$ --- the learner exactly as in
+	Section~2, the representer as described in
+	Section~\ref{sec:rates}. The debiased estimator is:
+	\begin{equation}
+		\hat{\theta}_h = \frac{1}{n} \sum_{k=1}^{K} \sum_{i \in I_k}
+		\left[ w(\mathbf{x}_i)\, \Dh \hat{f}^{(-k)}(\mathbf{x}_i)
+		+ \hat{\alpha}^{(-k)}(\mathbf{x}_i)\,
+		\bigl(y_i - \hat{f}^{(-k)}(\mathbf{x}_i)\bigr) \right]
+		\label{eq:dml}
+	\end{equation}
+	Cross-fitting decouples the randomness of the nuisance estimates from the
+	observations at which the score is evaluated, so that no entropy or Donsker
+	condition on the learner's function class is needed \citep{chernozhukov2018dml} ---
+	a point of substance here, since the function classes of boosted trees and deep
+	networks are exactly the classes for which such conditions fail.
+	
+	\begin{assumption}
+		\label{ass:nuisance}
+		For each fold $k$: (a)
+		$\Ptwo{\hat{f}^{(-k)} - f} = o_p(1)$ and
+		$\Ptwo{\hat{\alpha}^{(-k)} - \alpha_h} = o_p(1)$; (b)
+		$\Ptwo{\hat{f}^{(-k)} - f} \cdot \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}
+		= o_p(n^{-1/2})$; (c)
+		$\norm{\hat{\alpha}^{(-k)}}_\infty \leq \bar{A} < \infty$ almost surely.
+	\end{assumption}
+	
+	Condition (c) is without loss of generality: $\alpha_h$ obeys the known bound of
+	Lemma~\ref{lem:riesz}, so any estimate may be truncated at that bound without
+	degrading its $L^2$ error. Conditions (a) and (b) are rate conditions on
+	\emph{regression-type} $L^2$ errors only. The sufficient condition for (b) that we
+	verify for specific learners in Section~\ref{sec:rates} is that both nuisances
+	converge faster than $n^{-1/4}$; the product form also permits trading accuracy in
+	one nuisance against the other.
+	
+	\begin{theorem}[Asymptotic Linearity and Normality]
+		\label{thm:main}
+		Let Assumptions~\ref{ass:sampling} and~\ref{ass:nuisance} hold, write
+		$\psi_i = \psi(\mathbf{x}_i, y_i; f, \alpha_h, \theta_h(f))$, and suppose
+		$V_h = \mathrm{Var}(\psi_i) > 0$. Then:
+		\begin{equation}
+			\sqrt{n}\,\bigl(\hat{\theta}_h - \theta_h(f)\bigr)
+			= \frac{1}{\sqrt{n}} \sum_{i=1}^n \psi_i + o_p(1)
+			\;\xrightarrow{d}\; N(0, V_h)
+		\end{equation}
+		Moreover the plug-in variance estimator:
+		\begin{equation}
+			\hat{V}_h = \frac{1}{n} \sum_{k=1}^{K} \sum_{i \in I_k}
+			\left[ w(\mathbf{x}_i)\, \Dh \hat{f}^{(-k)}(\mathbf{x}_i)
+			+ \hat{\alpha}^{(-k)}(\mathbf{x}_i)\,
+			\bigl(y_i - \hat{f}^{(-k)}(\mathbf{x}_i)\bigr)
+			- \hat{\theta}_h \right]^2
+		\end{equation}
+		satisfies $\hat{V}_h \xrightarrowp V_h$.
+	\end{theorem}
+	
+	No smoothness of the fitted learner appears anywhere in
+	Theorem~\ref{thm:main} or its proof. The only property of the finite difference
+	operator that is used is that it is bounded on $L^2(P)$ after trimming:
+	\begin{equation}
+		\Ptwo{w\, \Dh g} \leq
+		\frac{1}{h} \left(\frac{p_{\max}}{p_{\min}}\right)^{1/2} \Ptwo{g}
+		\label{eq:opbound}
+	\end{equation}
+	so $L^2$ convergence of the learner transfers to $L^2$ convergence of its window
+	effects automatically --- precisely the step that fails for the derivative operator,
+	which is unbounded on every $L^p$ space, and the reason the classical route
+	requires function-space convergence of the learner's gradient. The condition that
+	the earlier version of this theory imposed at this point --- root-$n$ convergence
+	of $\fn$ to $f$ in a Sobolev or BV norm --- is not merely weakened but absent: it
+	has been replaced by Assumption~\ref{ass:nuisance}(b), a product of $L^2$ rates
+	that growing-complexity learners can attain.
+	
+	The exactness of Lemma~\ref{lem:orth} yields a second dividend beyond weakened
+	rates: the score is doubly robust, and one direction of that robustness removes the
+	consistency requirement on the learner altogether. Setting
+	$\tilde{\alpha} = \alpha_h$ in Lemma~\ref{lem:orth} makes the moment bias vanish
+	identically for \emph{every} $\tilde{f}$ --- not approximately, not at first order,
+	but as an identity --- and cross-fitting converts this into exact finite-sample
+	unbiasedness of $\hat{\theta}_h$. The learner's failures are then paid entirely in
+	variance, never in location.
+	
+	\begin{proposition}[Double Robustness: Inference without Learner Consistency]
+		\label{prop:robust}
+		Let Assumption~\ref{ass:sampling} hold and suppose that for each fold:
+		(a) $\Ptwo{\hat{f}^{(-k)} - g} = o_p(1)$ for some fixed $g \in L^2(\Omega)$,
+		\emph{not necessarily equal to $f$};
+		(b) $\Ptwo{\hat{\alpha}^{(-k)} - \alpha_h} = o_p(n^{-1/2})$ --- in particular
+		$\hat{\alpha}^{(-k)} = \alpha_h$ when the covariate density is known; and
+		(c) $\norm{\hat{\alpha}^{(-k)}}_\infty \leq \bar{A} < \infty$ almost surely.
+		Define $m_g = w\, \Dh g + \alpha_h\,(f - g)$, which satisfies
+		$\E[m_g(X)] = \theta_h(f)$ for every $g$, and:
+		\begin{equation}
+			V_h(g) = \mathrm{Var}\bigl(m_g(X)\bigr)
+			+ \E\bigl[\alpha_h(X)^2\, \sigma^2(X)\bigr]
+			\label{eq:vrobust}
+		\end{equation}
+		If $V_h(g) > 0$, then:
+		\begin{equation}
+			\sqrt{n}\,\bigl(\hat{\theta}_h - \theta_h(f)\bigr)
+			\;\xrightarrow{d}\; N\bigl(0, V_h(g)\bigr),
+			\qquad
+			\hat{V}_h \xrightarrowp V_h(g)
+		\end{equation}
+		so the confidence intervals of Corollary~\ref{cor:ci} retain asymptotic
+		coverage. When $\hat{\alpha}^{(-k)} = \alpha_h$ exactly,
+		$\E[\hat{\theta}_h] = \theta_h(f)$ at every sample size.
+	\end{proposition}
+	
+	The practical reach of Proposition~\ref{prop:robust} is wider than its hypotheses
+	may suggest, because condition (a) is the condition that off-the-shelf machine
+	learning defaults actually satisfy. A depth-capped forest, an early-stopped
+	boosting run, a network of fixed width --- fixed-complexity learners generally ---
+	converge not to $f$ but to a pseudo-true limit $g$ within their approximation
+	class, so Assumption~\ref{ass:nuisance}(a) fails and Theorem~\ref{thm:main} is
+	silent about them. The proposition covers exactly this case whenever the
+	representer side is strong: in simulation designs and designed experiments the
+	covariate density is known and $\alpha_h$ is computable in closed form; and in the
+	binary case of Remark~\ref{rem:binary}, a randomized $X_j$ means a \emph{known}
+	propensity score, so the marginal effect of a randomized treatment is validly
+	covered for any black-box learner with no consistency requirement whatsoever ---
+	the model-agnostic analog of the classical robustness of randomization
+	\citep{robins1994}. The mirror-image direction of the double robustness is worth
+	recording too: since the bias identity is symmetric, a learner converging at the
+	parametric rate --- a correctly specified GLM --- tolerates an arbitrarily poor
+	representer estimate, which is how the classical delta-method validity of
+	parametric average marginal effects is nested here as the opposite corner of the
+	same identity.
+	
+	Two honest qualifications. First, when $g \neq f$ the estimator is asymptotically
+	linear with influence function different from the efficient one; there is no
+	conflict with Theorem~\ref{thm:efficiency} below, because such an estimator is
+	not regular, and efficiency is restored exactly when $g = f$, at which point
+	\eqref{eq:vrobust} reduces to the bound. The noise component of the variance is
+	invariant in $g$; misspecification of the learner is paid entirely through the
+	dispersion of $m_g$, typically as wider intervals. Second, in observational data
+	the density is unknown and condition (b) demands a parametric-rate representer,
+	which Riesz regression delivers only under strong structure; the proposition is
+	therefore a complement to Theorem~\ref{thm:main}, not a replacement --- the
+	theorem splits the burden multiplicatively across the two nuisances, the
+	proposition shifts it entirely onto one of them.
+	
+	\begin{theorem}[Semiparametric Efficiency]
+		\label{thm:efficiency}
+		Let Assumption~\ref{ass:sampling} hold. In the nonparametric model in which the
+		distribution of $(X, Y)$ is restricted only by
+		Assumption~\ref{ass:sampling}, the efficient influence function of the
+		functional $P \mapsto \theta_h(f_P)$ is
+		$\psi(x, y; f, \alpha_h, \theta_h(f))$, and the semiparametric efficiency
+		bound is:
+		\begin{equation}
+			V_h = \mathrm{Var}\bigl(w(X)\, \Dh f(X)\bigr)
+			+ \E\bigl[\alpha_h(X)^2\, \sigma^2(X)\bigr]
+			\label{eq:effbound}
+		\end{equation}
+		where $\sigma^2(x) = \mathrm{Var}(Y \mid X = x)$. The estimator
+		$\hat{\theta}_h$ of Theorem~\ref{thm:main} attains the bound.
+	\end{theorem}
+	
+	The variance decomposition \eqref{eq:effbound} is the honest accounting of what
+	inference on a marginal effect costs. The first term is the heterogeneity of the
+	effect itself across the covariate distribution --- irreducible, present even if
+	$f$ were known. The second is the price of not knowing $f$: the conditional noise
+	amplified by the squared representer, which scales as $h^{-2}$ in the worst case
+	through the bound of Lemma~\ref{lem:riesz}. Narrow windows purchase proximity to
+	the derivative estimand at the cost of a larger efficiency bound --- the
+	bias--variance tradeoff of the problem, located in the estimand rather than hidden
+	in an estimator's tuning. No estimator that is regular for $\theta_h$ can do better
+	than \eqref{eq:effbound}; the question the earlier version of this theory could not
+	answer --- whether the procedure is optimal in any sense --- has the sharpest
+	available affirmative answer for the window estimand.
+	
+	\begin{corollary}[Confidence Intervals]
+		\label{cor:ci}
+		Under the conditions of Theorem~\ref{thm:main},
+		$\hat{\theta}_h \pm z_{1-\gamma/2}\, (\hat{V}_h / n)^{1/2}$ is an
+		asymptotically valid $1 - \gamma$ confidence interval for $\theta_h(f)$, and
+		the associated $t$-statistic is asymptotically standard normal under
+		$H_0 : \theta_h(f) = 0$.
+	\end{corollary}
+	
+	\begin{remark}[Resampling-Free and Resampling-Based Inference]
+		\label{rem:bootstrap}
+		Corollary~\ref{cor:ci} requires no resampling: the coefficient table of
+		Section~2 is produced from a single pass of cross-fitting, with $K$ model fits
+		in place of the $B$ refits of the bootstrap --- a reduction of one to two orders
+		of magnitude in computation. When a resampling distribution is nonetheless
+		wanted (for simultaneous bands across coefficients, for example), asymptotic
+		linearity delivers one for free: the multiplier bootstrap that perturbs the
+		estimated influence function values $\hat{\psi}_i$ by i.i.d.\ mean-zero
+		weights is consistent \citep[Chapter~3.6]{vandervaart1996weak} under the
+		conditions of Theorem~\ref{thm:main}, and costs no additional model fits.
+	\end{remark}
+	
+	\begin{remark}[The Model-Refitting Bootstrap]
+		\label{rem:refit}
+		The refitting bootstrap of Section~2, applied to the uncorrected plug-in
+		average, is not covered by these guarantees, for two reasons that the present
+		framework makes visible. First, it recenters at the fitted model, so it
+		measures variability around $\E[w \Dh \hat{f}]$ rather than around
+		$\theta_h(f)$: the regularization bias
+		$\E[\alpha_h (\hat{f} - f)]$ --- first order for slowly converging learners
+		--- is invisible to it. This is the mechanism behind the collapse of random
+		forest coverage documented in Section~5. Second, evaluating each refitted model
+		at the original sample holds the empirical covariate distribution fixed and
+		thereby omits the first variance component of \eqref{eq:effbound} from the
+		bootstrap distribution. The refitting bootstrap retains a legitimate role as a
+		diagnostic for specification and hyperparameter-selection variability, which
+		the asymptotic theory conditions away; it should be read as that diagnostic,
+		not as the inferential procedure.
+	\end{remark}
+	
+	\subsection{What Learner Gradients Estimate}
+	\label{sec:interpretation}
+	
+	The inference theory of Section~\ref{sec:inference} used no property of the fitted
+	learner beyond an $L^2$ rate. The question it leaves open is interpretive: the
+	first component of the score averages the finite differences of the fitted model,
+	and one wants to know what that object measures about the model --- and when the
+	model's gradient information converges to the population's. This subsection answers
+	both questions in the function spaces the learners naturally inhabit. Four lemmas
+	establish that gradients exist and converge in the Sobolev space of smooth
+	estimators and the BV space of piecewise constant ones; a pairing identity
+	(Theorem~\ref{thm:pairing}) then expresses the window effect of any BV estimator
+	exactly as its jump measure integrated against a locally averaged covariate
+	density, which is, to our knowledge, the first characterization of the population
+	quantity that the marginal effect of a tree-based model measures. All proofs are in
+	the Appendix.
 	
 	The parallel structure of Lemmas~\ref{lem:sobolev_existence}
 	through~\ref{lem:bv_consistency} reflects the parallel structure of the Sobolev
 	and BV frameworks and is the formal expression of the analogy between smooth and
-	piecewise constant estimators. Lemma~\ref{lem:hadamard} then sits above both
-	frameworks as the unifying result that connects gradient consistency to bootstrap
-	validity.
+	piecewise constant estimators. None of these results is needed for the validity of
+	Theorem~\ref{thm:main}; they characterize the regime in which the \emph{uncorrected}
+	plug-in average is already consistent, and hence in which the correction term of
+	\eqref{eq:dml} is a refinement rather than a repair.
 	
 	\begin{lemma}[Derivative Existence in Sobolev Spaces]
 		\label{lem:sobolev_existence}
@@ -578,57 +1119,82 @@
 	information in a stronger sense than piecewise constant estimators, which is itself a
 	reflection of the different inductive biases of the estimator classes.
 	
-	\begin{lemma}[Hadamard Differentiability of the AME Functional]
-		\label{lem:hadamard}
-		Let $P$ be the marginal distribution of the covariates with density bounded away
-		from zero and infinity on $\Omega$, and let $f \in \Wonep$ for $p > d$. The
-		functional:
-		\begin{equation}
-			T: \mathcal{F} \to \R^d, \quad
-			T(f) = \int_\Omega \nabla f(x) \, dP(x)
-		\end{equation}
-		is Hadamard differentiable at $f$ tangentially to $C(\Omega)^d$, with derivative:
-		\begin{equation}
-			T'_f(h) = \int_\Omega \nabla h(x) \, dP(x)
-		\end{equation}
-	\end{lemma}
-	
-	Lemma~\ref{lem:hadamard} is the keystone result of the paper. It establishes that
-	the AME functional varies smoothly when the underlying function is perturbed, in
-	precisely the sense required by the functional delta method
-	\citep[Chapter~3.9]{vandervaart1996weak}. Hadamard differentiability tangentially to
-	$C(\Omega)^d$ means that for any sequence $t_n \to 0$ and $h_n \to h$ in
-	$C(\Omega)^d$:
+	The pairing identity is the capstone of the interpretation theory. Recall from
+	Lemma~\ref{lem:bv_existence} that the distributional gradient of a piecewise
+	constant estimator is a measure concentrated on leaf boundaries. The window effect
+	of such an estimator integrates that measure against a smoothed density: let
+	$K_h \star q$ denote the one-dimensional moving average of $q = wp$ (extended by
+	zero) along coordinate $j$:
 	\begin{equation}
-		\frac{T(f + t_n h_n) - T(f)}{t_n} \to T'_f(h) = \int_\Omega \nabla h \, dP
+		(K_h \star q)(u) = \frac{1}{2h} \int_{-h}^{h} q(u + s\, e_j)\, ds
 	\end{equation}
-	This is the precise smoothness condition that allows the bootstrap to consistently
-	estimate the sampling distribution of $T(\fn)$. Intuitively, if small perturbations
-	to the estimator produce proportionally small changes in the AME in a controlled way,
-	then the bootstrap perturbations induced by resampling the data will correctly
-	characterize the variability of the AME estimate.
 	
-	The condition $p > d$ ensures the Sobolev embedding $W^{1,p} \hookrightarrow
-	C^{0,\alpha}$ holds, which is required to control the continuity of $\nabla f$ and
-	make the integral well defined for perturbed functions. This is the one assumption
-	that is stronger than what the gradient consistency results require, and it is the
-	price of having a general bootstrap validity result.
+	\begin{theorem}[Pairing Identity]
+		\label{thm:pairing}
+		Let Assumption~\ref{ass:sampling} hold, let $w$ be a trimming weight with
+		$\operatorname{supp}(w) \subseteq \Omega_{j,h}$, and let $g \in \BV$
+		(identified with its precise representative). Then:
+		\begin{equation}
+			\E\left[w(X)\, \Dh g(X)\right]
+			= \int_\Omega (K_h \star q)(u)\; dD_j g(u)
+			\label{eq:pairing}
+		\end{equation}
+		where $D_j g$ is the $j$-th component of the distributional gradient of $g$.
+		In particular, for a piecewise constant $g$ with leaf partition $\{R_l\}$ and
+		leaf values $\{\bar{y}_l\}$, by Lemma~\ref{lem:bv_existence}:
+		\begin{equation}
+			\E\left[w(X)\, \Dh g(X)\right]
+			= \sum_{l \sim m} (\bar{y}_m - \bar{y}_l)\, (\nu_{lm})_j
+			\int_{\partial R_l \cap \partial R_m} (K_h \star q)\;
+			d\mathcal{H}^{d-1}
+			\label{eq:pairing_tree}
+		\end{equation}
+	\end{theorem}
 	
-	The proof proceeds by verifying the Hadamard derivative formula directly and checking
-	the continuity conditions. Lemmas~\ref{lem:sobolev_existence}
-	through~\ref{lem:bv_consistency} establish that the gradient of the estimator
-	converges in the appropriate topology; Lemma~\ref{lem:hadamard} then shows that this
-	convergence is smooth enough to justify bootstrap inference. The two parts of the
-	theory --- gradient consistency and bootstrap validity --- are therefore not
-	independent results but facets of the same underlying smoothness property of the AME
-	functional.
+	\begin{corollary}
+		\label{cor:pairing_limit}
+		If in addition $q$ extends to a continuous function of compact support (for
+		instance $w$ continuous and $p$ continuous on $\Omega$), then for fixed
+		$g \in \BV$:
+		\begin{equation}
+			\lim_{h \downarrow 0} \int_\Omega (K_h \star q)\; dD_j g
+			= \int_\Omega q\; dD_j g
+		\end{equation}
+		and when $g \in W^{1,1}(\Omega)$ the right side equals
+		$\E[w(X)\, \partial_j g(X)]$, consistent with
+		Proposition~\ref{prop:hlimit}.
+	\end{corollary}
 	
-	\subsection{Main Theorems}
+	Theorem~\ref{thm:pairing} settles a question that the interpretability literature
+	has left informal: what does the average marginal effect of a random forest
+	\emph{measure}? The answer given by \eqref{eq:pairing_tree} is exact and
+	geometric: it is the total jump of the fitted surface across leaf boundaries in
+	direction $j$, with each boundary segment weighted by its share of the covariate
+	mass in an $h$-window --- the places where the model changes its prediction,
+	weighted by how many observations live near those places. The identity reconciles
+	the two readings of a marginal effect that Section~2 could only juxtapose. Read
+	with $g = \hat{f}$, \eqref{eq:pairing} is a descriptive statement about the fitted
+	model, available in finite samples with no assumptions at all. Read through
+	Theorem~\ref{thm:main}, the same plug-in quantity, corrected by the orthogonal
+	score, estimates the population functional $\theta_h(f)$ at the parametric rate.
+	The descriptive and the inferential interpretations are the two sides of
+	\eqref{eq:dml}, and the pairing identity is what makes the first of them precise.
 	
-	The main theorems apply the lemmas to each estimator class. In each case the argument
-	has two components: verifying that the estimator satisfies the well-behaved condition,
-	and citing the appropriate lemma pair. The first component is the estimator-specific
-	contribution; the second is the functional analytic machinery established above.
+	\subsection{Gradient Convergence of Specific Learners}
+	\label{sec:learners}
+	
+	The theorems of this subsection verify the well-behaved conditions for three
+	estimator classes and conclude, via the lemma pairs above, that the learner's own
+	gradient information converges to the population's. This is the strongest
+	interpretability property a learner can have --- the fitted model's local behavior,
+	not merely its window averages, tracks the truth --- and it implies consistency of
+	the uncorrected plug-in average for the small-$h$ estimand. We emphasize the
+	division of labor: these results calibrate how much interpretive weight the fitted
+	gradients themselves can bear, while the inference of Section~\ref{sec:inference}
+	requires none of them. In each case the argument has two components: verifying that
+	the estimator satisfies the well-behaved condition, and citing the appropriate
+	lemma pair. The first component is the estimator-specific contribution; the second
+	is the functional analytic machinery established above.
 	
 	\begin{theorem}[Gradient Consistency for Neural Networks]
 		\label{thm:neural_nets}
@@ -801,153 +1367,90 @@
 		and is discussed further in Section~\ref{sec:conclusion}.
 	\end{remark}
 	
-	\subsection{Bootstrap Validity}
+	\subsection{Nuisance Estimation and Rates}
+	\label{sec:rates}
 	
-	The gradient consistency results established above, combined with the Hadamard
-	differentiability of the AME functional established in Lemma~\ref{lem:hadamard},
-	yield bootstrap validity for average marginal effects across all three estimator
-	classes. The proof strategy in each case is the same: the gradient consistency
-	theorem establishes that $\fn$ converges to $f$ in the appropriate function space,
-	the rate condition verifies the speed of that convergence, and
-	Lemma~\ref{lem:hadamard} together with the functional delta method of
-	\citet[Theorem~3.9.4]{vandervaart1996weak} then gives bootstrap validity.
+	Assumption~\ref{ass:nuisance} asks for two regression-type $L^2$ rates whose
+	product is $o_p(n^{-1/2})$; the benchmark sufficient condition is that each
+	nuisance converge faster than $n^{-1/4}$. This subsection records when the
+	learners of Section~2 meet the benchmark for $\hat{f}$, and how the representer
+	$\alpha_h$ is estimated without ever estimating a density.
 	
-	The three corollaries below make this argument explicit for each estimator class.
-	The rate conditions differ across classes in a way that reflects fundamental
-	differences in the estimators. For neural networks in the overparameterized regime
-	the parametric rate $n^{-1/2}$ is achievable and the rate condition is stated as
-	an explicit assumption that we conjecture is provable under the neural tangent
-	kernel approximation \citep{jacot2018ntk}. For gradient boosted models the
-	parametric rate holds under the eigenvalue condition of \citet{buhlmann2003boosting},
-	which governs the exponential decay of residuals along the boosting path and implies
-	convergence at the parametric rate. For Mondrian forests the rate is
-	dimension-dependent at $n^{-1/(d+2)}$, reflecting the minimax lower bound for
-	nonparametric estimation of Lipschitz functions --- a fundamental limitation of the
-	problem rather than of the method.
+	For the regression function, the required rates are exactly the $L^2$ risk bounds
+	of the modern nonparametric literature, and a single smoothness threshold
+	organizes all three learner classes. For deep neural networks with ReLU
+	activations, \citet{schmidthieber2020} establishes the rate
+	$n^{-s/(2s + d)}$ up to logarithmic factors for $s$-H\"{o}lder regression
+	functions (with the effective $d$ reduced under compositional structure), so the
+	$n^{-1/4}$ benchmark is met precisely when:
+	\begin{equation}
+		\frac{s}{2s + d} > \frac{1}{4}
+		\quad \Longleftrightarrow \quad
+		s > \frac{d}{2}
+		\label{eq:threshold}
+	\end{equation}
+	For Mondrian forests, the minimax-optimal rates of \citet{mourtada2017mondrian}
+	take the same form $n^{-s/(2s + d)}$ for H\"{o}lder smoothness $s \leq 2$, so the
+	benchmark is again \eqref{eq:threshold}: at Lipschitz smoothness $s = 1$ this
+	requires $d < 2$, and exploiting forest smoothing up to $s = 2$ accommodates
+	$d \leq 3$. For $L_2$Boost, \citet{buhlmann2003boosting} establish minimax rates
+	for smoothing-spline base learners with the boosting iteration acting as the
+	regularization parameter, and the benchmark corresponds to smoothness exceeding
+	one half in their univariate and additive settings --- with additive structure,
+	as usual, breaking the dependence on the ambient dimension. The reading we intend
+	is not that these conditions are innocuous --- \eqref{eq:threshold} is a real
+	restriction, and in high dimensions it binds --- but that the currency in which
+	the conditions are denominated has changed: what inference requires of the learner
+	is an $L^2$ error rate of the kind the learning-theory literature actually
+	proves, rather than root-$n$ convergence in a Sobolev norm, which no
+	growing-complexity learner satisfies. For Breiman forests with data-dependent
+	splits, $L^2$ consistency is available under structural assumptions
+	\citep{scornet2015forests}, and polynomial $L^2$ rates for the original
+	algorithm --- sample CART splits and column subsampling included --- have been
+	established under sufficient-impurity-decrease conditions by
+	\citet{chi2022forests}; the resulting exponents can fall short of the
+	$n^{-1/4}$ benchmark, but the product form of
+	Assumption~\ref{ass:nuisance}(b) permits pairing a slow forest rate with a fast
+	representer estimate, and Proposition~\ref{prop:robust} covers the
+	known-representer case with no forest rate at all. The open question relevant to
+	this paper is therefore an $L^2$ rate question, a substantially more tractable
+	target than the gradient-consistency question that
+	Section~\ref{sec:learners} leaves open for that class.
 	
-	\begin{corollary}[Bootstrap Validity for Neural Network AMEs]
-		\label{cor:bootstrap_nn}
-		Under the conditions of Theorem~\ref{thm:neural_nets}, suppose additionally that
-		$\sigma \in C^3$ and that:
-		\begin{equation}
-			\sqrt{n}(\fn - f) = O_p(1) \quad \text{in } \Wonep
-			\tag{RC}
-		\end{equation}
-		Then the bootstrap distribution of:
-		\begin{equation}
-			\sqrt{n}\left(\frac{1}{n}\sum_{i=1}^n \nabla \hat{f}_n^*(x_i) -
-			\frac{1}{n}\sum_{i=1}^n \nabla \fn(x_i)\right)
-		\end{equation}
-		consistently estimates the sampling distribution of
-		$\sqrt{n}\left(\frac{1}{n}\sum_{i=1}^n \nabla \fn(x_i) - T(f)\right)$.
-	\end{corollary}
-	
-	The condition $\sigma \in C^3$ rather than $C^2$ is required because the Hadamard
-	differentiability argument in Lemma~\ref{lem:hadamard} needs one additional derivative
-	beyond what Theorem~\ref{thm:neural_nets} requires --- specifically to control the
-	smoothness of the bootstrap perturbations of the network weights as they propagate
-	through the gradient of the network function.
-	
-	The rate condition (RC) is stated as an explicit assumption rather than a proved
-	result. We conjecture it holds in the overparameterized regime where the neural
-	tangent kernel approximation applies. In this regime the network training dynamics
-	are approximately linear in the weights \citep{jacot2018ntk}, the weight estimates
-	converge at the parametric rate $n^{-1/2}$, and propagating this through the network
-	function via the $C^3$ chain rule calculation gives $O_p(n^{-1/2})$ convergence in
-	$\Wonep$. A complete proof requires quantitative finite-width NTK approximation
-	results and is left as future work. Unlike the Mondrian forest case where the
-	dimension-dependent rate is a fundamental consequence of the nonparametric minimax
-	lower bound, we expect the parametric rate to be achievable for neural networks
-	without a dimension penalty, making (RC) a provable rather than fundamental
-	restriction.
-	
-	\begin{corollary}[Bootstrap Validity for Gradient Boosted AMEs]
-		\label{cor:bootstrap_boost}
-		Under the conditions of Theorem~\ref{thm:boosting} with eigenvalue condition
-		$0 < \lambda_k \leq 1$, suppose additionally that $\sqrt{n}(\fn - f) = O_p(1)$
-		in the appropriate norm. Then the bootstrap distribution of:
-		\begin{equation}
-			\sqrt{n}\left(\frac{1}{n}\sum_{i=1}^n D\hat{f}_n^*(x_i) -
-			\frac{1}{n}\sum_{i=1}^n D\fn(x_i)\right)
-		\end{equation}
-		consistently estimates the sampling distribution of
-		$\sqrt{n}\left(\frac{1}{n}\sum_{i=1}^n D\fn(x_i) - T(f)\right)$.
-	\end{corollary}
-	
-	The rate condition for gradient boosting follows from the exponential residual decay
-	established in the proof of Theorem~\ref{thm:boosting}. By Proposition~1 and
-	Theorem~1 of \citet{buhlmann2003boosting}, under the eigenvalue condition $0 <
-	\lambda_k \leq 1$, the residuals decay geometrically as $\|u_m\|_{L^2} \leq C\rho^m$
-	for $\rho = \max_k(1-\lambda_k) < 1$. This geometric decay implies convergence of
-	the boosting estimator at a rate sufficient for the parametric $n^{-1/2}$ rate,
-	since the bias vanishes exponentially fast and the variance is controlled by the
-	eigenvalue structure of $S$. The bootstrap validity argument then adapts the
-	framework of \citet{horowitz2000bootstrap} for smooth functionals of empirical
-	processes to the sequential structure of the boosting path, using the geometric
-	decay of residuals to control the dependence across iterations.
-	
-	\begin{corollary}[Bootstrap Validity for Mondrian Forest AMEs]
-		\label{cor:bootstrap_rf}
-		Under the conditions of Theorem~\ref{thm:forests}, the bootstrap distribution of:
-		\begin{equation}
-			n^{1/(d+2)}\left(\frac{1}{n}\sum_{i=1}^n D\hat{f}_n^*(x_i) -
-			\frac{1}{n}\sum_{i=1}^n D\fn(x_i)\right)
-		\end{equation}
-		consistently estimates the sampling distribution of:
-		\begin{equation}
-			n^{1/(d+2)}\left(\frac{1}{n}\sum_{i=1}^n D\fn(x_i) - T(f)\right)
-		\end{equation}
-		In particular, when $d \leq 2$ the scaling $n^{1/(d+2)}$ achieves the parametric
-		rate $n^{1/2}$ and the bootstrap confidence intervals are asymptotically exact at
-		the parametric rate.
-	\end{corollary}
-	
-	The Mondrian forest case differs from the neural network and gradient boosting cases
-	in that bootstrap validity holds at a dimension-dependent rate rather than the
-	parametric rate $n^{1/2}$ universally. The rate $n^{1/(d+2)}$ is the minimax optimal
-	rate for Lipschitz regression functions on $[0,1]^d$, established by
-	\citet{mourtada2017mondrian} with the budget sequence $\lambda_n \asymp n^{1/(d+2)}$.
-	This rate achieves $n^{1/2}$ when $d \leq 2$, and is slower than $n^{1/2}$ for $d
-	\geq 3$ --- a consequence of the curse of dimensionality that is fundamental to
-	nonparametric estimation rather than a limitation of the present framework. The
-	bootstrap remains valid at the actual convergence rate in all dimensions, consistently
-	estimating the sampling distribution of the AME estimator regardless of dimension.
-	
-	The budget condition $\lambda_n \asymp n^{1/(d+2)}$ plays two roles. First it ensures
-	the minimax rate is achieved, balancing bias from coarse partitions against variance
-	from fine partitions. Second it determines the rate at which the BV norm of the
-	forest average is controlled via the second moment argument in the proof of
-	Theorem~\ref{thm:forests} --- specifically the cell diameter bound
-	$\mathbb{E}[D_{\lambda_n}(x)^2] \leq 4d/\lambda_n^2 = O(n^{-2/(d+2)})$ of
-	\citet{roy2009mondrian} and the split count bound $\mathbb{E}[K_{\lambda_n}] \leq
-	(e(\lambda_n+1))^d = O(n^{d/(d+2)})$ of \citet{mourtada2017mondrian}.
-	
-	The independence of the Mondrian partition from the data --- the same property that
-	made the gradient consistency proof tractable in Theorem~\ref{thm:forests} --- also
-	simplifies the bootstrap validity argument. Under bootstrap resampling the partition
-	$\mathcal{P}_b$ is unchanged across replicates and only the response values within
-	fixed leaves are perturbed. The conditional independence of subtrees established by
-	\citet{roy2009mondrian} then controls the dependence structure of the bootstrap
-	gradient measures across leaves, completing the bootstrap validity argument via
-	Lemma~\ref{lem:hadamard} and \citet[Theorem~3.9.4]{vandervaart1996weak}. The
-	connection to the infinitesimal jackknife results of \citet{wager2014confidence}
-	provides additional scaffolding: their variance estimation framework for forest
-	estimators is essentially a first-order bootstrap approximation, and the Hadamard
-	differentiability established in Lemma~\ref{lem:hadamard} shows that this
-	approximation is asymptotically exact at the Mondrian convergence rate.
-	
-	\begin{remark}
-		The three corollaries establish bootstrap validity for neural networks in the
-		overparameterized regime, gradient boosted models, and Mondrian forests. The rate
-		conditions reflect the fundamental structure of each estimator class: the parametric
-		rate for neural networks and gradient boosting, and the dimension-dependent minimax
-		rate for Mondrian forests. Bootstrap validity for Breiman forests with
-		data-dependent splits remains open for the same reason that gradient consistency
-		for Breiman forests is harder --- the data-dependent partition geometry couples the
-		bootstrap perturbations to the partition structure in a way that prevents the cross-
-		term cancellation argument and resists clean analysis. This is an important
-		direction for future work.
-	\end{remark}
+	The representer is estimated by Riesz regression
+	\citep{chernozhukov2022riesz}, which exploits the same linearity that produced
+	Lemma~\ref{lem:orth}. By Lemma~\ref{lem:riesz}, for any candidate
+	$\alpha \in L^2(P)$:
+	\begin{equation}
+		\E\left[\alpha(X)^2\right] - 2\,\E\left[w(X)\, \Dh \alpha(X)\right]
+		= \Ptwo{\alpha - \alpha_h}^2 - \Ptwo{\alpha_h}^2
+		\label{eq:rieszloss}
+	\end{equation}
+	so the population loss on the left is minimized uniquely at $\alpha_h$, and its
+	sample analog:
+	\begin{equation}
+		\hat{L}(\alpha) = \frac{1}{n} \sum_{i=1}^{n} \left[
+		\alpha(\mathbf{x}_i)^2
+		- 2\, w(\mathbf{x}_i)\,
+		\frac{\alpha(\mathbf{x}_i + h e_j) - \alpha(\mathbf{x}_i - h e_j)}{2h}
+		\right]
+	\end{equation}
+	is computable directly: minimizing $\hat{L}$ over a class of functions ---
+	penalized linear sieves, neural networks, or forests --- requires only the ability
+	to evaluate candidates at shifted points, and at no stage is the density $p$, let
+	alone a derivative of it, estimated. \citet{chernozhukov2022riesz} provide
+	$L^2$ convergence guarantees for such estimators over exactly these classes, with
+	rates governed by the complexity of the class and the approximability of
+	$\alpha_h$. Since $\alpha_h$ obeys the explicit bound of Lemma~\ref{lem:riesz},
+	the minimizer is truncated at that bound, which enforces
+	Assumption~\ref{ass:nuisance}(c) by construction without affecting the $L^2$
+	error. Two further remarks. First, the product form of
+	Assumption~\ref{ass:nuisance}(b) permits asymmetry: a learner with a fast rate
+	for $f$ tolerates a slow Riesz estimate, and conversely. Second, in designed or
+	simulated data where the covariate density is known --- as in the Monte Carlo
+	study of Section~5 --- $\alpha_h$ is available in closed form and the representer
+	error is identically zero; Proposition~\ref{prop:robust} then applies, and valid
+	inference requires no rate --- indeed no consistency --- from the learner at all.
 	
 	\section{Empirical Examples}
 	
@@ -1822,7 +2325,7 @@
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP, evaluating empirical coverage of nominal 95\% confidence intervals at $n \in \{250, 1{\,}000, 5{\,}000\}$ using 200 bootstrap replicates. Logistic regression achieves coverage between 0.896 and 0.950 across all variables and sample sizes, with the slight undercoverage at $n=250$ for $x_2$ reflecting finite-sample bias rather than bootstrap miscalibration --- the bootstrap interval is correctly sized but the point estimate is slightly off-center. Coverage improves toward the nominal level as sample size increases and is well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features at all sample sizes --- around 0.978 to 0.986 --- reflecting the wide bootstrap intervals produced by the model's high variance at small samples; the intervals are conservative rather than anti-conservative, which is the safer failure mode for inference. The neural network shows undercoverage for the noise features at $n=250$ (0.866 and 0.854) that recovers toward and above the nominal level by $n=5{,}000$, with the overcoverage at large samples (0.990 and 0.994) consistent with the smooth differentiable surface producing stable finite differences across bootstrap replicates. Random forests show a more concerning pattern: coverage collapses dramatically at $n=5{,}000$, falling to 0.130 for $x_1$, 0.274 for $x_2$, and 0.392 for the noise features. This is a direct consequence of the regularization bias documented in Simulation 1 --- the bootstrap intervals shrink at the expected rate but they shrink around a biased point estimate, so as the intervals narrow they fail to cover the true AME. The intervals at $n=5{,}000$ have mean width 0.0165 for $x_1$ but the bias is around $-0.016$, so the interval is roughly the width of the bias itself and coverage of the true value becomes nearly impossible. This finding is the empirical counterpart to Conjecture 3 in Section~3 on bootstrap validity for random forests --- the bootstrap is consistent for the variability of $\widehat{\mathrm{AME}}_j$ around its expectation under the data generating process for the forest, but that expectation does not coincide with the true AME, and standard nonparametric bootstrap methods do not correct for the asymptotic bias.
+	Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP, evaluating empirical coverage of nominal 95\% confidence intervals at $n \in \{250, 1{\,}000, 5{\,}000\}$ using 200 bootstrap replicates. Logistic regression achieves coverage between 0.896 and 0.950 across all variables and sample sizes, with the slight undercoverage at $n=250$ for $x_2$ reflecting finite-sample bias rather than bootstrap miscalibration --- the bootstrap interval is correctly sized but the point estimate is slightly off-center. Coverage improves toward the nominal level as sample size increases and is well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features at all sample sizes --- around 0.978 to 0.986 --- reflecting the wide bootstrap intervals produced by the model's high variance at small samples; the intervals are conservative rather than anti-conservative, which is the safer failure mode for inference. The neural network shows undercoverage for the noise features at $n=250$ (0.866 and 0.854) that recovers toward and above the nominal level by $n=5{,}000$, with the overcoverage at large samples (0.990 and 0.994) consistent with the smooth differentiable surface producing stable finite differences across bootstrap replicates. Random forests show a more concerning pattern: coverage collapses dramatically at $n=5{,}000$, falling to 0.130 for $x_1$, 0.274 for $x_2$, and 0.392 for the noise features. This is a direct consequence of the regularization bias documented in Simulation 1 --- the bootstrap intervals shrink at the expected rate but they shrink around a biased point estimate, so as the intervals narrow they fail to cover the true AME. The intervals at $n=5{,}000$ have mean width 0.0165 for $x_1$ but the bias is around $-0.016$, so the interval is roughly the width of the bias itself and coverage of the true value becomes nearly impossible. This is the first failure mode identified in Remark~\ref{rem:refit}: the refitting bootstrap is consistent for the variability of the plug-in average around its own expectation, but that expectation is displaced from the true AME by the regularization bias $\mathbb{E}[\alpha_h(\hat{f} - f)]$, which resampling cannot see because every replicate recenters at a similarly regularized fit. It is exactly the first-order term that the orthogonal correction of Section~2.4 is constructed to remove.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1884,7 +2387,16 @@
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:sim2_calibration_regression_linear} reports the corresponding calibration results for the linear regression DGP, where the magnitudes of the AMEs are larger and the bias-coverage interaction becomes even more visible. Linear regression achieves coverage between 0.918 and 0.952 across all variables and sample sizes, well-calibrated throughout. The neural network performs well at small and moderate samples, with coverage approaching the nominal level by $n=1{,}000$, before drifting upward to exactly 1.000 at $n=5{,}000$ for all four variables --- the same conservatism observed in the classification case, amplified in the regression setting where the smooth prediction surface produces highly stable finite differences. XGBoost shows pronounced undercoverage for the signal features at $n=250$ --- 0.526 for $x_1$ and 0.752 for $x_2$ --- driven by the large positive bias documented in Simulation 1 at small samples, but coverage recovers toward and above the nominal level by $n=1{,}000$ and is well-calibrated at $n=5{,}000$. The most striking result is again random forests: coverage at $n=5{,}000$ falls to 0.104 for $x_1$ and 0.204 for $x_2$, the worst calibration in either table. The mechanism is identical to the classification case --- the bootstrap intervals narrow at the expected rate but the bias does not vanish, so the intervals fail to cover the true AME at large samples. The noise features under random forests show coverage of around 0.6 across all sample sizes, indicating that even where the bias is small, the bootstrap intervals are systematically too narrow to achieve nominal coverage. Taken together the two calibration tables establish that the nonparametric bootstrap produces valid standard errors for logistic regression, linear regression, neural networks, and XGBoost across a range of sample sizes, with random forests as the clear exception --- a finding that aligns with the theoretical status of bootstrap validity for that estimator class as conjectured rather than proved.
+	Table~\ref{tab:sim2_calibration_regression_linear} reports the corresponding calibration results for the linear regression DGP, where the magnitudes of the AMEs are larger and the bias-coverage interaction becomes even more visible. Linear regression achieves coverage between 0.918 and 0.952 across all variables and sample sizes, well-calibrated throughout. The neural network performs well at small and moderate samples, with coverage approaching the nominal level by $n=1{,}000$, before drifting upward to exactly 1.000 at $n=5{,}000$ for all four variables --- the same conservatism observed in the classification case, amplified in the regression setting where the smooth prediction surface produces highly stable finite differences. XGBoost shows pronounced undercoverage for the signal features at $n=250$ --- 0.526 for $x_1$ and 0.752 for $x_2$ --- driven by the large positive bias documented in Simulation 1 at small samples, but coverage recovers toward and above the nominal level by $n=1{,}000$ and is well-calibrated at $n=5{,}000$. The most striking result is again random forests: coverage at $n=5{,}000$ falls to 0.104 for $x_1$ and 0.204 for $x_2$, the worst calibration in either table. The mechanism is identical to the classification case --- the bootstrap intervals narrow at the expected rate but the bias does not vanish, so the intervals fail to cover the true AME at large samples. The noise features under random forests show coverage of around 0.6 across all sample sizes, indicating that even where the bias is small, the bootstrap intervals are systematically too narrow to achieve nominal coverage. Taken together, the two calibration tables show that the refitting bootstrap applied to the uncorrected plug-in tracks sampling variability adequately when the learner's regularization bias is negligible at the sample sizes considered --- logistic and linear regression, the neural network, and XGBoost beyond small samples --- and fails without warning when the bias term dominates, as it does for random forests at large $n$. The tables should therefore be read as a controlled demonstration of the mechanism analyzed in Remark~\ref{rem:refit}, not as a validation of the plug-in bootstrap as an inferential procedure: the failure is not specific to forests but to any learner whose $L^2$ bias shrinks more slowly than its intervals, and forests at default tuning are simply the class for which this occurs within the sample sizes examined. In the designs of this section the covariate density is known, so the representer $\alpha_h$ is available in closed form and the debiased estimator of Section~2.4 requires no representer estimation at all. The forests here are moreover depth-capped, and a depth-capped forest converges to a depth-limited approximation of the regression function rather than to the regression function itself; Proposition~\ref{prop:robust} applies verbatim to this case, and asserts that coverage of the true window effect requires no consistency from the forest --- only the known representer --- with the forest's approximation error paid in interval width rather than in location.
+	%% TODO (Jason): add Simulation 3 --- debiased estimator with closed-form alpha_h
+	%% (features are independent N(0,1), so alpha_h(u) = [q(u-he_j)-q(u+he_j)]/(2h p(u))
+	%% is computable exactly): report bias, RMSE, and coverage of the influence-function
+	%% CIs across the same DGPs, model classes, and sample sizes. The forest panel is
+	%% the money table: coverage should recover from ~0.10 to ~0.95 at n=5,000.
+	%% Also worth one column comparing runtime vs the B=200 refit bootstrap.
+	%% Per Prop prop:robust the forest panel doubles as the double-robustness demo:
+	%% coverage should be ~nominal even at fixed depth 6 (inconsistent learner),
+	%% with wider CIs than the debiased NN/XGB panels. Say so in the table notes.
 	
 	\section{Conclusion}
 	\label{sec:conclusion}
@@ -1899,35 +2411,40 @@
 	model. The estimator replaces analytical derivatives with adaptive centered finite
 	differences, applies uniformly across model classes and outcome types, and produces a
 	coefficient table --- estimate, standard error, and significance level --- directly
-	analogous to the output of a parametric regression. The nonparametric bootstrap, with
-	full model refitting and hyperparameter selection on each replicate, provides standard
-	errors that capture uncertainty about model specification as well as estimation. These
-	are capabilities that existing interpretability methods, including SHAP
+	analogous to the output of a parametric regression. Standard errors come from the estimated
+	influence function of a debiased, cross-fitted estimator in a single pass, with a
+	model-refitting bootstrap retained as a diagnostic for specification uncertainty.
+	These are capabilities that existing interpretability methods, including SHAP
 	\citep{lundberg2017shap}, LIME \citep{ribeiro2016lime}, and partial dependence plots
 	\citep{friedman2001pdp}, do not provide.
 	
-	The theoretical contribution proceeds in two parts. The first establishes gradient
-	consistency for three classes of supervised learners. For neural networks, the
-	appropriate function space is the Sobolev space $W^{1,p}$, and gradient consistency
-	follows from uniform $W^{2,p}$ boundedness combined with $L^p$ consistency via the
-	Rellich--Kondrachov compact embedding theorem \citep{evans2010pde}. For gradient
-	boosted models with tree base learners and for Mondrian forests
-	\citep{mourtada2017mondrian}, the appropriate function space is the space of functions
-	of bounded variation \citep{ambrosio2000bv}, where gradients exist as Radon measures
-	and consistency is established via the BV compactness theorem. For Breiman random
-	forests \citep{breiman2001rf, scornet2015forests}, gradient consistency is conjectured
-	rather than proved: the obstruction lies in the data-dependent partition boundaries,
-	whose discontinuity structure does not admit the geometric analysis available for
-	Mondrian partitions. The second part establishes bootstrap validity for all three
-	proved estimator classes --- neural networks, gradient boosted models, and Mondrian
-	forests --- via the Hadamard differentiability of the AME functional
-	\citep{vandervaart1996weak} and the functional delta method. Corollaries~1 through~3
-	make this precise, showing that the bootstrap distribution of the sample AME
-	consistently estimates the sampling distribution of the estimator under rate
-	conditions that are verified for each class. Bootstrap validity for Breiman forests
-	remains open for the same reason gradient consistency is harder to establish ---
-	the data-dependent partition geometry resists the clean decomposition that the
-	Mondrian independence assumption makes available.
+	The theoretical contribution proceeds in three parts. The first is the estimand
+	and its dual: the window average marginal effect is linear in the regression
+	function and admits an exact Riesz representation by a change of variables, with a
+	bounded representer, no boundary terms, and no density derivatives --- and the
+	classical average derivative is recovered in the small-window limit under one weak
+	derivative. The second is inference and optimality: the orthogonal score built
+	from the representer has estimation bias exactly equal to a product of two $L^2$
+	nuisance errors, so the cross-fitted estimator is root-$n$ consistent and
+	asymptotically normal under $n^{-1/4}$-type $L^2$ rates that flexible learners can
+	satisfy, and it attains the semiparametric efficiency bound --- replacing the
+	parametric-rate function-space condition that a functional delta method treatment
+	would require and that growing-complexity learners cannot meet; a double
+	robustness proposition extends validity to inconsistent, fixed-complexity
+	learners whenever the representer is known or parametrically estimable. The third is
+	interpretation: a pairing identity shows that the window effect of any estimator
+	of bounded variation equals its jump measure integrated against a locally averaged
+	covariate density, characterizing the population quantity that a tree-based
+	model's marginal effect measures; and gradient consistency is established for
+	neural networks in the Sobolev space $W^{1,p}$ via Rellich--Kondrachov compactness
+	\citep{evans2010pde}, and for gradient boosted models with tree base learners and
+	Mondrian forests \citep{mourtada2017mondrian} in the space of functions of bounded
+	variation \citep{ambrosio2000bv} via BV compactness, characterizing the regime in
+	which the uncorrected plug-in is already consistent. For Breiman random forests
+	\citep{breiman2001rf, scornet2015forests}, gradient consistency is conjectured
+	rather than proved --- the obstruction lies in the data-dependent partition
+	boundaries --- but the inference theory does not require it, so what remains open
+	for that class is an $L^2$ rate question rather than a function-space one.
 	
 	The empirical results across three datasets --- UCI Adult Income \citep{kohavi1996,
 		UCI}, UCI Credit Card Default \citep{yeh2009, UCI}, and Ames Housing
@@ -1942,34 +2459,48 @@
 	concrete --- SHAP attributes to above-ground living area an effect sixty times larger
 	than the AME for the linear model, a number that is not interpretable as a marginal
 	effect in any standard sense. An additional finding is that Breiman random forests
-	produce less stable AME estimates than the other estimator classes, consistent with
-	the theoretical result that gradient consistency for Breiman forests is harder to
-	establish. Practitioners requiring random forest AMEs are advised to consider Mondrian
-	forests, for which both gradient consistency and bootstrap validity are proved.
+	produce less stable plug-in AME estimates than the other estimator classes, and the
+	simulation study traces the resulting coverage failure to the regularization bias of
+	the plug-in --- the first-order term that the orthogonal correction removes, and the
+	clearest empirical argument for reporting the debiased estimator rather than the
+	uncorrected average.
 	
-	Several important problems remain open. The most pressing is gradient consistency and
-	bootstrap validity for Breiman forests. The obstruction identified in the proof of
-	Theorem~3 --- that data-dependent splits couple partition geometry to response
-	variation in a way that prevents the key decomposition --- suggests that new
-	analytical tools will be required, possibly involving direct control over the
-	data-dependent splitting criterion or a coupling argument relating Breiman partitions
-	to Mondrian partitions in an appropriate sense. Establishing these results would
-	close the gap between the theoretical guarantees and the most widely used random
-	forest implementation.
+	Several important problems remain open. The most pressing concerns Breiman
+	forests, and the present framework splits it into two questions of very different
+	difficulty. The inferential question --- valid confidence intervals for the window
+	effect when the learner is a Breiman forest --- now requires only an $L^2$
+	convergence rate for the forest, since Theorem~\ref{thm:main} consumes nothing
+	else; consistency is available under structural assumptions
+	\citep{scornet2015forests}, and converting it into a rate meeting the
+	$n^{-1/4}$ benchmark, or exploiting the product form of
+	Assumption~\ref{ass:nuisance}(b) with a fast representer estimate, is a concrete
+	and plausibly tractable target. The interpretive question --- convergence of the
+	forest's own gradient information, in the sense of
+	Section~\ref{sec:learners} --- remains genuinely hard: the obstruction identified
+	in the proof of Theorem~\ref{thm:forests}, that data-dependent splits couple
+	partition geometry to response variation in a way that prevents the key
+	decomposition, suggests that new analytical tools will be required, possibly a
+	coupling argument relating Breiman partitions to Mondrian partitions. Separating
+	the two questions is itself progress: the most widely used forest implementation
+	can be brought under the inferential guarantees without waiting for the harder
+	interpretation theory.
 	
-	A second open problem is the extension of gradient consistency and bootstrap validity
-	to additional model classes. The theoretical results cover neural networks, gradient
-	boosted models, and Mondrian forests. The BV and Sobolev architectures developed here
-	provide a template: identify the natural function space for the estimator class,
-	establish derivative existence and consistency in that space, verify the rate
-	condition, and invoke the Hadamard differentiability of the AME functional. Applying
-	this template to support vector machines with smooth kernels, Bayesian additive
-	regression trees, generalized additive models, and kernel methods is an important
-	direction. Each case requires identifying the appropriate function space and verifying
-	the well-behaved conditions, but the framework makes the proof obligations explicit
-	and the path tractable. Splines and ridge regression are particularly natural
-	candidates since they live in Sobolev spaces by construction and the gradient
-	consistency results are likely near-immediate from the existing theory.
+	A second open problem is the extension to additional model classes, and the
+	framework now presents two templates with distinct proof obligations. For
+	inference, the obligation is minimal and uniform across classes: an $L^2(P)$
+	convergence rate for the learner --- support vector machines with smooth kernels,
+	Bayesian additive regression trees, generalized additive models, and kernel ridge
+	regression all have such rates in the literature or within reach --- together
+	with a Riesz-regression class rich enough to approximate the bounded representer,
+	for which \citet{chernozhukov2022riesz} provide general guarantees. For
+	interpretation, the Sobolev and BV architecture developed here remains the
+	template: identify the natural function space of the estimator class, establish
+	derivative existence and consistency there, and conclude gradient convergence
+	via the appropriate compactness theorem. Splines and ridge regression are
+	particularly natural candidates for the second template since they live in
+	Sobolev spaces by construction, and the pairing identity of
+	Theorem~\ref{thm:pairing} extends the first template to any learner of bounded
+	variation without further work.
 	
 	A third open problem is the extension to causal inference. The average marginal effect
 	as defined here is a predictive quantity --- the average derivative of the conditional
@@ -1992,21 +2523,386 @@
 	of the feature space and the marginal effect at the mean may therefore be a poor
 	summary of the average effect.
 	
-	Finally, the computational cost of the full bootstrap procedure --- refitting the
-	model with hyperparameter selection on each of $B$ replicates --- limits practical
-	applicability for very large datasets or very expensive models. Approximations based
-	on the infinitesimal jackknife \citep{wager2014confidence}, subsampling, or
-	warm-started hyperparameter search reduce this cost substantially, but the statistical
-	properties of these approximations relative to the full bootstrap have not been
-	characterized. The Hadamard differentiability established in Lemma~5 provides a
-	natural starting point for analyzing such approximations: any procedure that
-	consistently estimates the derivative $T'_f$ of the AME functional will yield
-	asymptotically valid inference, and this opens a principled path toward
-	computationally efficient alternatives to the full bootstrap. Developing and
-	characterizing such procedures is an important practical problem that we leave to
-	future work.
+	Finally, several practical questions about the debiased procedure itself deserve
+	systematic study. The influence-function standard errors of
+	Section~2.4 already remove the computational objection to inference --- $K$ model
+	fits in place of $B$ refits with hyperparameter selection --- but the finite-sample
+	behavior of the procedure depends on choices the asymptotic theory does not
+	pin down: the number of folds, the truncation level for the estimated
+	representer, the trimming weight near the boundary, and above all the window
+	$h$, which is part of the estimand and whose sensitivity should be reported the
+	way bandwidth sensitivity is. The multiplier bootstrap of
+	Remark~\ref{rem:bootstrap} makes simultaneous confidence bands across features
+	essentially free, and characterizing its finite-sample accuracy relative to the
+	plug-in intervals, along with honest procedures when the density bounds of
+	Assumption~\ref{ass:sampling} are weak near the boundary, is a practical program
+	we leave to future work.
 	
 	\appendix
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:riesz} (Riesz Representation)}
+	\label{app:lem_riesz}
+	% ============================================================
+	
+	\begin{proof}
+		Recall $q = wp$ extended by zero outside $\Omega$, so that $q$ is defined on
+		all of $\R^d$, $\norm{q}_\infty \leq p_{\max}$, and $q(x) \neq 0$ implies
+		$x \in \operatorname{supp}(w) \subseteq \Omega_{j,h}$. Fix $g \in L^1(P)$ and
+		consider the positive-shift half of the finite difference:
+		\begin{equation}
+			\E\left[w(X)\, g(X + h e_j)\right]
+			= \int_{\R^d} q(x)\, g(x + h e_j)\, dx
+			= \int_{\R^d} q(u - h e_j)\, g(u)\, du
+		\end{equation}
+		by the substitution $u = x + h e_j$. The manipulation is legitimate because
+		on the set where the integrand is nonzero we have $x \in \Omega_{j,h}$, hence
+		$u = x + h e_j \in \Omega$, so $g$ is evaluated only on $\Omega$; and the
+		integral is absolutely convergent since:
+		\begin{equation}
+			\int q(u - h e_j)\, \abs{g(u)}\, du
+			\leq p_{\max} \int_\Omega \abs{g(u)}\, du
+			\leq \frac{p_{\max}}{p_{\min}} \, \E\abs{g(X)} < \infty
+		\end{equation}
+		The negative-shift half is identical with $u = x - h e_j$. Subtracting and
+		dividing by $2h$:
+		\begin{equation}
+			\E\left[w(X)\, \Dh g(X)\right]
+			= \int_\Omega \frac{q(u - h e_j) - q(u + h e_j)}{2h}\, g(u)\, du
+			= \E\left[\alpha_h(X)\, g(X)\right]
+		\end{equation}
+		where the restriction of the domain of integration to $\Omega$ in the second
+		step uses that $g$ is supported there, and the final step multiplies and
+		divides by $p(u) \geq p_{\min} > 0$. The uniform bound follows from
+		$\abs{q(u - h e_j) - q(u + h e_j)} \leq 2 p_{\max}$ and $p(u) \geq p_{\min}$.
+		Applying the representation to $g \equiv 1$ gives
+		$\E[\alpha_h(X)] = \E[w(X) \Dh 1] = 0$ since the finite difference of a
+		constant vanishes.
+	\end{proof}
+	
+	% ============================================================
+	\section{Proof of Proposition~\ref{prop:hlimit} (Recovery of the Average
+		Derivative)}
+	\label{app:prop_hlimit}
+	% ============================================================
+	
+	\begin{proof}
+		Let $f \in W^{1,1}(\Omega)$ and fix $h \leq h_0$, so that
+		$\operatorname{supp}(w) \subseteq \Omega_{j,h_0} \subseteq \Omega_{j,h}$ and
+		every segment $\{x + t e_j : \abs{t} \leq h\}$ with
+		$x \in \operatorname{supp}(w)$ lies in $\Omega$. Sobolev functions are
+		absolutely continuous on almost every line parallel to a coordinate axis, with
+		the classical derivative along the line agreeing almost everywhere with the
+		weak derivative \citep[Section~4.9]{evans2015measure}. Hence for almost every
+		$x \in \operatorname{supp}(w)$:
+		\begin{equation}
+			f(x + h e_j) - f(x - h e_j)
+			= \int_{-h}^{h} \partial_j f(x + t e_j)\, dt
+		\end{equation}
+		and therefore:
+		\begin{equation}
+			\theta_h(f) - \E\left[w(X)\, \partial_j f(X)\right]
+			= \int_{\R^d} q(x)\, \frac{1}{2h} \int_{-h}^{h}
+			\left[\partial_j f(x + t e_j) - \partial_j f(x)\right] dt\, dx
+		\end{equation}
+		Bounding $q$ by $p_{\max}$, applying Tonelli, and extending
+		$\partial_j f$ by zero outside $\Omega$:
+		\begin{equation}
+			\abs{\theta_h(f) - \E\left[w\, \partial_j f\right]}
+			\leq p_{\max} \sup_{\abs{t} \leq h}
+			\int_{\R^d} \abs{\partial_j f(x + t e_j) - \partial_j f(x)}
+			\, \mathbf{1}\{x \in \operatorname{supp}(w)\}\, dx
+		\end{equation}
+		where the extension introduces no error because $x + t e_j \in \Omega$ for
+		$x \in \operatorname{supp}(w)$ and $\abs{t} \leq h \leq h_0$. Continuity of
+		translation in $L^1(\R^d)$ applied to the extension of $\partial_j f$ sends
+		the right side to zero as $h \downarrow 0$. For the second claim,
+		$\abs{w_m \partial_j f} \leq \abs{\partial_j f}$, which is $P$-integrable
+		because $\partial_j f \in L^1(\Omega)$ and $p \leq p_{\max}$; dominated
+		convergence gives
+		$\E[w_m \partial_j f] \to \E[\partial_j f] = \mathrm{AME}_j$.
+	\end{proof}
+	
+	% ============================================================
+	\section{Proof of Lemma~\ref{lem:orth} (Exact Product Bias)}
+	\label{app:lem_orth}
+	% ============================================================
+	
+	\begin{proof}
+		Conditioning on $X$ and using $\E[Y \mid X] = f(X)$:
+		\begin{equation}
+			\E\left[\tilde{\alpha}(X)\,(Y - \tilde{f}(X))\right]
+			= \E\left[\tilde{\alpha}(X)\,(f(X) - \tilde{f}(X))\right]
+		\end{equation}
+		By linearity of $\Dh$ and Lemma~\ref{lem:riesz} applied to
+		$g = \tilde{f} - f \in L^1(P)$:
+		\begin{equation}
+			\E\left[w(X)\, \Dh \tilde{f}(X)\right] - \theta_h(f)
+			= \E\left[w(X)\, \Dh (\tilde{f} - f)(X)\right]
+			= \E\left[\alpha_h(X)\,(\tilde{f}(X) - f(X))\right]
+		\end{equation}
+		Summing the two displays gives:
+		\begin{equation}
+			\E\left[\psi(X, Y; \tilde{f}, \tilde{\alpha}, \theta_h(f))\right]
+			= \E\left[(\alpha_h(X) - \tilde{\alpha}(X))(\tilde{f}(X) - f(X))\right]
+		\end{equation}
+		and the bound is Cauchy--Schwarz.
+	\end{proof}
+	
+	% ============================================================
+	\section{Proof of Theorem~\ref{thm:main} (Asymptotic Linearity and Normality)}
+	\label{app:thm_main}
+	% ============================================================
+	
+	\subsection{Step 0: The Trimmed Difference Operator is Bounded on $L^2(P)$}
+	
+	For any $g \in L^2(\Omega)$, using $(a - b)^2 \leq 2a^2 + 2b^2$ and the
+	change of variables from the proof of Lemma~\ref{lem:riesz}:
+	\begin{align}
+		\E\left[\bigl(w(X)\, \Dh g(X)\bigr)^2\right]
+		&\leq \frac{1}{2h^2}\left(
+		\E\left[w(X)^2 g(X + h e_j)^2\right]
+		+ \E\left[w(X)^2 g(X - h e_j)^2\right]\right) \notag \\
+		&\leq \frac{1}{h^2} \cdot \frac{p_{\max}}{p_{\min}}\, \E\left[g(X)^2\right]
+		\label{eq:opbound_proof}
+	\end{align}
+	which establishes \eqref{eq:opbound} with constant
+	$\kappa = h^{-1}(p_{\max}/p_{\min})^{1/2}$. This is the only property of the
+	finite difference used below; no derivative of $g$ appears anywhere.
+	
+	\subsection{Step 1: Decomposition by Folds}
+	
+	Write $\theta = \theta_h(f)$,
+	$\psi_i = \psi(\mathbf{x}_i, y_i; f, \alpha_h, \theta)$, and for
+	$i \in I_k$ let
+	$\hat{\psi}_i = \psi(\mathbf{x}_i, y_i; \hat{f}^{(-k)},
+	\hat{\alpha}^{(-k)}, \theta)$. Then:
+	\begin{equation}
+		\sqrt{n}\,(\hat{\theta}_h - \theta)
+		= \frac{1}{\sqrt{n}} \sum_{i=1}^{n} \psi_i
+		+ \sum_{k=1}^{K} \sqrt{\frac{n_k}{n}}\,\bigl(\sqrt{n_k}\, A_k
+		+ \sqrt{n_k}\, B_k\bigr)
+	\end{equation}
+	where, with $\E_k$ denoting expectation over a fresh draw $(X, Y)$ holding the
+	fold-$k$ nuisances fixed:
+	\begin{equation}
+		A_k = \E_k\left[\hat{\psi} - \psi\right],
+		\qquad
+		B_k = \frac{1}{n_k} \sum_{i \in I_k}
+		\left(\hat{\psi}_i - \psi_i - A_k\right)
+	\end{equation}
+	Since $K$ is fixed and $n_k / n \to 1/K$, it suffices that
+	$\sqrt{n_k} A_k = o_p(1)$ and $\sqrt{n_k} B_k = o_p(1)$ for each $k$.
+	
+	\subsection{Step 2: The Bias Term}
+	
+	By Lemma~\ref{lem:orth} with
+	$(\tilde{f}, \tilde{\alpha}) = (\hat{f}^{(-k)}, \hat{\alpha}^{(-k)})$:
+	\begin{equation}
+		\abs{\sqrt{n_k}\, A_k}
+		\leq \sqrt{n_k}\, \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}
+		\cdot \Ptwo{\hat{f}^{(-k)} - f} = o_p(1)
+	\end{equation}
+	by Assumption~\ref{ass:nuisance}(b). This is the only place the product rate is
+	used, and it is used without any expansion: the bound is exact.
+	
+	\subsection{Step 3: The Empirical Process Term}
+	
+	Conditional on the out-of-fold data, the summands of $B_k$ are i.i.d.\ and
+	mean zero, so:
+	\begin{equation}
+		\E\left[(\sqrt{n_k}\, B_k)^2 \mid \text{out-of-fold}\right]
+		\leq \E_k\left[(\hat{\psi} - \psi)^2\right]
+	\end{equation}
+	Decompose, adding and subtracting $\hat{\alpha}^{(-k)}(x)(y - f(x))$:
+	\begin{equation}
+		\hat{\psi} - \psi
+		= w\, \Dh(\hat{f}^{(-k)} - f)
+		+ (\hat{\alpha}^{(-k)} - \alpha_h)(y - f)
+		- \hat{\alpha}^{(-k)}\,(\hat{f}^{(-k)} - f)
+	\end{equation}
+	and bound each piece in $L^2(P)$: the first by
+	$\kappa \Ptwo{\hat{f}^{(-k)} - f}$ via \eqref{eq:opbound_proof}; the second by
+	$\bar{\sigma}\, \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}$ after conditioning on
+	$X$; the third by $\bar{A}\, \Ptwo{\hat{f}^{(-k)} - f}$ using
+	Assumption~\ref{ass:nuisance}(c). All three are $o_p(1)$ by
+	Assumption~\ref{ass:nuisance}(a), so
+	$\E_k[(\hat{\psi} - \psi)^2] = o_p(1)$ and conditional Chebyshev gives
+	$\sqrt{n_k}\, B_k = o_p(1)$.
+	
+	\subsection{Step 4: Central Limit Theorem and Variance Estimation}
+	
+	The $\psi_i$ are i.i.d., mean zero by Lemma~\ref{lem:orth} at
+	$(\tilde{f}, \tilde{\alpha}) = (f, \alpha_h)$, with variance:
+	\begin{equation}
+		V_h = \E[\psi_i^2]
+		\leq 2\,\E\left[(w \Dh f)^2\right] + 2\,\norm{\alpha_h}_\infty^2\,
+		\E[\sigma^2(X)] < \infty
+	\end{equation}
+	by \eqref{eq:opbound_proof} and Lemma~\ref{lem:riesz}, so the classical CLT
+	applies. For the variance estimator, write
+	$\hat{\psi}_i(\hat{\theta}_h) = \hat{\psi}_i - (\hat{\theta}_h - \theta)$; then:
+	\begin{equation}
+		\hat{V}_h = \frac{1}{n} \sum_i \hat{\psi}_i^2
+		- 2(\hat{\theta}_h - \theta)\,\frac{1}{n}\sum_i \hat{\psi}_i
+		+ (\hat{\theta}_h - \theta)^2
+	\end{equation}
+	The last two terms vanish in probability since
+	$\hat{\theta}_h - \theta = o_p(1)$ and
+	$n^{-1}\sum_i \hat{\psi}_i = O_p(n^{-1/2})$ by Steps~1--3. For the first term:
+	\begin{equation}
+		\abs{\frac{1}{n}\sum_i \hat{\psi}_i^2 - \frac{1}{n}\sum_i \psi_i^2}
+		\leq \frac{1}{n}\sum_i (\hat{\psi}_i - \psi_i)^2
+		+ 2\left(\frac{1}{n}\sum_i (\hat{\psi}_i - \psi_i)^2\right)^{1/2}
+		\left(\frac{1}{n}\sum_i \psi_i^2\right)^{1/2}
+	\end{equation}
+	by Cauchy--Schwarz; $n^{-1}\sum_i (\hat{\psi}_i - \psi_i)^2 = o_p(1)$ by the
+	fold-wise conditional Markov inequality and the Step~3 bound, and
+	$n^{-1}\sum_i \psi_i^2 \xrightarrowp V_h$ by the law of large numbers. Hence
+	$\hat{V}_h \xrightarrowp V_h$.
+	\qed
+	
+	% ============================================================
+	\section{Proof of Proposition~\ref{prop:robust} (Double Robustness)}
+	\label{app:prop_robust}
+	% ============================================================
+	
+	The argument retraces the proof of Theorem~\ref{thm:main} with the pseudo-true
+	influence function in place of the efficient one; we record the steps that change.
+	
+	\subsection{Step 1: The Pseudo-True Influence Function}
+	
+	Define $\psi_{g,i} = w(\mathbf{x}_i)\, \Dh g(\mathbf{x}_i)
+	+ \alpha_h(\mathbf{x}_i)\,(y_i - g(\mathbf{x}_i)) - \theta_h(f)$. By
+	Lemma~\ref{lem:orth} with $(\tilde{f}, \tilde{\alpha}) = (g, \alpha_h)$:
+	\begin{equation}
+		\E[\psi_{g,i}]
+		= \E\bigl[(\alpha_h - \alpha_h)(g - f)\bigr] = 0
+	\end{equation}
+	for every $g \in L^2(\Omega)$, which also establishes
+	$\E[m_g(X)] = \theta_h(f)$ after conditioning on $X$. Conditioning likewise gives
+	$\E[\psi_{g,i} \mid X] = m_g(X) - \theta_h(f)$ and
+	$\mathrm{Var}(\psi_{g,i} \mid X) = \alpha_h(X)^2 \sigma^2(X)$, so
+	$\mathrm{Var}(\psi_{g,i}) = V_h(g)$ by the law of total variance; finiteness
+	follows from \eqref{eq:opbound_proof}, $g \in L^2(\Omega)$, the bound on
+	$\alpha_h$ from Lemma~\ref{lem:riesz}, and $\E[Y^2] < \infty$.
+	
+	\subsection{Step 2: The Bias Term}
+	
+	With $A_k = \E_k[\hat{\psi} - \psi_g] = \E_k[\hat{\psi}]$, Lemma~\ref{lem:orth}
+	gives $A_k = \E[(\alpha_h - \hat{\alpha}^{(-k)})(\hat{f}^{(-k)} - f)]$, so:
+	\begin{equation}
+		\abs{\sqrt{n_k}\, A_k}
+		\leq \sqrt{n_k}\, \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}
+		\left( \Ptwo{\hat{f}^{(-k)} - g} + \Ptwo{g - f} \right)
+		= \sqrt{n_k}\, o_p(n^{-1/2}) \cdot O_p(1) = o_p(1)
+	\end{equation}
+	by conditions (a) and (b); the second factor is $O_p(1)$ rather than $o_p(1)$
+	because $g$ need not equal $f$, and it is exactly here that condition (b) must be
+	strengthened to $o_p(n^{-1/2})$ relative to Assumption~\ref{ass:nuisance}(b).
+	When $\hat{\alpha}^{(-k)} = \alpha_h$, $A_k = 0$ identically at every $n$;
+	averaging the fold-wise identity
+	$\E[\hat{\psi}_i + \theta_h(f) \mid \text{out-of-fold data}] = \theta_h(f)$,
+	which holds because the observations in fold $k$ are independent of
+	$\hat{f}^{(-k)}$, gives the exact unbiasedness claim.
+	
+	\subsection{Step 3: The Empirical Process Term}
+	
+	Decompose, for $i \in I_k$:
+	\begin{equation}
+		\hat{\psi}_i - \psi_{g,i}
+		= w\, \Dh(\hat{f}^{(-k)} - g)
+		+ (\hat{\alpha}^{(-k)} - \alpha_h)(y_i - \hat{f}^{(-k)})
+		+ \alpha_h\,(g - \hat{f}^{(-k)})
+	\end{equation}
+	The first and third terms have conditional $L^2(P)$ norms bounded by
+	$\kappa\, \Ptwo{\hat{f}^{(-k)} - g}$ and
+	$\norm{\alpha_h}_\infty \Ptwo{\hat{f}^{(-k)} - g}$ respectively, both $o_p(1)$
+	by condition (a). For the middle term, write
+	$y - \hat{f}^{(-k)} = (y - f) + (f - g) + (g - \hat{f}^{(-k)})$ and bound the
+	three resulting pieces: the first by
+	$\bar{\sigma}^2 \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}^2 = o_p(1)$ after
+	conditioning on $X$; the third by
+	$(\bar{A} + \norm{\alpha_h}_\infty)^2 \Ptwo{\hat{f}^{(-k)} - g}^2 = o_p(1)$; and
+	the second piece, $\E[(\hat{\alpha}^{(-k)} - \alpha_h)^2 (f - g)^2]$, tends to
+	zero by dominated convergence along subsequences: the factor
+	$(\hat{\alpha}^{(-k)} - \alpha_h)^2$ is bounded by
+	$(\bar{A} + \norm{\alpha_h}_\infty)^2$ and converges to zero in $P$-measure by
+	condition (b), while $(f - g)^2 \in L^1(P)$ dominates. Conditional Chebyshev then
+	gives $\sqrt{n_k}\, B_k = o_p(1)$ exactly as in Step~3 of the proof of
+	Theorem~\ref{thm:main}.
+	
+	\subsection{Step 4: Conclusion}
+	
+	The $\psi_{g,i}$ are i.i.d., mean zero, with finite positive variance $V_h(g)$,
+	so the classical CLT applies to their normalized sum, and Steps~2--3 identify
+	$\sqrt{n}(\hat{\theta}_h - \theta_h(f))$ with that sum up to $o_p(1)$. The
+	consistency of $\hat{V}_h$ for $V_h(g)$ repeats Step~4 of the proof of
+	Theorem~\ref{thm:main} verbatim with $\psi_{g}$ in place of $\psi$, using the
+	Step~3 bound just established. Finally, when $g \neq f$ the influence function
+	$\psi_g$ differs from the efficient influence function $\psi$ of
+	Theorem~\ref{thm:efficiency}; since in the nonparametric model every regular
+	asymptotically linear estimator has influence function equal to the efficient
+	one, the estimator is not regular in this case, and no conflict with the
+	convolution theorem arises.
+	\qed
+	
+	% ============================================================
+	\section{Proof of Theorem~\ref{thm:efficiency} (Semiparametric Efficiency)}
+	\label{app:thm_eff}
+	% ============================================================
+	
+	\begin{proof}
+		Consider one-dimensional submodels
+		$dP_t = (1 + t s)\, dP$ indexed by bounded functions
+		$s \in L^2_0(P) = \{s : \E[s(X, Y)] = 0\}$, which are well defined for
+		$\abs{t} < 1/\norm{s}_\infty$ and differentiable in quadratic mean at $t = 0$
+		with score $s$; bounded mean-zero functions are dense in $L^2_0(P)$, so the
+		tangent space of the nonparametric model is all of $L^2_0(P)$
+		\citep[Chapter~25]{vaart1998}. Write
+		$\bar{s}_X(x) = \E[s(X, Y) \mid X = x]$ for the induced score of the
+		covariate marginal and
+		$f_t(x) = \E_t[Y \mid X = x]$ for the regression function along the path.
+		Differentiating the Bayes formula for $f_t$ at $t = 0$ gives, for
+		$P$-almost every $x$:
+		\begin{equation}
+			\dot{f}(x) := \frac{\partial}{\partial t} f_t(x)\Big|_{t=0}
+			= \E\left[(Y - f(X))\, s(X, Y) \mid X = x\right]
+		\end{equation}
+		where differentiation under the integral is justified by
+		$\E[Y^2] < \infty$ and the boundedness of $s$. The functional along the path
+		is $\theta(t) = \E_t[w(X)\, \Dh f_t(X)]$, and the product rule gives:
+		\begin{equation}
+			\frac{d\theta}{dt}\Big|_{t=0}
+			= \E\left[w\, \Dh f(X)\cdot \bar{s}_X(X)\right]
+			+ \E\left[w\, \Dh \dot{f}(X)\right]
+		\end{equation}
+		For the first term, note $\E[\bar{s}_X] = 0$, so the term equals
+		$\E[(w \Dh f(X) - \theta_h(f))\, \bar{s}_X(X)]
+		= \E[(w \Dh f(X) - \theta_h(f))\, s(X, Y)]$, the last equality because
+		$w \Dh f(X) - \theta_h(f)$ is $X$-measurable. For the second term,
+		$\dot{f} \in L^1(P)$ (indeed $L^2$) since $s$ is bounded, so
+		Lemma~\ref{lem:riesz} applies:
+		\begin{equation}
+			\E\left[w\, \Dh \dot{f}(X)\right]
+			= \E\left[\alpha_h(X)\, \dot{f}(X)\right]
+			= \E\left[\alpha_h(X)\,(Y - f(X))\, s(X, Y)\right]
+		\end{equation}
+		by the tower property. Summing:
+		\begin{equation}
+			\frac{d\theta}{dt}\Big|_{t=0}
+			= \E\left[\psi(X, Y; f, \alpha_h, \theta_h(f))\; s(X, Y)\right]
+		\end{equation}
+		for every score $s$, so $\theta_h$ is pathwise differentiable with influence
+		function $\psi$; since $\psi \in L^2_0(P)$ lies in the tangent space, it is
+		the efficient influence function and the bound is
+		$\E[\psi^2]$ \citep[Theorem~25.20]{vaart1998}. The cross term in
+		$\E[\psi^2]$ vanishes by conditioning on $X$, yielding
+		\eqref{eq:effbound}. Attainment follows from Theorem~\ref{thm:main}, whose
+		expansion exhibits $\hat{\theta}_h$ as asymptotically linear with influence
+		function $\psi$, hence regular and efficient
+		\citep[Lemma~25.23]{vaart1998}.
+	\end{proof}
 	
 	% ============================================================
 	\section{Proof of Lemma~\ref{lem:sobolev_existence}
@@ -2576,126 +3472,74 @@
 	\end{remark}
 	
 	% ============================================================
-	\section{Proof of Lemma~\ref{lem:hadamard}
-		(Hadamard Differentiability of the AME Functional)}
-	\label{app:lem_hadamard}
+	\section{Proof of Theorem~\ref{thm:pairing} (Pairing Identity)}
+	\label{app:thm_pairing}
 	% ============================================================
 	
-	\subsection{What Needs to Be Shown}
-	
-	That the functional $T(f) = \int_\Omega \nabla f(x) \, dP(x)$ is Hadamard
-	differentiable at $f$ tangentially to $C(\Omega)^d$, with derivative
-	$T'_f(h) = \int_\Omega \nabla h(x) \, dP(x)$.
-	
-	Recall that Hadamard differentiability tangentially to $C(\Omega)^d$ means
-	that for every sequence $t_n \to 0$ and every sequence $h_n \to h$ in
-	$C(\Omega)^d$ \citep[Definition~3.9.2]{vandervaart1996weak}:
-	\begin{equation}
-		\frac{T(f + t_n h_n) - T(f)}{t_n} \to T'_f(h)
-	\end{equation}
-	Once Hadamard differentiability is established, the functional delta method
-	\citep[Theorem~3.9.4]{vandervaart1996weak} and the bootstrap validity result
-	of \citet[Chapter~3.6]{horowitz2000bootstrap} apply directly to give
-	Corollaries~\ref{cor:bootstrap_nn}, \ref{cor:bootstrap_boost},
-	and~\ref{cor:bootstrap_rf}.
-	
-	\subsection{Step 1: Linearity and Boundedness of the Candidate Derivative}
-	
-	The candidate derivative $T'_f(h) = \int_\Omega \nabla h \, dP$ is linear
-	in $h$ by linearity of the integral and the gradient operator. It is bounded
-	on $C(\Omega)^d$ since:
-	\begin{equation}
-		\abs{T'_f(h)}
-		\leq \int_\Omega \abs{\nabla h(x)} \, dP(x)
-		\leq \norm{\nabla h}_{L^\infty(\Omega)} \cdot P(\Omega)
-		= \norm{\nabla h}_{L^\infty(\Omega)}
-	\end{equation}
-	using that $P$ is a probability measure so $P(\Omega) = 1$. Therefore
-	$T'_f: C(\Omega)^d \to \R^d$ is a bounded linear map.
-	
-	\subsection{Step 2: Verify the Hadamard Derivative Formula}
-	
-	The key observation is that $T$ is itself a linear functional of $f$.
-	Therefore for any $t_n \to 0$ and $h_n \to h$ in $C(\Omega)^d$:
-	\begin{align}
-		\frac{T(f + t_n h_n) - T(f)}{t_n}
-		&= \frac{1}{t_n} \int_\Omega
-		\left[\nabla(f + t_n h_n)(x) - \nabla f(x)\right] dP(x) \notag \\
-		&= \frac{1}{t_n} \int_\Omega t_n \nabla h_n(x) \, dP(x) \notag \\
-		&= \int_\Omega \nabla h_n(x) \, dP(x)
-	\end{align}
-	where the second equality uses linearity of the gradient operator:
-	$\nabla(f + t_n h_n) = \nabla f + t_n \nabla h_n$.
-	
-	It remains to show that $\int_\Omega \nabla h_n \, dP \to \int_\Omega
-	\nabla h \, dP$. Since $h_n \to h$ in $C(\Omega)^d$, we have
-	$\nabla h_n \to \nabla h$ uniformly on $\Omega$. The density of $P$ is
-	bounded on $\Omega$ by assumption, so $P$ is absolutely continuous with
-	respect to $\mathcal{L}^d$ with bounded Radon-Nikodym derivative. Applying
-	the dominated convergence theorem with dominating function
-	$\norm{\nabla h_n}_{L^\infty} \cdot p_{\max}$ where $p_{\max}$ is the
-	essential supremum of the density of $P$:
-	\begin{equation}
-		\int_\Omega \nabla h_n \, dP \to \int_\Omega \nabla h \, dP = T'_f(h)
-	\end{equation}
-	This establishes the Hadamard derivative formula.
-	
-	\subsection{Step 3: Tangential Differentiability}
-	
-	The differentiability is tangential to $C(\Omega)^d$ rather than to all of
-	$\Wonep$ for the following reason. The derivative formula requires passing
-	the limit $h_n \to h$ through the gradient and integral. This exchange is
-	justified by uniform convergence of $\nabla h_n \to \nabla h$, which holds
-	when $h_n \to h$ in $C(\Omega)^d$ but not in general when $h_n \to h$ only
-	in $\Wonep$.
-	
-	Formally, following \citet[Definition~3.9.2]{vandervaart1996weak}, tangential
-	differentiability to $C(\Omega)^d$ means the derivative formula holds for
-	all sequences $t_n \to 0$ and $h_n \to h$ with $h_n, h \in C(\Omega)^d$.
-	The condition $p > d$ in the lemma statement ensures via the Sobolev
-	embedding $W^{1,p}(\Omega) \hookrightarrow C^{0,\alpha}(\Omega)$ for
-	$\alpha = 1 - d/p$ \citep[Section~5.6]{evans2010pde} that the estimator
-	sequences $\{\fn\}$ take values in $C(\Omega)^d$ with probability one, so
-	the tangential differentiability condition is the operative one for the
-	bootstrap corollaries.
-	
-	\subsection{Conclusion}
-	
-	The functional $T(f) = \int_\Omega \nabla f \, dP$ is Hadamard
-	differentiable at $f$ tangentially to $C(\Omega)^d$ with derivative
-	$T'_f(h) = \int_\Omega \nabla h \, dP$. The proof required only the
-	linearity of $T$, the uniform convergence of $h_n \to h$ in $C(\Omega)^d$,
-	and the dominated convergence theorem. By
-	\citet[Theorem~3.9.4]{vandervaart1996weak} and
-	\citet[Chapter~3.6]{horowitz2000bootstrap}, Hadamard differentiability
-	tangentially to $C(\Omega)^d$ together with the rate conditions verified in
-	Corollaries~\ref{cor:bootstrap_nn}, \ref{cor:bootstrap_boost},
-	and~\ref{cor:bootstrap_rf} implies bootstrap validity for the AME estimator
-	under each of the three estimator classes. \qed
-	
-	\begin{remark}
-		Lemma~\ref{lem:hadamard} is the shortest proof in the appendix precisely
-		because the AME functional is linear. Hadamard differentiability of a
-		linear functional is immediate once the derivative formula is identified
-		--- the quotient $[T(f + t_n h_n) - T(f)] / t_n$ equals $T(h_n)$
-		exactly, with no remainder term, and convergence to $T(h)$ follows from
-		continuity. The hard work is in
-		Lemmas~\ref{lem:sobolev_consistency} and~\ref{lem:bv_consistency}, which
-		establish that the estimator sequences live in the right function spaces
-		with the right regularity. Lemma~\ref{lem:hadamard} then harvests those
-		results with a one-line calculation.
-	\end{remark}
-	
-	\begin{remark}
-		The condition that $P$ has density bounded away from zero and infinity on
-		$\Omega$ is used in Step~2 to apply the dominated convergence theorem and
-		in Step~3 to ensure the Sobolev embedding gives the required regularity.
-		The lower bound on the density ensures the integral $\int_\Omega \nabla f
-		\, dP$ is well defined and nondegenerate. The upper bound provides the
-		dominating function for the dominated convergence argument. Both are mild
-		conditions satisfied by any covariate distribution with reasonable support
-		and no extreme mass concentrations.
-	\end{remark}
+	\begin{proof}
+		Write points as $x = (x_{-j}, x_j)$ and for fixed $x_{-j}$ let
+		$\Omega^{x_{-j}} = \{ \tau \in \R : (x_{-j}, \tau) \in \Omega \}$ denote the
+		one-dimensional section of the domain and
+		$g^{x_{-j}}(\tau) = g(x_{-j}, \tau)$ the section of $g$. By the
+		one-dimensional section theory of BV functions
+		\citep[Section~3.11]{ambrosio2000bv}, for $\mathcal{H}^{d-1}$-almost every
+		$x_{-j}$ the section $g^{x_{-j}}$ of the precise representative is a good
+		representative of a function of bounded variation on $\Omega^{x_{-j}}$, its
+		distributional derivative $D g^{x_{-j}}$ is the corresponding section of
+		$D_j g$, and the total variations disintegrate:
+		\begin{equation}
+			\int_\Omega \phi\; d D_j g
+			= \int \left( \int_{\Omega^{x_{-j}}} \phi(x_{-j}, \tau)\;
+			d D g^{x_{-j}}(\tau) \right) d\mathcal{H}^{d-1}(x_{-j})
+			\label{eq:disintegration}
+		\end{equation}
+		for every bounded Borel $\phi$. For a good representative of a BV function of
+		one variable, the fundamental theorem of calculus holds in the form
+		$g^{x_{-j}}(b) - g^{x_{-j}}(a) = D g^{x_{-j}}\bigl((a, b]\bigr)$ for all
+		$a < b$ in $\Omega^{x_{-j}}$ that are not atoms of $D g^{x_{-j}}$; since
+		each section has at most countably many atoms, for
+		Lebesgue-almost every $x_j$ the pair $(x_j - h, x_j + h)$ avoids them. Hence
+		for almost every $x \in \operatorname{supp}(w)$ (where the whole segment lies
+		in $\Omega$ by the trimming condition):
+		\begin{equation}
+			g(x + h e_j) - g(x - h e_j)
+			= D g^{x_{-j}}\bigl((x_j - h,\; x_j + h]\bigr)
+		\end{equation}
+		Multiplying by $q(x)/2h$, integrating, and applying
+		Tonelli on each section (justified since
+		$\abs{D g^{x_{-j}}}$ is finite for a.e.\ section and $q$ is bounded):
+		\begin{align}
+			\E\left[w(X)\, \Dh g(X)\right]
+			&= \int d\mathcal{H}^{d-1}(x_{-j}) \int dx_j\;
+			\frac{q(x_{-j}, x_j)}{2h}
+			\int \mathbf{1}\{\tau \in (x_j - h, x_j + h]\}\;
+			d D g^{x_{-j}}(\tau) \notag \\
+			&= \int d\mathcal{H}^{d-1}(x_{-j}) \int d D g^{x_{-j}}(\tau)\;
+			\frac{1}{2h} \int \mathbf{1}\{x_j \in [\tau - h, \tau + h)\}\,
+			q(x_{-j}, x_j)\; dx_j \notag \\
+			&= \int d\mathcal{H}^{d-1}(x_{-j}) \int (K_h \star q)(x_{-j}, \tau)\;
+			d D g^{x_{-j}}(\tau)
+			= \int_\Omega (K_h \star q)\; d D_j g
+		\end{align}
+		using $\tau \in (x_j - h, x_j + h] \Leftrightarrow
+		x_j \in [\tau - h, \tau + h)$ in the second line, the definition of
+		$K_h \star q$ (half-open versus closed windows agree up to Lebesgue-null
+		sets) in the third, and \eqref{eq:disintegration} in the last step. The
+		piecewise constant case follows by substituting the explicit jump formula of
+		Lemma~\ref{lem:bv_existence} for $D_j g$.
+		
+		For the corollary: if $q$ extends to a uniformly continuous function of
+		compact support on $\R^d$, then $K_h \star q \to q$ uniformly as
+		$h \downarrow 0$, so:
+		\begin{equation}
+			\abs{\int (K_h \star q)\; d D_j g - \int q\; d D_j g}
+			\leq \norm{K_h \star q - q}_\infty \cdot \abs{D_j g}(\Omega) \to 0
+		\end{equation}
+		since $\abs{D_j g}(\Omega) < \infty$. When $g \in W^{1,1}(\Omega)$, the
+		measure $D_j g$ is absolutely continuous with density $\partial_j g$, so
+		$\int q\, d D_j g = \int w\, \partial_j g\, p\, dx
+		= \E[w\, \partial_j g(X)]$.
+	\end{proof}
 	
 	% ============================================================
 	\section{Proof of Theorem~\ref{thm:neural_nets} (Neural Networks)}
@@ -3306,321 +4150,7 @@
 	\end{remark}
 	
 	% ============================================================
-	\section{General Strategy for Bootstrap Validity Proofs}
-	\label{app:bootstrap_strategy}
-	% ============================================================
-	
-	All three bootstrap corollaries follow from the same argument. The functional delta
-	method of \citet[Theorem~3.9.4]{vandervaart1996weak} states that if:
-	\begin{enumerate}
-		\item $T: \mathcal{F} \to \R^d$ is Hadamard differentiable at $f$
-		tangentially to $C(\Omega)^d$, and
-		\item $r_n(\fn - f) \rightsquigarrow \mathbb{G}$ in $C(\Omega)^d$
-		for some rate sequence $r_n \to \infty$
-	\end{enumerate}
-	then $r_n(T(\fn) - T(f)) \rightsquigarrow T'_f(\mathbb{G})$, and the bootstrap is
-	consistent in the sense that the bootstrap distribution of $r_n(T(\fn^*) - T(\fn))$
-	consistently estimates the sampling distribution of $r_n(T(\fn) - T(f))$
-	\citep[Chapter~3.6]{horowitz2000bootstrap}.
-	
-	Lemma~\ref{lem:hadamard} establishes condition~(1) for all three estimator classes.
-	The estimator-specific work in each corollary is verification of condition~(2) at
-	the appropriate rate $r_n$. For neural networks and gradient boosted models the rate
-	is $r_n = \sqrt{n}$. For Mondrian forests the rate is $r_n = n^{1/(d+2)}$,
-	reflecting the minimax lower bound for nonparametric estimation of Lipschitz
-	functions.
-	
-	% ============================================================
-	\section{Proof of Corollary~\ref{cor:bootstrap_nn}
-		(Bootstrap Validity for Neural Networks)}
-	\label{app:bootstrap_nn}
-	% ============================================================
-	
-	\subsection{Step 1: Rate Condition}
-	
-	The rate condition (RC) --- that $\sqrt{n}(\fn - f) = O_p(1)$ in $\Wonep$ --- is
-	taken as an explicit assumption of the corollary. We sketch here why this condition
-	is expected to hold in the overparameterized regime and identify the steps required
-	for a complete proof.
-	
-	\subsubsection*{NTK Approximation}
-	
-	In the overparameterized regime with width $m \to \infty$, the neural tangent kernel
-	\citep{jacot2018ntk} governs the training dynamics. The network function at training
-	time $t$ satisfies:
-	\begin{equation}
-		\fn^{(t)}(x) \approx \fn^{(0)}(x) - \eta \int_0^t
-		K(x, \cdot) \nabla_W \mathcal{L}(\fn^{(s)}) \, ds
-	\end{equation}
-	where $K(x, x') = \nabla_W \fn(x)^\top \nabla_W \fn(x')$ is the NTK and
-	$\mathcal{L}$ is the training loss. In the infinite-width limit $K$ is deterministic
-	and constant during training, making the dynamics exactly linear.
-	
-	\subsubsection*{Parametric Rate From Linear Dynamics}
-	
-	Under the linear NTK approximation the trained network satisfies:
-	\begin{equation}
-		\fn - f \approx (I - K(K + \lambda I)^{-1})(f_0 - f) +
-		K(K + \lambda I)^{-1}\epsilon
-	\end{equation}
-	where $f_0$ is the network at initialization, $\lambda$ is the regularization
-	parameter, and $\epsilon$ is the noise. The bias term and the variance term each
-	contribute $O_p(n^{-1/2})$ under standard conditions, giving:
-	\begin{equation}
-		\sqrt{n}(\fn - f) = O_p(1) \quad \text{in } L^2(\Omega)
-	\end{equation}
-	
-	\subsubsection*{Upgrading to $W^{1,p}$}
-	
-	To upgrade from $L^2$ to $\Wonep$ one applies the chain rule calculation from
-	Theorem~\ref{thm:neural_nets} to the linear approximation. Since $\sigma \in C^3$
-	by assumption, the gradient of the network function satisfies:
-	\begin{equation}
-		\nabla \fn(x) - \nabla f(x)
-		\approx \nabla_x\!\left[K(x,\cdot)(K+\lambda I)^{-1}\epsilon\right]
-	\end{equation}
-	The $C^3$ condition ensures this gradient is well defined and the propagation through
-	the chain rule gives $O_p(n^{-1/2})$ convergence in $L^p(\Omega)^d$, yielding:
-	\begin{equation}
-		\sqrt{n}(\fn - f) = O_p(1) \quad \text{in } \Wonep
-	\end{equation}
-	A complete proof requires quantitative finite-width NTK approximation results
-	establishing how close the finite-width network is to the infinite-width limit as a
-	function of width and sample size, and is left for future work.
-	
-	\subsection{Step 2: Apply the Functional Delta Method}
-	
-	The rate condition (RC) is assumed. Lemma~\ref{lem:hadamard} establishes Hadamard
-	differentiability of $T$ tangentially to $C(\Omega)^d$ under $\sigma \in C^3$ and
-	$p > d$. By \citet[Theorem~3.9.4]{vandervaart1996weak}:
-	\begin{equation}
-		\sqrt{n}\left(T(\fn) - T(f)\right) \rightsquigarrow T'_f(\mathbb{G})
-		= \int_\Omega \nabla \mathbb{G}(x) \, dP(x)
-	\end{equation}
-	where $\mathbb{G}$ is the weak limit of $\sqrt{n}(\fn - f)$ in $C(\Omega)^d$.
-	Bootstrap consistency follows from \citet[Chapter~3.6]{horowitz2000bootstrap}: the
-	bootstrap distribution of $\sqrt{n}(T(\fn^*) - T(\fn))$ consistently estimates the
-	sampling distribution of $\sqrt{n}(T(\fn) - T(f))$. \qed
-	
-	\begin{remark}
-		The rate condition (RC) is the only unproved component of
-		Corollary~\ref{cor:bootstrap_nn}. Unlike the Mondrian forest case where the
-		dimension-dependent rate $n^{-1/(d+2)}$ is a fundamental consequence of the
-		nonparametric minimax lower bound, the parametric rate $n^{-1/2}$ for neural
-		networks is not a fundamental limitation --- it is a consequence of the
-		overparameterization and the NTK regime, and we expect it to be provable with
-		a more detailed engagement with the finite-width NTK literature. The sketch
-		above identifies the key steps: the NTK linear approximation, the $L^2$
-		parametric rate, and the $C^3$ chain rule upgrade to $\Wonep$. Completing
-		this argument is left for future work.
-	\end{remark}
-	
-	% ============================================================
-	\section{Proof of Corollary~\ref{cor:bootstrap_boost}
-		(Bootstrap Validity for Gradient Boosting)}
-	\label{app:bootstrap_boost}
-	% ============================================================
-	
-	\subsection{Step 1: Verify the Rate Condition}
-	
-	The rate condition requires showing that $\sqrt{n}(\hat{F}_m - f) = O_p(1)$ in the
-	appropriate norm. The argument uses the eigenvalue structure of $L_2$Boost
-	established in the proof of Theorem~\ref{thm:boosting}.
-	
-	\subsubsection*{Bias}
-	
-	By Proposition~1 and Theorem~1(a) of \citet{buhlmann2003boosting}, under the
-	eigenvalue condition $0 < \lambda_k \leq 1$, the bias of $\hat{F}_m$ satisfies:
-	\begin{equation}
-		\mathrm{bias}^2(m, S; f)
-		= n^{-1} f^T U\,\mathrm{diag}((1-\lambda_k)^{2m+2})\,U^T f
-		\leq \rho^{2m} \norm{f}_{L^2}^2
-	\end{equation}
-	where $\rho = \max_k(1-\lambda_k) < 1$. The bias decays exponentially in $m$. For
-	$m = m(n)$ growing sufficiently fast with $n$, the bias is $o(n^{-1/2})$ and
-	negligible at the parametric rate.
-	
-	\subsubsection*{Variance}
-	
-	By Proposition~3 of \citet{buhlmann2003boosting}, the variance of $\hat{F}_m$
-	satisfies:
-	\begin{equation}
-		\mathrm{var}(m, S; \sigma^2)
-		= \sigma^2 n^{-1} \sum_{k=1}^n (1-(1-\lambda_k)^{m+1})^2
-		\leq \sigma^2
-	\end{equation}
-	The variance is bounded above by the noise variance $\sigma^2$ regardless of $m$.
-	Over $n$ observations, the variance of the sample average satisfies:
-	\begin{equation}
-		\mathrm{Var}\!\left(\frac{1}{n}\sum_{i=1}^n \hat{F}_m(x_i)\right)
-		= O(n^{-1})
-	\end{equation}
-	so $\sqrt{n}(\hat{F}_m - f) = O_p(1)$ in $L^2$.
-	
-	\subsubsection*{Upgrading to the Appropriate Norm}
-	
-	For Case~(i) with smooth base learners, the upgrade from $L^2$ to $\Wonep$ follows
-	from the same chain rule argument as in Theorem~\ref{thm:neural_nets}, using the
-	geometric decay of residuals $\norm{u_m}_{L^2} \leq C\rho^m$ to propagate the rate
-	through the $W^{2,p}$ norm bound.
-	
-	For Case~(ii) with tree stump base learners, the upgrade from $L^2$ to $\BV$ uses
-	the ensemble BV bound from Theorem~\ref{thm:boosting}. The total variation of
-	$\sqrt{n}(\hat{F}_m - f)$ is controlled by:
-	\begin{equation}
-		\mathbb{E}\!\left[|D\sqrt{n}(\hat{F}_m - f)|(\Omega)\right]
-		= \sqrt{n}\,\mathbb{E}\!\left[|D(\hat{F}_m - f)|(\Omega)\right]
-		\leq \sqrt{n} \cdot \frac{2\operatorname{diam}(\Omega)^{d-1} C\rho}{1-\rho}
-	\end{equation}
-	For this to be $O(1)$ the right-hand side must be bounded, which requires $\rho =
-	O(n^{-1/2})$, i.e.\ the smallest eigenvalue satisfies $\lambda_{\min} =
-	\Omega(n^{-1/2})$. This is the principal remaining proof obligation for Case~(ii)
-	and is left for future work. The $L^2$ rate condition and Case~(i) upgrade are
-	complete.
-	
-	\subsection{Step 2: Apply the Functional Delta Method}
-	
-	With the rate condition verified, Lemma~\ref{lem:hadamard} establishes Hadamard
-	differentiability of $T$ tangentially to $C(\Omega)^d$, and
-	\citet[Theorem~3.9.4]{vandervaart1996weak} gives:
-	\begin{equation}
-		\sqrt{n}\left(T(\hat{F}_m) - T(f)\right) \rightsquigarrow T'_f(\mathbb{G})
-		= \int_\Omega \nabla \mathbb{G}(x) \, dP(x)
-	\end{equation}
-	where $\mathbb{G}$ is the weak limit of $\sqrt{n}(\hat{F}_m - f)$ in $C(\Omega)^d$.
-	Bootstrap consistency follows from \citet[Chapter~3.6]{horowitz2000bootstrap}: the
-	bootstrap distribution of $\sqrt{n}(T(\hat{F}_m^*) - T(\hat{F}_m))$ consistently
-	estimates the sampling distribution of $\sqrt{n}(T(\hat{F}_m) - T(f))$.
-	
-	The sequential dependence of the boosting path is handled by the framework of
-	\citet{horowitz2000bootstrap} for smooth functionals of empirical processes. The
-	geometric decay of residuals established in Theorem~\ref{thm:boosting} provides the
-	Lyapunov-type control over the sequential dependence that the Horowitz framework
-	requires. \qed
-	
-	\begin{remark}
-		Corollary~\ref{cor:bootstrap_boost} is fully proved for Case~(i) with smooth base
-		learners. For Case~(ii) with tree stump base learners the rate condition upgrade
-		from $L^2$ to $\BV$ requires a condition on the smallest eigenvalue of $S$ that we
-		state explicitly but do not verify from first principles. Verifying this condition
-		under natural assumptions on the covariate distribution is an important direction
-		for future work. Unlike the Mondrian forest case where the dimension-dependent rate
-		is a fundamental minimax limitation, the tree stump rate condition is a verifiable
-		property of the base learner and we expect it to hold under mild conditions.
-	\end{remark}
-	
-	% ============================================================
-	\section{Proof of Corollary~\ref{cor:bootstrap_rf}
-		(Bootstrap Validity for Mondrian Forests)}
-	\label{app:bootstrap_rf}
-	% ============================================================
-	
-	\subsection{Step 1: Verify the Rate Condition}
-	
-	The rate condition requires showing that $n^{1/(d+2)}(\fn - f) = O_p(1)$ in $\BV$,
-	which is the correct scaling given the Mondrian minimax rate $O(n^{-2/(d+2)})$
-	established by \citet{mourtada2017mondrian} for Lipschitz regression functions under
-	the budget $\lambda_n \asymp n^{1/(d+2)}$.
-	
-	The argument proceeds in two parts --- bias and variance --- using the independence
-	of the Mondrian partition from the data.
-	
-	\subsubsection*{Bias}
-	
-	The bias of the Mondrian forest at budget $\lambda_n$ is controlled by the cell
-	diameter. By \citet{roy2009mondrian}:
-	\begin{equation}
-		\mathbb{E}[D_{\lambda_n}(x)^2] \leq \frac{4d}{\lambda_n^2}
-		= O(n^{-2/(d+2)})
-	\end{equation}
-	Since $f$ is Lipschitz, the bias satisfies:
-	\begin{equation}
-		\left|\mathbb{E}[\fn(x)] - f(x)\right|
-		\leq C \cdot \mathbb{E}[D_{\lambda_n}(x)]
-		\leq C \cdot \sqrt{\mathbb{E}[D_{\lambda_n}(x)^2]}
-		= O(n^{-1/(d+2)})
-	\end{equation}
-	Therefore $n^{1/(d+2)} \cdot \text{bias} = O(1)$, confirming the bias is negligible
-	at the rate $n^{-1/(d+2)}$.
-	
-	\subsubsection*{Variance}
-	
-	The variance of $\fn(x)$ is controlled by the split count and the conditional
-	independence structure of the Mondrian process. Since the $B$ trees are independent:
-	\begin{equation}
-		\mathrm{Var}(\fn(x)) = \frac{1}{B} \mathrm{Var}(T_1(x))
-	\end{equation}
-	Within a single tree, the variance of the leaf mean at $x$ is at most $\sigma^2 /
-	n_j$ where $n_j$ is the number of observations in the leaf containing $x$. Under
-	the budget $\lambda_n \asymp n^{1/(d+2)}$ the expected leaf count satisfies
-	$\mathbb{E}[n_j] \asymp n^{2/(d+2)}$ by the split count bound of
-	\citet{mourtada2017mondrian}. Therefore $\mathrm{Var}(T_1(x)) = O(n^{-2/(d+2)})$
-	and:
-	\begin{equation}
-		n^{2/(d+2)} \cdot \mathrm{Var}(\fn(x)) = O(1/B) = O(1)
-	\end{equation}
-	confirming the variance is controlled at the rate $n^{-1/(d+2)}$.
-	
-	\subsubsection*{Combining Bias and Variance}
-	
-	By bias-variance decomposition:
-	\begin{equation}
-		\mathbb{E}\!\left[(\fn(x) - f(x))^2\right]
-		= O(n^{-2/(d+2)})
-	\end{equation}
-	consistent with the minimax rate of \citet{mourtada2017mondrian}. The BV rate
-	follows from the $L^2$ rate via the second moment argument in
-	Theorem~\ref{thm:forests}: the BV norm of $n^{1/(d+2)}(\fn - f)$ is controlled by
-	the same geometric and response bounds used to establish uniform BV boundedness,
-	giving:
-	\begin{equation}
-		n^{1/(d+2)}(\fn - f) = O_p(1) \quad \text{in } \BV
-	\end{equation}
-	
-	\subsection{Step 2: Apply the Functional Delta Method}
-	
-	With the rate condition verified, Lemma~\ref{lem:hadamard} establishes Hadamard
-	differentiability of $T$ tangentially to $C(\Omega)^d$, and
-	\citet[Theorem~3.9.4]{vandervaart1996weak} gives:
-	\begin{equation}
-		n^{1/(d+2)}\left(T(\fn) - T(f)\right) \rightsquigarrow T'_f(\mathbb{G})
-		= \int_\Omega \nabla \mathbb{G}(x) \, dP(x)
-	\end{equation}
-	where $\mathbb{G}$ is the weak limit of $n^{1/(d+2)}(\fn - f)$ in $C(\Omega)^d$.
-	Bootstrap consistency follows from \citet[Chapter~3.6]{horowitz2000bootstrap} and
-	\citet[Theorem~3.9.4]{vandervaart1996weak}: the bootstrap distribution of
-	$n^{1/(d+2)}(T(\fn^*) - T(\fn))$ consistently estimates the sampling distribution
-	of $n^{1/(d+2)}(T(\fn) - T(f))$.
-	
-	The connection to the infinitesimal jackknife of \citet{wager2014confidence}
-	provides an alternative characterization of the bootstrap variance that is
-	computationally tractable for large forests. The Hadamard differentiability
-	established in Lemma~\ref{lem:hadamard} shows that the infinitesimal jackknife
-	approximation is asymptotically exact at the Mondrian convergence rate. \qed
-	
-	\begin{remark}
-		The scaling $n^{1/(d+2)}$ rather than $\sqrt{n}$ reflects the minimax rate for
-		Lipschitz functions on $[0,1]^d$. When $d \leq 2$ the rate $n^{1/(d+2)}$ achieves
-		$n^{1/2}$ and the bootstrap confidence intervals are asymptotically exact at the
-		parametric rate. For $d \geq 3$ the rate is slower than $n^{1/2}$ --- a
-		fundamental consequence of the curse of dimensionality, not a limitation of the
-		bootstrap procedure. The bootstrap remains valid at the actual convergence rate in
-		all dimensions.
-	\end{remark}
-	
-	\begin{remark}
-		Bootstrap validity for Breiman forests with data-dependent splits remains open.
-		Under bootstrap resampling Breiman forests redraw the partition based on the new
-		sample, coupling it to the response values in a way that prevents the clean
-		separation of geometric and response variation used in Step~1 above. The cross-term
-		cancellation argument from Theorem~\ref{thm:forests} fails because jump directions
-		are no longer independent across bootstrap replicates. Establishing bootstrap
-		validity for Breiman forests requires new techniques for controlling the joint
-		distribution of partition geometry and response variation under resampling, and is
-		left as an important direction for future work.
-	\end{remark}
-	
 	\bibliographystyle{apalike}  % or plainnat, or whatever style you prefer
 	\bibliography{references}
 	
-\end{document}
+\end{document}
