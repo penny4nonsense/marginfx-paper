@@ -5,7 +5,7 @@ Shared analysis engine for marginfx empirical examples.
 
 Provides functions for:
     - Fitting models (logistic/linear, random forest, XGBoost, TensorFlow)
-    - Computing AMEs with bootstrap SEs across all specifications
+    - Computing debiased cross-fitted AMEs across all specifications
     - Computing SHAP values for the full specification
     - Computing PDP slopes for the full specification
     - Saving results to parquet
@@ -37,6 +37,187 @@ warnings.filterwarnings('ignore', category=ConvergenceWarning)
 # Model builders
 # ---------------------------------------------------------------------------
 
+def make_learner(
+    model_name: str,
+    outcome_type: str,
+    seed: int = 42,
+):
+    """
+    Build an UNFITTED learner for the debiased cross-fitted estimator.
+
+    mfx.fit refits the learner once per fold, so it takes a specification
+    rather than a trained model.
+
+    Parameters
+    ----------
+    model_name : str
+        One of 'logistic', 'linear', 'rf', 'xgboost', 'tensorflow'.
+    outcome_type : str
+        One of 'classification', 'regression'.
+    seed : int
+        Random seed.
+
+    Returns
+    -------
+    An unfitted scikit-learn compatible estimator, or a KerasLearner.
+    """
+    if model_name in ('logistic', 'linear'):
+        if outcome_type == 'classification':
+            from sklearn.linear_model import LogisticRegression
+            return LogisticRegression(max_iter=5000, random_state=seed)
+        from sklearn.linear_model import LinearRegression
+        return LinearRegression()
+
+    elif model_name == 'rf':
+        if outcome_type == 'classification':
+            from sklearn.ensemble import RandomForestClassifier
+            return RandomForestClassifier(
+                n_estimators=200, max_depth=8,
+                random_state=seed, n_jobs=-1,
+            )
+        from sklearn.ensemble import RandomForestRegressor
+        return RandomForestRegressor(
+            n_estimators=200, max_depth=8,
+            random_state=seed, n_jobs=-1,
+        )
+
+    elif model_name == 'xgboost':
+        import xgboost as xgb
+        if outcome_type == 'classification':
+            return xgb.XGBClassifier(
+                n_estimators=200, max_depth=4,
+                learning_rate=0.05, random_state=seed,
+                verbosity=0, eval_metric='logloss',
+            )
+        return xgb.XGBRegressor(
+            n_estimators=200, max_depth=4,
+            learning_rate=0.05, random_state=seed,
+            verbosity=0,
+        )
+
+    elif model_name == 'tensorflow':
+        return KerasLearner(outcome_type, seed=seed)
+
+    else:
+        raise ValueError(f"Unknown model: '{model_name}'")
+
+
+# ---------------------------------------------------------------------------
+# Keras network: architecture and training recipe
+#
+# Shared by fit_model, which trains once on the full sample for the fit
+# statistics, SHAP and PDP, and by KerasLearner, which is refit from scratch
+# on each cross-fitting fold.
+# ---------------------------------------------------------------------------
+
+def _keras_scaling(y: np.ndarray, outcome_type: str):
+    """
+    Return (mean, scale) for the target.
+
+    Regression standardizes the outcome so gradient updates are scale
+    invariant; classification trains on the raw 0/1 labels.
+    """
+    if outcome_type == 'regression':
+        scale = float(np.std(y))
+        return float(np.mean(y)), (scale if scale > 0 else 1.0)
+    return 0.0, 1.0
+
+
+def _build_keras(X: np.ndarray, outcome_type: str, seed: int):
+    """Build and compile the feedforward network for this outcome type."""
+    import tensorflow as tf
+    tf.random.set_seed(seed)
+
+    normalizer = tf.keras.layers.Normalization(axis=-1)
+    normalizer.adapt(X.astype(np.float32))
+
+    if outcome_type == 'regression':
+        layers = [
+            normalizer,
+            tf.keras.layers.Dense(256, activation='relu'),
+            tf.keras.layers.Dense(128, activation='relu'),
+            tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dense(32, activation='relu'),
+            tf.keras.layers.Dense(1, activation=None),
+        ]
+        lr, loss = 3e-4, 'mse'
+    else:
+        layers = [
+            normalizer,
+            tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dense(32, activation='relu'),
+            tf.keras.layers.Dense(1, activation='sigmoid'),
+        ]
+        lr, loss = float(1e-3), 'binary_crossentropy'
+
+    model = tf.keras.Sequential(layers)
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+        loss=loss,
+    )
+    return model
+
+
+def _fit_keras(model, X: np.ndarray, y_fit: np.ndarray, outcome_type: str):
+    """Train with early stopping on a 10% validation split."""
+    import tensorflow as tf
+    patience = 50 if outcome_type == 'regression' else 20
+    model.fit(
+        X.astype(np.float32), y_fit.astype(np.float32),
+        epochs=500, batch_size=32, verbose=0,
+        validation_split=0.1,
+        callbacks=[tf.keras.callbacks.EarlyStopping(
+            patience=patience, restore_best_weights=True,
+            monitor='val_loss',
+        )],
+    )
+    return model
+
+
+class KerasLearner:
+    """
+    The feedforward network as an unfitted fit/predict learner.
+
+    Cross-fitting trains the learner from scratch on each fold, so marginfx
+    needs a specification it can instantiate rather than a trained Keras
+    model. This wrapper carries the architecture, the early stopping
+    schedule and the target standardization, and predicts on the natural
+    outcome scale.
+
+    Parameters
+    ----------
+    outcome_type : str
+        One of 'classification', 'regression'.
+    seed : int
+        Random seed.
+    """
+
+    def __init__(self, outcome_type: str, seed: int = 42):
+        self.outcome_type = outcome_type
+        self.seed = seed
+        self._model = None
+        self._y_mean = 0.0
+        self._y_scale = 1.0
+
+    def fit(self, X, y):
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        X = np.asarray(X, dtype=float)
+        y = np.asarray(y, dtype=float)
+
+        self._y_mean, self._y_scale = _keras_scaling(y, self.outcome_type)
+        y_fit = (y - self._y_mean) / self._y_scale
+
+        self._model = _build_keras(X, self.outcome_type, self.seed)
+        _fit_keras(self._model, X, y_fit, self.outcome_type)
+        return self
+
+    def predict(self, X):
+        pred = self._model.predict(
+            np.asarray(X, dtype=float).astype(np.float32), verbose=0
+        )
+        return np.asarray(pred).squeeze() * self._y_scale + self._y_mean
+
+
 def fit_model(
     model_name: str,
     X: np.ndarray,
@@ -45,7 +226,11 @@ def fit_model(
     seed: int = 42,
 ):
     """
-    Build and fit a model.
+    Build and fit a model on the full sample.
+
+    Used for the fit statistics, SHAP and PDP, all of which need a single
+    trained model. The AME estimator does not use this: it refits the
+    specification from make_learner once per cross-fitting fold.
 
     Parameters
     ----------
@@ -64,102 +249,15 @@ def fit_model(
     -------
     Fitted model object.
     """
-    if model_name in ('logistic', 'linear'):
-        if outcome_type == 'classification':
-            from sklearn.linear_model import LogisticRegression
-            model = LogisticRegression(max_iter=5000, random_state=seed)
-        else:
-            from sklearn.linear_model import LinearRegression
-            model = LinearRegression()
-        model.fit(X, y)
-        return model
-
-    elif model_name == 'rf':
-        if outcome_type == 'classification':
-            from sklearn.ensemble import RandomForestClassifier
-            model = RandomForestClassifier(
-                n_estimators=200, max_depth=8,
-                random_state=seed, n_jobs=-1,
-            )
-        else:
-            from sklearn.ensemble import RandomForestRegressor
-            model = RandomForestRegressor(
-                n_estimators=200, max_depth=8,
-                random_state=seed, n_jobs=-1,
-            )
-        model.fit(X, y)
-        return model
-
-    elif model_name == 'xgboost':
-        import xgboost as xgb
-        if outcome_type == 'classification':
-            model = xgb.XGBClassifier(
-                n_estimators=200, max_depth=4,
-                learning_rate=0.05, random_state=seed,
-                verbosity=0, eval_metric='logloss',
-            )
-        else:
-            model = xgb.XGBRegressor(
-                n_estimators=200, max_depth=4,
-                learning_rate=0.05, random_state=seed,
-                verbosity=0,
-            )
-        model.fit(X, y)
-        return model
-
-
-    elif model_name == 'tensorflow':
-        import os
+    if model_name == 'tensorflow':
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
         import tensorflow as tf
-        tf.random.set_seed(seed)
 
-        if outcome_type == 'classification':
-            output_activation = 'sigmoid'
-            loss = 'binary_crossentropy'
-            y_fit = y
-            y_mean = 0.0
-            y_scale = 1.0
-        else:
-            output_activation = None
-            loss = 'mse'
-            y_mean = float(np.mean(y))
-            y_scale = float(np.std(y))
-            y_fit = (y - y_mean) / y_scale
+        y_mean, y_scale = _keras_scaling(y, outcome_type)
+        y_fit = (y - y_mean) / y_scale
 
-        normalizer = tf.keras.layers.Normalization(axis=-1)
-        normalizer.adapt(X.astype(np.float32))
-        if outcome_type == 'regression':
-            layers = [
-                normalizer,
-                tf.keras.layers.Dense(256, activation='relu'),
-                tf.keras.layers.Dense(128, activation='relu'),
-                tf.keras.layers.Dense(64, activation='relu'),
-                tf.keras.layers.Dense(32, activation='relu'),
-                tf.keras.layers.Dense(1, activation=output_activation),
-            ]
-        else:
-            layers = [
-                normalizer,
-                tf.keras.layers.Dense(64, activation='relu'),
-                tf.keras.layers.Dense(32, activation='relu'),
-                tf.keras.layers.Dense(1, activation=output_activation),
-            ]
-
-        model = tf.keras.Sequential(layers)
-        lr = 3e-4 if outcome_type == 'regression' else float(1e-3)
-        model.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-            loss=loss,
-        )
-        patience = 50 if outcome_type == 'regression' else 20
-        model.fit(X.astype(np.float32), y_fit.astype(np.float32),
-                  epochs=500, batch_size=32, verbose=0,
-                  validation_split=0.1,
-                  callbacks=[tf.keras.callbacks.EarlyStopping(
-                      patience=patience, restore_best_weights=True,
-                      monitor='val_loss'
-                  )])
+        model = _build_keras(X, outcome_type, seed)
+        _fit_keras(model, X, y_fit, outcome_type)
 
         if outcome_type == 'regression':
             y_mean_val = y_mean
@@ -197,8 +295,9 @@ def fit_model(
 
         return model
 
-    else:
-        raise ValueError(f"Unknown model: '{model_name}'")
+    model = make_learner(model_name, outcome_type, seed)
+    model.fit(X, y)
+    return model
 
 # ---------------------------------------------------------------------------
 # AME computation across specifications
@@ -211,19 +310,20 @@ def compute_ames_all_specs(
     outcome: str,
     categorical_features: List[str],
     outcome_type: str,
-    n_bootstrap: int = 200,
+    n_folds: int = 5,
     seed: int = 42,
     output_dir: Optional[str] = None,
     dataset_name: Optional[str] = None,
 ) -> pd.DataFrame:
     """
-    Compute AMEs with bootstrap SEs for all models and specifications.
+    Compute debiased cross-fitted AMEs for all models and specifications.
 
     For each specification and model:
         1. Select features for this specification
-        2. Fit the model
+        2. Fit the model on the full sample for the fit statistics
         3. Compute fit statistics (McFadden R2 + Accuracy or R2 + RMSE)
-        4. Compute AMEs with bootstrap SEs
+        4. Compute AMEs and orthogonal-score standard errors, refitting the
+           learner once per fold
         5. Collect results into tidy DataFrame
         6. Save partial results incrementally (if output_dir provided)
 
@@ -241,8 +341,8 @@ def compute_ames_all_specs(
         Names of categorical/binary features.
     outcome_type : str
         One of 'classification', 'regression'.
-    n_bootstrap : int
-        Number of bootstrap replicates. Default 200.
+    n_folds : int
+        Cross-fitting folds K. Default 5.
     seed : int
         Random seed.
     output_dir : str, optional
@@ -254,8 +354,8 @@ def compute_ames_all_specs(
     -------
     pd.DataFrame
         Tidy results with columns:
-        model, spec, term, estimate, std_error,
-        statistic, p_value, conf_low, conf_high,
+        model, spec, term, estimate, h, std_error,
+        statistic, p_value, conf_low, conf_high, trimmed,
         fit_stat1, fit_stat1_name, fit_stat2, fit_stat2_name, n_obs.
 
         For classification: fit_stat1=mcfadden_r2, fit_stat2=accuracy
@@ -337,11 +437,15 @@ def compute_ames_all_specs(
                     fit_stat2_name = 'rmse'
 
                 # --- AMEs ---
+                # The debiased estimator refits the learner on each fold, so
+                # it takes the unfitted specification, not the model above.
                 result = mfx.fit(
-                    model, X, y,
+                    make_learner(model_name, outcome_type, seed),
+                    X, y,
                     feature_names=features,
                     categorical_features=cat_feats,
-                    n_bootstrap=n_bootstrap,
+                    n_folds=n_folds,
+                    trim=True,
                     seed=seed,
                     verbose=False,
                 )
@@ -374,8 +478,8 @@ def compute_ames_all_specs(
 
     results = pd.concat(all_rows, ignore_index=True)
 
-    cols = ['model', 'spec', 'term', 'estimate', 'std_error',
-            'statistic', 'p_value', 'conf_low', 'conf_high',
+    cols = ['model', 'spec', 'term', 'estimate', 'h', 'std_error',
+            'statistic', 'p_value', 'conf_low', 'conf_high', 'trimmed',
             'fit_stat1', 'fit_stat1_name', 'fit_stat2', 'fit_stat2_name',
             'n_obs']
     cols = [c for c in cols if c in results.columns]

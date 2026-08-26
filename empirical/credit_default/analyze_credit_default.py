@@ -4,7 +4,7 @@ analyze_credit_default.py
 Empirical analysis of the UCI Credit Card Default dataset using marginfx.
 
 Computes:
-    1. AMEs with bootstrap SEs for all specifications and all models
+    1. Debiased cross-fitted AMEs for all specifications and all models
     2. SHAP values for the full specification (ABC) only
     3. PDP slopes for the full specification (ABC) only
 
@@ -14,7 +14,7 @@ Usage:
     python analyze_credit_default.py
 
 Settings:
-    n_bootstrap: number of bootstrap replicates for AME SEs
+    n_folds: cross-fitting folds for the debiased AME estimator
     seed: random seed for reproducibility
     models: list of model families to fit
 """
@@ -47,7 +47,7 @@ from analyze import (
 # Settings
 # ---------------------------------------------------------------------------
 
-N_BOOTSTRAP = 200
+N_FOLDS = 5
 SEED = 42
 OUTCOME_TYPE = 'classification'
 
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     print("=" * 60)
     print(f"\nSettings:")
     print(f"  Models:      {MODELS}")
-    print(f"  Bootstrap:   {N_BOOTSTRAP} replicates")
+    print(f"  Folds:       {N_FOLDS} (cross-fitted)")
     print(f"  Seed:        {SEED}")
     print(f"\nSpecifications:")
     for spec, features in SPECIFICATIONS.items():
@@ -108,7 +108,7 @@ if __name__ == '__main__':
         outcome=OUTCOME,
         categorical_features=CATEGORICAL_FEATURES,
         outcome_type=OUTCOME_TYPE,
-        n_bootstrap=N_BOOTSTRAP,
+        n_folds=N_FOLDS,
         seed=SEED,
         output_dir=OUTPUT_DIR,
         dataset_name='credit_default',
@@ -118,7 +118,7 @@ if __name__ == '__main__':
     y = df[OUTCOME].values.astype(float)
 
     # --- SHAP for full specification ---
-    shap_path = os.path.join(OUTPUT_DIR, 'adult_shap.parquet')
+    shap_path = os.path.join(OUTPUT_DIR, 'credit_default_shap.parquet')
     if os.path.exists(shap_path):
         print("SHAP results already exist, skipping...")
         shap_results = pd.read_parquet(shap_path)
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         )
 
     # --- PDP for full specification ---
-    pdp_path = os.path.join(OUTPUT_DIR, 'adult_pdp.parquet')
+    pdp_path = os.path.join(OUTPUT_DIR, 'credit_default_pdp.parquet')
     if os.path.exists(pdp_path):
         print("PDP results already exist, skipping...")
         pdp_results = pd.read_parquet(pdp_path)

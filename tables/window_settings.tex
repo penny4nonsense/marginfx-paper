@@ -1,0 +1,53 @@
+\begin{table*}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{Window settings for the empirical applications. Step size $h_j$ and the fraction of observations receiving trimming weight zero.}
+\label{tab:window_settings}
+\begin{tabular}{llrr}
+\toprule
+Dataset & Feature & $h_j$ & Trimmed \\
+\midrule
+UCI Adult Income & age & 0.6855 & 1.3\% \\
+ & female & --- & 0.0\% \\
+ & education\_num & 0.5 & 1.4\% \\
+ & hours\_per\_week & 0.6196 & 0.3\% \\
+ & government & --- & 0.0\% \\
+ & self\_employed & --- & 0.0\% \\
+ & white\_collar & --- & 0.0\% \\
+ & blue\_collar & --- & 0.0\% \\
+ & service & --- & 0.0\% \\
+ & capital\_gain & 373 & 92.3\% \\
+ & capital\_loss & 20.15 & 95.3\% \\
+ & married & --- & 0.0\% \\
+\midrule
+UCI Credit Card Default & age & 0.5 & 0.2\% \\
+ & female & --- & 0.0\% \\
+ & education & 0.5 & 36.8\% \\
+ & married & --- & 0.0\% \\
+ & avg\_pay\_status & 0.04911 & 7.0\% \\
+ & months\_delayed & 0.5 & 70.9\% \\
+ & avg\_bill\_amt & 3,163 & 0.0\% \\
+ & avg\_pay\_amt & 507 & 11.7\% \\
+ & pay\_ratio & 0.01839 & 18.4\% \\
+\midrule
+Ames Housing & GrLivArea & 26.27 & 0.1\% \\
+ & BedroomAbvGr & 0.5 & 0.5\% \\
+ & FullBath & 0.5 & 2.9\% \\
+ & HalfBath & 0.5 & 63.4\% \\
+ & OverallQual & 0.5 & 1.4\% \\
+ & OverallCond & 0.5 & 1.6\% \\
+ & YearBuilt & 1.51 & 1.4\% \\
+ & YearRemodAdd & 1.032 & 14.5\% \\
+ & LotArea & 499 & 1.2\% \\
+ & GarageArea & 10.69 & 5.6\% \\
+ & nbhd\_high & --- & 0.0\% \\
+ & nbhd\_mid & --- & 0.0\% \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} $h_j$ is the default adaptive step size, $\max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features so that a count is contrasted over a whole unit. Features declared binary use the level contrast $f(x \mid x_j=1) - f(x \mid x_j=0)$, for which $h_j$ is undefined and no trimming applies. The trimmed fraction is the share of observations lying within $h_j$ of the boundary of the observed support of $x_j$, which receive weight zero; for those features the estimand is the window effect on the untrimmed subpopulation.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

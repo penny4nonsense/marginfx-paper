@@ -4,7 +4,7 @@ analyze_adult.py
 Empirical analysis of the UCI Adult Income dataset using marginfx.
 
 Computes:
-    1. AMEs with bootstrap SEs for all specifications and all models
+    1. Debiased cross-fitted AMEs for all specifications and all models
     2. SHAP values for the full specification (ABC) only
     3. PDP slopes for the full specification (ABC) only
 
@@ -14,7 +14,7 @@ Usage:
     python analyze_adult.py
 
 Settings:
-    n_bootstrap: number of bootstrap replicates for AME SEs
+    n_folds: cross-fitting folds for the debiased AME estimator
     seed: random seed for reproducibility
     models: list of model families to fit
 """
@@ -47,7 +47,7 @@ from analyze import (
 # Settings
 # ---------------------------------------------------------------------------
 
-N_BOOTSTRAP = 200
+N_FOLDS = 5
 SEED = 42
 OUTCOME_TYPE = 'classification'
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     print("=" * 60)
     print(f"\nSettings:")
     print(f"  Models:      {MODELS}")
-    print(f"  Bootstrap:   {N_BOOTSTRAP} replicates")
+    print(f"  Folds:       {N_FOLDS} (cross-fitted)")
     print(f"  Seed:        {SEED}")
     print(f"\nSpecifications:")
     for spec, features in SPECIFICATIONS.items():
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         outcome=OUTCOME,
         categorical_features=CATEGORICAL_FEATURES,
         outcome_type=OUTCOME_TYPE,
-        n_bootstrap=N_BOOTSTRAP,
+        n_folds=N_FOLDS,
         seed=SEED,
         output_dir=OUTPUT_DIR,
         dataset_name='adult',

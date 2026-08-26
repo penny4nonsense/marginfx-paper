@@ -254,7 +254,10 @@ def latex_end_with_stars() -> list:
         r'\begin{tablenotes}',
         r'\footnotesize',
         r'\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. '
-        r'Standard errors from nonparametric bootstrap (200 replicates) in parentheses.',
+        r'Estimates are the debiased cross-fitted window AME with $K=5$ folds; '
+        r'standard errors from the orthogonal score in parentheses. '
+        r'Step sizes $h_j$ and trimmed fractions are reported in '
+        r'Table~\ref{tab:window_settings}.',
         r'\end{tablenotes}',
         r'\end{threeparttable}',
         r'\end{table*}',
@@ -353,7 +356,7 @@ def make_table1(ames_df, dataset, config):
     lines = latex_begin(caption, label, col_spec)
 
     # Model header
-    model_header = 'Variable'
+    model_header = ''
     for model in models:
         model_header += f' & \\multicolumn{{{len(SPECS_ORDER)}}}{{c}}{{{MODEL_LABELS[model]}}}'
     model_header += r' \\'
@@ -454,7 +457,7 @@ def make_table2(ames_df, dataset, config):
 
     lines = latex_begin(caption, label, col_spec)
 
-    header = 'Variable'
+    header = 'Feature'
     for model in models:
         header += f' & {MODEL_LABELS[model]}'
     header += r' \\'
@@ -536,7 +539,7 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
 
     lines = latex_begin(caption, label, col_spec)
 
-    model_header = 'Variable'
+    model_header = ''
     for model in models:
         model_header += f' & \\multicolumn{{{len(methods)}}}{{c}}{{{MODEL_LABELS[model]}}}'
     model_header += r' \\'
@@ -620,6 +623,100 @@ def make_table3(ames_df, shap_df, pdp_df, dataset, config):
 # ---------------------------------------------------------------------------
 # Simulation 1: AME Recovery helpers
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Window settings: step sizes and trimming
+# ---------------------------------------------------------------------------
+
+def make_window_settings_table() -> tuple:
+    """
+    Report the estimand settings for every empirical feature.
+
+    h and the trimmed fraction define theta_h, so they belong in the paper
+    rather than only in the code. Both are properties of the feature column
+    alone, so they are identical across models and specifications; the full
+    specification is read for each dataset.
+
+    Returns
+    -------
+    tuple
+        (latex string, tidy DataFrame).
+    """
+    lines = latex_begin(
+        caption=(
+            'Window settings for the empirical applications. Step size '
+            '$h_j$ and the fraction of observations receiving trimming '
+            'weight zero.'
+        ),
+        label='tab:window_settings',
+        col_spec='llrr',
+    )
+    lines.append(r'Dataset & Feature & $h_j$ & Trimmed \\')
+    lines.append(r'\midrule')
+
+    rows = []
+    first = True
+    for dataset, config in RESULTS.items():
+        if not os.path.exists(config['ames_path']):
+            continue
+        df = pd.read_parquet(config['ames_path'])
+        df = df[df['spec'] == 'ABC']
+        if df.empty:
+            continue
+
+        available = list(df['term'].unique())
+        ordered = []
+        for _, feats in iter_feature_groups(config['feature_groups'], available):
+            ordered.extend(feats)
+
+        if not first:
+            lines.append(r'\midrule')
+        first = False
+
+        label = config['dataset_label']
+        for i, feat in enumerate(ordered):
+            sub = df[df['term'] == feat]
+            if sub.empty:
+                continue
+            h = sub['h'].values[0] if 'h' in sub.columns else np.nan
+            tr = sub['trimmed'].values[0] if 'trimmed' in sub.columns else np.nan
+
+            if pd.isna(h):
+                h_txt = '---'
+            elif abs(h) >= 100:
+                h_txt = f'{h:,.0f}'
+            else:
+                h_txt = f'{h:.4g}'
+            tr_txt = '---' if pd.isna(tr) else f'{100 * tr:.1f}\\%'
+
+            name = label if i == 0 else ''
+            lines.append(
+                f'{name} & {escape_feature(feat)} & {h_txt} & {tr_txt} \\\\'
+            )
+            rows.append({'dataset': dataset, 'term': feat, 'h': h,
+                         'trimmed': tr})
+
+    lines += [
+        r'\bottomrule',
+        r'\end{tabular}',
+        r'\begin{tablenotes}',
+        r'\footnotesize',
+        r'\item \textit{Notes:} $h_j$ is the default adaptive step size, '
+        r'$\max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for '
+        r'integer-valued features so that a count is contrasted over a whole '
+        r'unit. Features declared binary use the level contrast '
+        r'$f(x \mid x_j=1) - f(x \mid x_j=0)$, for which $h_j$ is undefined '
+        r'and no trimming applies. The trimmed fraction is the share of '
+        r'observations lying within $h_j$ of the boundary of the observed '
+        r'support of $x_j$, which receive weight zero; for those features '
+        r'the estimand is the window effect on the untrimmed subpopulation.',
+        r'\end{tablenotes}',
+        r'\end{threeparttable}',
+        r'\end{table*}',
+    ]
+
+    return '\n'.join(lines), pd.DataFrame(rows)
+
 
 def load_sim1_results(outcome_type: str, dgp: str) -> pd.DataFrame:
     """Load and concatenate all sim1 results for a given outcome type and DGP."""
@@ -1005,6 +1102,20 @@ def main():
                 f.write(tex)
             df.to_parquet(pq_path, index=False)
             print(f"    Saved: {tex_path}")
+
+    # --- Window settings (h and trimming), all datasets ---
+    print("\nGenerating window settings table...")
+    tex, df = make_window_settings_table()
+    if tex:
+        tex_path = os.path.join(TABLES_DIR, 'window_settings.tex')
+        with open(tex_path, 'w') as f:
+            f.write(tex)
+        if not df.empty:
+            df.to_parquet(
+                os.path.join(TABLES_DIR, 'window_settings.parquet'),
+                index=False,
+            )
+        print(f"    Saved: {tex_path}")
 
     # --- Simulation 1 tables ---
     print(f"\nGenerating simulation 1 tables...")

@@ -276,12 +276,17 @@
 	three applications we compare AMEs from logistic regression, random forests
 	\citep{breiman2001rf}, XGBoost \citep{chen2016xgboost}, and neural networks against
 	SHAP values \citep{lundberg2017shap} and partial dependence plot slopes
-	\citep{friedman2001pdp}. The AME and PDP estimates are in close agreement throughout,
-	while SHAP values are on a different scale and in several cases have the wrong sign
-	--- a systematic divergence that is most visible in the regression setting where units
-	are dollars and the magnitudes are large enough to make the discrepancy concrete.
-	Because AMEs come with standard errors and SHAP values do not, the AME framework
-	supports conclusions that the SHAP framework cannot. An additional empirical finding
+	\citep{friedman2001pdp}. The debiased AMEs agree closely across the four model classes,
+	which is what one expects once every learner is used to estimate the same window
+	effect rather than to report its own slope, while SHAP values are on a different
+	scale and in several cases have the wrong sign --- a systematic divergence that is
+	most visible in the regression setting where units are dollars and the magnitudes are
+	large enough to make the discrepancy concrete. PDP slopes, being themselves plug-in
+	averages over a single full-sample fit, track the debiased AME where the plug-in is
+	nearly unbiased and fall short of it, usually toward zero, wherever regularization
+	flattens the fitted surface --- the regularization bias made directly visible.
+	Because AMEs come with standard errors and SHAP values and PDP slopes do not, the AME
+	framework supports conclusions that the alternatives cannot. An additional empirical finding
 	is that Breiman random forests produce less stable AME estimates than the other
 	estimator classes, consistent with the theoretical result that gradient consistency
 	for Breiman forests is harder to establish than for Mondrian forests. The
@@ -1454,11 +1459,67 @@
 	
 	\section{Empirical Examples}
 	
-	Across the three empirical applications we fit four model classes: logistic or linear regression as the parametric baseline, a random forest, XGBoost, and a feedforward neural network. The random forest uses 200 trees with a maximum depth of 8. XGBoost uses 200 boosting rounds with a maximum depth of 4 and a learning rate of 0.05. The neural network architecture and training schedule depend on the outcome type. For binary classification, the network is a feedforward architecture with two hidden layers of 64 and 32 units trained with the Adam optimizer at a learning rate of $10^{-3}$, with early stopping on a 10\% validation split with patience of 20 epochs. For continuous regression, the network is deeper --- four hidden layers of 256, 128, 64, and 32 units --- trained at a learning rate of $3 \times 10^{-4}$ with patience of 50 epochs, reflecting the larger capacity required to fit the continuous outcome surface and the longer training horizon needed for the optimization to converge. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 to ensure scale-invariant gradient updates and predictions on the natural outcome scale. All models are trained on the full sample for each application, with the bootstrap procedure described in Section~2 producing standard errors via 200 replicates. Where applicable, predicted probabilities for classification models are extracted from \texttt{predict\_proba(X)[:,1]} as discussed in Section~2.
+	Across the three empirical applications we fit four model classes: logistic or linear regression as the parametric baseline, a random forest, XGBoost, and a feedforward neural network. The random forest uses 200 trees with a maximum depth of 8. XGBoost uses 200 boosting rounds with a maximum depth of 4 and a learning rate of 0.05. The neural network architecture and training schedule depend on the outcome type. For binary classification, the network is a feedforward architecture with two hidden layers of 64 and 32 units trained with the Adam optimizer at a learning rate of $10^{-3}$, with early stopping on a 10\% validation split with patience of 20 epochs. For continuous regression, the network is deeper --- four hidden layers of 256, 128, 64, and 32 units --- trained at a learning rate of $3 \times 10^{-4}$ with patience of 50 epochs, reflecting the larger capacity required to fit the continuous outcome surface and the longer training horizon needed for the optimization to converge. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 to ensure scale-invariant gradient updates and predictions on the natural outcome scale. Estimation follows the debiased cross-fitted procedure of Section~2.4 with $K=5$ folds: within each fold the learner and the Riesz representer are fit on the other four folds and evaluated on the held-out fold, and standard errors come from the sample variance of the orthogonal score. No learner is ever differenced at an observation it was trained on. Every model class is refit from scratch on each fold, including the neural networks, whose early stopping schedule is applied within the fold. The fit statistics reported at the foot of each table are computed from a single full-sample fit and are descriptive of the learner rather than of the estimator; they are not used in the estimation. Where applicable, predicted probabilities for classification models are extracted from \texttt{predict\_proba(X)[:,1]} as discussed in Section~2.
+
+The window estimand requires two settings to be fixed before estimation, and because $\theta_{j,h}$ is defined by them they are reported rather than treated as tuning. The step size is the default $h_j = \max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features. The floor matters for count variables such as bedrooms, bathrooms, years of education and months delayed: a count has no mass strictly between its levels, so a window narrower than one unit has an empty interior, and for a piecewise constant learner the difference across it vanishes except where the window happens to straddle a split. At $h_j = 0.5$ the window is exactly the one-unit contrast, which is also the quantity of substantive interest for a count. The second setting is the trimming weight, which gives weight zero to observations lying within $h_j$ of the boundary of the observed support of $x_j$, where $x \pm h_j e_j$ would require the learner to extrapolate. For most features this removes a negligible share of the sample, but for variables with mass sitting exactly on a boundary it does not: capital gains and capital losses are zero for over ninety percent of the Adult sample, and zero is the minimum of their observed support, so those AMEs are effects on the subpopulation with nonzero gains or losses rather than on the full sample. Table~\ref{tab:window_settings} reports $h_j$ and the trimmed fraction for every feature in the three applications, and the discussion below flags the cases where the trimming is large enough to change the interpretation.
+	
+		\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+		\caption{Window settings for the empirical applications. Step size $h_j$ and the fraction of observations receiving trimming weight zero.}
+		\label{tab:window_settings}
+		\begin{tabular}{llrr}
+			\toprule
+			Dataset & Feature & $h_j$ & Trimmed \\
+			\midrule
+			UCI Adult Income & age & 0.6855 & 1.3\% \\
+			& female & --- & 0.0\% \\
+			& education\_num & 0.5 & 1.4\% \\
+			& hours\_per\_week & 0.6196 & 0.3\% \\
+			& government & --- & 0.0\% \\
+			& self\_employed & --- & 0.0\% \\
+			& white\_collar & --- & 0.0\% \\
+			& blue\_collar & --- & 0.0\% \\
+			& service & --- & 0.0\% \\
+			& capital\_gain & 373 & 92.3\% \\
+			& capital\_loss & 20.15 & 95.3\% \\
+			& married & --- & 0.0\% \\
+			\midrule
+			UCI Credit Card Default & age & 0.5 & 0.2\% \\
+			& female & --- & 0.0\% \\
+			& education & 0.5 & 36.8\% \\
+			& married & --- & 0.0\% \\
+			& avg\_pay\_status & 0.04911 & 7.0\% \\
+			& months\_delayed & 0.5 & 70.9\% \\
+			& avg\_bill\_amt & 3,163 & 0.0\% \\
+			& avg\_pay\_amt & 507 & 11.7\% \\
+			& pay\_ratio & 0.01839 & 18.4\% \\
+			\midrule
+			Ames Housing & GrLivArea & 26.27 & 0.1\% \\
+			& BedroomAbvGr & 0.5 & 0.5\% \\
+			& FullBath & 0.5 & 2.9\% \\
+			& HalfBath & 0.5 & 63.4\% \\
+			& OverallQual & 0.5 & 1.4\% \\
+			& OverallCond & 0.5 & 1.6\% \\
+			& YearBuilt & 1.51 & 1.4\% \\
+			& YearRemodAdd & 1.032 & 14.5\% \\
+			& LotArea & 499 & 1.2\% \\
+			& GarageArea & 10.69 & 5.6\% \\
+			& nbhd\_high & --- & 0.0\% \\
+			& nbhd\_mid & --- & 0.0\% \\
+			\bottomrule
+			\end{tabular}
+			\begin{tablenotes}
+			\footnotesize
+			\item \textit{Notes:} $h_j$ is the default adaptive step size, $\max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features so that a count is contrasted over a whole unit. Features declared binary use the level contrast $f(x \mid x_j=1) - f(x \mid x_j=0)$, for which $h_j$ is undefined and no trimming applies. The trimmed fraction is the share of observations lying within $h_j$ of the boundary of the observed support of $x_j$, which receive weight zero; for those features the estimand is the window effect on the untrimmed subpopulation.
+			\end{tablenotes}
+		\end{threeparttable}
+		\end{table*}
 	
 	\subsection{UCI Adult Income}
 	
-	The first dataset is the UCI Adult Income dataset \citep{UCI, kohavi1996}, a widely used benchmark for binary classification in the social sciences. We combine the training and test sets for a total of 48,842 observations. The outcome is whether an individual earns more than \$50,000 per year. Features are organized into three panels: demographics (age, sex, years of education), work characteristics (hours worked per week, occupation group, work class), and financial variables (capital gains, capital losses, marital status). The specification search considers logistic regression and XGBoost across four specifications, allowing the method to be evaluated both where the parametric model is approximately correctly specified and where the black-box learner offers efficiency gains.
+	The first dataset is the UCI Adult Income dataset \citep{UCI, kohavi1996}, a widely used benchmark for binary classification in the social sciences. We combine the training and test sets for a total of 48,842 observations. The outcome is whether an individual earns more than \$50,000 per year. Features are organized into three panels: demographics (age, sex, years of education), work characteristics (hours worked per week, occupation group, work class), and financial variables (capital gains, capital losses, marital status). The specification search considers logistic regression and XGBoost across four specifications, allowing the method to be evaluated both where the parametric model is approximately correctly specified and where the black-box learner is substantially better fitted. Years of education takes the floored step size $h_j = 0.5$, so its effect is the one-year contrast; age and hours per week have enough spread that the adaptive rule already exceeds the floor, at $h_j = 0.686$ and $0.620$. Trimming is negligible for every feature except capital gains and capital losses, which lose 92.3\% and 95.3\% of the sample for the reason discussed below.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1472,52 +1533,56 @@
 			\begin{tabular}{lrrrrrrrr}
 				\toprule
 				& \multicolumn{4}{c}{Logistic} & \multicolumn{4}{c}{XGBoost} \\
-				\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+				\cmidrule(lr){2-5} \cmidrule(lr){6-9}
 				& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
 				\midrule
 				\multicolumn{9}{l}{\textit{Panel A: Demographics}} \\
-				\quad age & 0.0060$^{***}$ & 0.0060$^{***}$ & 0.0024$^{***}$ & 0.0027$^{***}$ & 0.0059$^{***}$ & 0.0059$^{***}$ & 0.0029$^{***}$ & 0.0031$^{***}$ \\
-				& (0.0001) & (0.0001) & (0.0001) & (0.0001) & (0.0002) & (0.0001) & (0.0001) & (0.0001) \\
-				\quad female & -0.1730$^{***}$ & -0.1648$^{***}$ & -0.0275$^{***}$ & -0.0269$^{***}$ & -0.1592$^{***}$ & -0.1446$^{***}$ & -0.0138$^{***}$ & -0.0122$^{***}$ \\
-				& (0.0034) & (0.0034) & (0.0041) & (0.0041) & (0.0032) & (0.0032) & (0.0028) & (0.0032) \\
-				\quad education\_num & 0.0523$^{***}$ & 0.0393$^{***}$ & 0.0400$^{***}$ & 0.0306$^{***}$ & 0.0610$^{***}$ & 0.0452$^{***}$ & 0.0405$^{***}$ & 0.0312$^{***}$ \\
-				& (0.0006) & (0.0007) & (0.0006) & (0.0006) & (0.0023) & (0.0017) & (0.0011) & (0.0011) \\
+				\quad age & 0.0084$^{***}$ & 0.0081$^{***}$ & 0.0041$^{***}$ & 0.0043$^{***}$ & 0.0059$^{***}$ & 0.0059$^{***}$ & 0.0031$^{***}$ & 0.0033$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0001) & (0.0001) & (0.0001) & (0.0001) & (0.0001) & (0.0001) \\
+				\quad female & -0.1749$^{***}$ & -0.1670$^{***}$ & -0.0122$^{***}$ & -0.0153$^{**}$ & -0.1604$^{***}$ & -0.1507$^{***}$ & -0.0089$^{**}$ & -0.0128$^{**}$ \\
+				& (0.0034) & (0.0045) & (0.0046) & (0.0061) & (0.0033) & (0.0041) & (0.0042) & (0.0056) \\
+				\quad education\_num & 0.0464$^{***}$ & 0.0351$^{***}$ & 0.0371$^{***}$ & 0.0284$^{***}$ & 0.0606$^{***}$ & 0.0458$^{***}$ & 0.0417$^{***}$ & 0.0325$^{***}$ \\
+				& (0.0007) & (0.0008) & (0.0006) & (0.0007) & (0.0007) & (0.0008) & (0.0006) & (0.0007) \\
 				\midrule
 				\multicolumn{9}{l}{\textit{Panel B: Work Characteristics}} \\
-				\quad hours\_per\_week & -- & 0.0048$^{***}$ & -- & 0.0033$^{***}$ & -- & 0.0084$^{***}$ & -- & 0.0032 \\
-				&  & (0.0001) &  & (0.0001) &  & (0.0028) &  & (0.0025) \\
-				\quad government & -- & 0.0029 & -- & 0.0033 & -- & -0.0067$^{*}$ & -- & -0.0003 \\
-				&  & (0.0051) &  & (0.0045) &  & (0.0037) &  & (0.0026) \\
-				\quad self\_employed & -- & -0.0077 & -- & -0.0268$^{***}$ & -- & 0.0113$^{**}$ & -- & -0.0055$^{*}$ \\
-				&  & (0.0050) &  & (0.0044) &  & (0.0054) &  & (0.0033) \\
-				\quad white\_collar & -- & 0.0666$^{***}$ & -- & 0.0541$^{***}$ & -- & 0.0466$^{***}$ & -- & 0.0474$^{***}$ \\
-				&  & (0.0056) &  & (0.0051) &  & (0.0026) &  & (0.0017) \\
-				\quad blue\_collar & -- & -0.0264$^{***}$ & -- & -0.0270$^{***}$ & -- & -0.0446$^{***}$ & -- & -0.0251$^{***}$ \\
-				&  & (0.0052) &  & (0.0048) &  & (0.0041) &  & (0.0034) \\
-				\quad service & -- & -0.0697$^{***}$ & -- & -0.0427$^{***}$ & -- & -0.0807$^{***}$ & -- & -0.0343$^{***}$ \\
-				&  & (0.0069) &  & (0.0066) &  & (0.0049) &  & (0.0058) \\
+				\quad hours\_per\_week & -- & 0.0035$^{***}$ & -- & 0.0027$^{***}$ & -- & 0.0084$^{***}$ & -- & 0.0038$^{***}$ \\
+				&  & (0.0002) &  & (0.0001) &  & (0.0002) &  & (0.0001) \\
+				\quad government & -- & 0.0059 & -- & -0.0004 & -- & -0.0072 & -- & -0.0060 \\
+				&  & (0.0067) &  & (0.0061) &  & (0.0066) &  & (0.0055) \\
+				\quad self\_employed & -- & 0.0218$^{***}$ & -- & -0.0085$^{**}$ & -- & 0.0192$^{***}$ & -- & -0.0080$^{**}$ \\
+				&  & (0.0058) &  & (0.0043) &  & (0.0056) &  & (0.0040) \\
+				\quad white\_collar & -- & 0.0649$^{***}$ & -- & 0.0561$^{***}$ & -- & 0.0480$^{***}$ & -- & 0.0478$^{***}$ \\
+				&  & (0.0053) &  & (0.0049) &  & (0.0051) &  & (0.0045) \\
+				\quad blue\_collar & -- & -0.0246$^{***}$ & -- & -0.0248$^{***}$ & -- & -0.0482$^{***}$ & -- & -0.0300$^{***}$ \\
+				&  & (0.0036) &  & (0.0031) &  & (0.0034) &  & (0.0028) \\
+				\quad service & -- & -0.0744$^{***}$ & -- & -0.0456$^{***}$ & -- & -0.0795$^{***}$ & -- & -0.0342$^{***}$ \\
+				&  & (0.0024) &  & (0.0023) &  & (0.0024) &  & (0.0020) \\
 				\midrule
 				\multicolumn{9}{l}{\textit{Panel C: Financial}} \\
-				\quad capital\_gain & -- & -- & 0.0000$^{***}$ & 0.0000$^{***}$ & -- & -- & -0.0001$^{***}$ & -0.0001$^{***}$ \\
+				\quad capital\_gain & -- & -- & 0.0000$^{***}$ & 0.0000$^{***}$ & -- & -- & 0.0000$^{***}$ & 0.0000$^{***}$ \\
 				&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
-				\quad capital\_loss & -- & -- & 0.0001$^{***}$ & 0.0001$^{***}$ & -- & -- & -0.0001$^{***}$ & -0.0000$^{***}$ \\
+				\quad capital\_loss & -- & -- & 0.0000$^{***}$ & 0.0000$^{***}$ & -- & -- & -0.0001$^{***}$ & -0.0000$^{***}$ \\
 				&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
-				\quad married & -- & -- & 0.2854$^{***}$ & 0.2752$^{***}$ & -- & -- & 0.2383$^{***}$ & 0.2357$^{***}$ \\
-				&  &  & (0.0042) & (0.0041) &  &  & (0.0035) & (0.0036) \\
+				\quad married & -- & -- & 0.2842$^{***}$ & 0.2785$^{***}$ & -- & -- & 0.2442$^{***}$ & 0.2423$^{***}$ \\
+				&  &  & (0.0048) & (0.0054) &  &  & (0.0045) & (0.0047) \\
 				\midrule
 				McFadden $R^2$ & 0.199 & 0.233 & 0.376 & 0.400 & 0.257 & 0.296 & 0.467 & 0.492 \\
 				Accuracy & 0.797 & 0.806 & 0.841 & 0.847 & 0.805 & 0.818 & 0.864 & 0.872 \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
-				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
-			\end{tablenotes}
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are the debiased cross-fitted window AME with $K=5$ folds; standard errors from the orthogonal score in parentheses. Step sizes $h_j$ and trimmed fractions are reported in Table~\ref{tab:window_settings}.
+				\end{tablenotes}
 		\end{threeparttable}
 		}%
 	\end{table*}
 	
-	Table~\ref{tab:adult_spec_search} presents the specification search results for the UCI Adult Income dataset. The demographic panel tells a consistent story across all specifications and both model classes. Age and education have positive effects on the probability of earning above \$50,000, and the female indicator is large and negative, falling from around -\$0.16 to $-$0.03 as financial and work controls are added --- a pattern of omitted variable bias that is clearly legible in the AME framework and consistent across logistic regression and XGBoost. The standard errors are tight throughout, reflecting the large sample size, and the XGBoost standard errors are comparable to or smaller than those from logistic regression despite the additional model complexity. This is the efficiency gain the framework is designed to produce: when the black-box model fits better, as reflected in the higher McFadden $R^2$ across all specifications, the bootstrap standard errors narrow rather than widen. The financial panel illustrates a limitation of the capital gains and losses variables --- the AMEs are near zero in magnitude because these variables are highly skewed, and the units are raw dollars, so the displayed coefficients reflect a one-dollar change. The sign reversal on capital gains between logistic regression and XGBoost in specification A+C warrants attention and likely reflects nonlinearity that the logistic model cannot capture.
+	Table~\ref{tab:adult_spec_search} presents the specification search results for the UCI Adult Income dataset. This is the largest of the three applications at 48,842 observations, and the estimates are correspondingly the most precisely determined in the paper. The demographic panel tells a consistent story across all specifications and both model classes. Age and education have positive effects on the probability of earning above \$50,000, and the female indicator is large and negative in the specifications that omit marital status, at $-$0.175 for logistic regression and $-$0.160 for XGBoost, collapsing to $-$0.012 and $-$0.009 once marital status enters in specification A+C. That collapse is the single most dramatic omitted variable pattern in the paper, and it is legible only because the AME puts every specification on the same probability scale. Education runs from 0.046 to 0.028 for logistic regression and 0.061 to 0.033 for XGBoost as controls accumulate. Marital status itself carries much the largest effect in the table, 0.278 and 0.242 in the full specification.
+
+	The two model classes track each other closely throughout, and their standard errors are now of the same order everywhere --- 0.0061 and 0.0056 on the female indicator in the full specification, 0.0007 and 0.0007 on education. Under the refitting bootstrap the black-box standard errors were sometimes an order of magnitude smaller than the parametric ones, which the earlier draft read as an efficiency gain from the better-fitting model. That reading was mistaken. The two models estimate the same $\theta_{j,h}$ at the same sample size, so their standard errors ought to be similar, and the earlier gap measured how stable each fitting procedure was under resampling rather than how precisely either pinned down the target. The influence-function standard errors do behave as sampling variability should: they shrink with $n$, they are largest for the features carrying the least independent variation, and they do not reward a model for being reproducibly wrong.
+
+	The financial panel illustrates the limits of what this design can say about capital gains and losses. Both variables are measured in raw dollars, so the reported effect is the response to a one-dollar change, and it displays as zero to four decimals in every cell but one --- as it did under the plug-in. The estimates are nonetheless significant at the one percent level, because the standard errors are smaller still; with nearly fifty thousand observations a substantively negligible effect can be sharply distinguished from zero, and this panel is a reminder that the stars answer a different question from the one the reader usually cares about. They also carry by far the heaviest trimming in the paper. Both are zero for the overwhelming majority of the sample and zero is the minimum of their observed support, so 92.3\% and 95.3\% of observations receive weight zero and the reported effect is identified only among filers who have nonzero gains or losses. The sign reversal between logistic regression and XGBoost that the earlier draft flagged in specification A+C does not survive the correction; both are zero to the displayed precision. Nothing here should be read as evidence about capital income, and a study interested in that question would want the variable re-expressed on a scale where a unit change is meaningful.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1529,45 +1594,47 @@
 				\toprule
 				Feature & Logistic & Random Forest & XGBoost & Neural Net \\
 				\midrule
-				age & 0.0027$^{***}$ & 0.0042$^{***}$ & 0.0031$^{***}$ & 0.0035$^{***}$ \\
-				& (0.0001) & (0.0001) & (0.0001) & (0.0006) \\
-				female & -0.0269$^{***}$ & -0.0218$^{***}$ & -0.0122$^{***}$ & -0.0085 \\
-				& (0.0041) & (0.0001) & (0.0032) & (0.0084) \\
-				education\_num & 0.0306$^{***}$ & 0.0294$^{***}$ & 0.0312$^{***}$ & 0.0238$^{***}$ \\
-				& (0.0006) & (0.0002) & (0.0011) & (0.0025) \\
+				age & 0.0043$^{***}$ & 0.0056$^{***}$ & 0.0033$^{***}$ & 0.0041$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0001) & (0.0001) \\
+				female & -0.0153$^{**}$ & -0.0210$^{***}$ & -0.0128$^{**}$ & -0.0166$^{***}$ \\
+				& (0.0061) & (0.0058) & (0.0056) & (0.0059) \\
+				education\_num & 0.0284$^{***}$ & 0.0336$^{***}$ & 0.0325$^{***}$ & 0.0284$^{***}$ \\
+				& (0.0007) & (0.0007) & (0.0007) & (0.0007) \\
 				\midrule
-				hours\_per\_week & 0.0033$^{***}$ & 0.0070$^{***}$ & 0.0032 & 0.0028$^{***}$ \\
-				& (0.0001) & (0.0001) & (0.0025) & (0.0006) \\
-				government & 0.0033 & 0.0051$^{***}$ & -0.0003 & -0.0065 \\
-				& (0.0045) & (0.0001) & (0.0026) & (0.0090) \\
-				self\_employed & -0.0268$^{***}$ & 0.0032$^{***}$ & -0.0055$^{*}$ & -0.0068 \\
-				& (0.0044) & (0.0001) & (0.0033) & (0.0066) \\
-				white\_collar & 0.0541$^{***}$ & 0.0600$^{***}$ & 0.0474$^{***}$ & 0.0243$^{***}$ \\
-				& (0.0051) & (0.0002) & (0.0017) & (0.0065) \\
-				blue\_collar & -0.0270$^{***}$ & -0.0240$^{***}$ & -0.0251$^{***}$ & -0.0502$^{***}$ \\
-				& (0.0048) & (0.0001) & (0.0034) & (0.0081) \\
-				service & -0.0427$^{***}$ & -0.0176$^{***}$ & -0.0343$^{***}$ & -0.0452$^{***}$ \\
-				& (0.0066) & (0.0001) & (0.0058) & (0.0088) \\
+				hours\_per\_week & 0.0027$^{***}$ & 0.0077$^{***}$ & 0.0038$^{***}$ & 0.0049$^{***}$ \\
+				& (0.0001) & (0.0001) & (0.0001) & (0.0001) \\
+				government & -0.0004 & -0.0025 & -0.0060 & -0.0060 \\
+				& (0.0061) & (0.0056) & (0.0055) & (0.0060) \\
+				self\_employed & -0.0085$^{**}$ & -0.0103$^{**}$ & -0.0080$^{**}$ & -0.0071$^{*}$ \\
+				& (0.0043) & (0.0041) & (0.0040) & (0.0042) \\
+				white\_collar & 0.0561$^{***}$ & 0.0606$^{***}$ & 0.0478$^{***}$ & 0.0383$^{***}$ \\
+				& (0.0049) & (0.0047) & (0.0045) & (0.0047) \\
+				blue\_collar & -0.0248$^{***}$ & -0.0316$^{***}$ & -0.0300$^{***}$ & -0.0533$^{***}$ \\
+				& (0.0031) & (0.0030) & (0.0028) & (0.0031) \\
+				service & -0.0456$^{***}$ & -0.0262$^{***}$ & -0.0342$^{***}$ & -0.0758$^{***}$ \\
+				& (0.0023) & (0.0021) & (0.0020) & (0.0023) \\
 				\midrule
-				capital\_gain & 0.0000$^{***}$ & 0.0000$^{***}$ & -0.0001$^{***}$ & 0.0001$^{***}$ \\
+				capital\_gain & 0.0000$^{***}$ & 0.0000$^{***}$ & 0.0000$^{***}$ & 0.0000$^{***}$ \\
 				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
-				capital\_loss & 0.0001$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & 0.0037$^{***}$ \\
-				& (0.0000) & (0.0000) & (0.0000) & (0.0006) \\
-				married & 0.2752$^{***}$ & 0.2446$^{***}$ & 0.2357$^{***}$ & 0.2046$^{***}$ \\
-				& (0.0041) & (0.0006) & (0.0036) & (0.0196) \\
+				capital\_loss & 0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & 0.0000$^{***}$ \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+				married & 0.2785$^{***}$ & 0.2504$^{***}$ & 0.2423$^{***}$ & 0.2438$^{***}$ \\
+				& (0.0054) & (0.0048) & (0.0047) & (0.0048) \\
 				\midrule
-				McFadden $R^2$ & 0.400 & 0.450 & 0.492 & 0.418 \\
-				Accuracy & 0.847 & 0.863 & 0.872 & 0.853 \\
+				McFadden $R^2$ & 0.400 & 0.450 & 0.492 & 0.449 \\
+				Accuracy & 0.847 & 0.863 & 0.872 & 0.858 \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
-				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
-			\end{tablenotes}
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are the debiased cross-fitted window AME with $K=5$ folds; standard errors from the orthogonal score in parentheses. Step sizes $h_j$ and trimmed fractions are reported in Table~\ref{tab:window_settings}.
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:adult_model_comparison} compares all four model classes on the full specification. The most important finding is the stability of the core demographic results. The education AME is 0.031 for logistic regression, 0.029 for random forest, 0.031 for XGBoost, and 0.024 for the neural network --- a range of less than one percentage point across models that differ enormously in their functional form. The married AME is similarly stable, ranging from 0.205 to 0.275. This stability is not guaranteed by the method --- it reflects genuine agreement across models about the underlying conditional expectation function --- and it is the kind of cross-model validation that the AME framework makes possible precisely because it produces output on a common scale. The female indicator shows more variation, from $-$0.027 for logistic regression to $-$0.009 for the neural network, and is not significant for the neural network, suggesting some sensitivity to model specification for this variable. The random forest standard errors are notably smaller than those from other models for most variables, which is a consequence of the ensemble averaging in that estimator producing a smoother prediction surface and therefore more stable finite differences across bootstrap replicates.
+	Table~\ref{tab:adult_model_comparison} compares all four model classes on the full specification, and with nearly fifty thousand observations it is the cleanest test in the paper of whether the correction delivers a common estimand. It does. The education AME is 0.028, 0.034, 0.033 and 0.028 for logistic regression, random forest, XGBoost and the neural network, and marital status is 0.279, 0.250, 0.242 and 0.244 --- a spread of 0.005 and 0.036 respectively across four architectures with McFadden $R^2$ ranging from 0.400 to 0.492. The female indicator, which the plug-in spread from $-$0.027 down to $-$0.009 and left insignificant for the neural network, is $-$0.015, $-$0.021, $-$0.013 and $-$0.017 after correction, all four significant and all four within a standard error or two of one another. The variable the earlier draft singled out as sensitive to model specification turns out not to have been.
+
+	The standard errors tell the same story from the other side. For a common target at a common sample size, four estimators using different nuisances should report standard errors of similar magnitude, and here they do: 0.0056 to 0.0061 on the female indicator, 0.0047 to 0.0054 on marital status, 0.0020 to 0.0023 on the service indicator. Under the plug-in they did not. The random forest reported 0.0001 on the female indicator and 0.0006 on marital status, one to two orders of magnitude below every other model, which the earlier draft attributed to ensemble averaging producing a smoother prediction surface and therefore more stable finite differences across bootstrap replicates. That description was accurate as a description of the bootstrap and wrong as a statement about precision: the replicates agreed with each other because every one of them was regularized the same way, not because the quantity was well determined. The convergence of the four standard-error columns to a common magnitude is what the orthogonal score is supposed to produce, and it is the more convincing for happening at the sample size where the asymptotics have the best claim to apply.
 	
 	\begin{sidewaystable}[htbp]
 		\centering
@@ -1578,37 +1645,39 @@
 			\begin{tabular}{lrrrrrrrrrrrr}
 				\toprule
 				& \multicolumn{3}{c}{Logistic} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
-				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
 				& AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
 				\midrule
-				age & 0.0027 & -0.0270 & 0.0028 & 0.0042 & -0.0068 & 0.0024 & 0.0031 & -0.0097 & 0.0036 & 0.0035 & 0.0044 & 0.0033 \\
-				female & -0.0269 & 0.0022 & -0.0270 & -0.0218 & 0.0011 & -0.0218 & -0.0122 & 0.0015 & -0.0122 & -0.0085 & -0.0001 & -0.0222 \\
-				education\_num & 0.0306 & -0.1186 & 0.0269 & 0.0294 & -0.0077 & 0.0137 & 0.0312 & -0.0093 & 0.0170 & 0.0238 & -0.0051 & 0.0207 \\
+				age & 0.0043 & -0.0270 & 0.0028 & 0.0056 & -0.0068 & 0.0024 & 0.0033 & -0.0097 & 0.0036 & 0.0041 & 0.0044 & 0.0033 \\
+				female & -0.0153 & 0.0022 & -0.0270 & -0.0210 & 0.0011 & -0.0218 & -0.0128 & 0.0015 & -0.0122 & -0.0166 & -0.0001 & -0.0222 \\
+				education\_num & 0.0284 & -0.1186 & 0.0269 & 0.0336 & -0.0077 & 0.0137 & 0.0325 & -0.0093 & 0.0170 & 0.0284 & -0.0051 & 0.0207 \\
 				\midrule
-				hours\_per\_week & 0.0033 & -0.0691 & 0.0033 & 0.0070 & -0.0054 & 0.0020 & 0.0032 & -0.0080 & 0.0028 & 0.0028 & -0.0032 & 0.0028 \\
-				government & 0.0033 & -0.0009 & 0.0026 & 0.0051 & -0.0003 & 0.0051 & -0.0003 & -0.0008 & -0.0003 & -0.0065 & 0.0002 & 0.0082 \\
-				self\_employed & -0.0268 & 0.0016 & -0.0265 & 0.0032 & -0.0003 & 0.0032 & -0.0055 & -0.0002 & -0.0055 & -0.0068 & -0.0008 & -0.0045 \\
-				white\_collar & 0.0541 & 0.0127 & 0.0538 & 0.0600 & 0.0031 & 0.0600 & 0.0474 & 0.0025 & 0.0474 & 0.0243 & 0.0007 & 0.0312 \\
-				blue\_collar & -0.0270 & 0.0136 & -0.0273 & -0.0240 & 0.0010 & -0.0240 & -0.0251 & 0.0004 & -0.0251 & -0.0502 & -0.0008 & -0.0531 \\
-				service & -0.0427 & -0.0027 & -0.0427 & -0.0176 & 0.0003 & -0.0176 & -0.0343 & 0.0005 & -0.0343 & -0.0452 & 0.0011 & -0.0558 \\
+				hours\_per\_week & 0.0027 & -0.0691 & 0.0033 & 0.0077 & -0.0054 & 0.0020 & 0.0038 & -0.0080 & 0.0028 & 0.0049 & -0.0032 & 0.0028 \\
+				government & -0.0004 & -0.0009 & 0.0026 & -0.0025 & -0.0003 & 0.0051 & -0.0060 & -0.0008 & -0.0003 & -0.0060 & 0.0002 & 0.0082 \\
+				self\_employed & -0.0085 & 0.0016 & -0.0265 & -0.0103 & -0.0003 & 0.0032 & -0.0080 & -0.0002 & -0.0055 & -0.0071 & -0.0008 & -0.0045 \\
+				white\_collar & 0.0561 & 0.0127 & 0.0538 & 0.0606 & 0.0031 & 0.0600 & 0.0478 & 0.0025 & 0.0474 & 0.0383 & 0.0007 & 0.0312 \\
+				blue\_collar & -0.0248 & 0.0136 & -0.0273 & -0.0316 & 0.0010 & -0.0240 & -0.0300 & 0.0004 & -0.0251 & -0.0533 & -0.0008 & -0.0531 \\
+				service & -0.0456 & -0.0027 & -0.0427 & -0.0262 & 0.0003 & -0.0176 & -0.0342 & 0.0005 & -0.0343 & -0.0758 & 0.0011 & -0.0558 \\
 				\midrule
-				capital\_gain & 0.0000 & -0.2627 & 0.0000 & 0.0000 & -0.0224 & 0.0000 & -0.0001 & -0.0264 & -0.0001 & 0.0001 & 0.0042 & 0.0000 \\
-				capital\_loss & 0.0001 & 0.0027 & -- & -0.0000 & -0.0034 & -- & -0.0000 & -0.0062 & -- & 0.0037 & -0.0115 & -- \\
-				married & 0.2752 & -0.0768 & 0.2749 & 0.2446 & -0.0064 & 0.2446 & 0.2357 & -0.0049 & 0.2357 & 0.2046 & 0.0149 & 0.1958 \\
+				capital\_gain & 0.0000 & -0.2627 & 0.0000 & 0.0000 & -0.0224 & 0.0000 & 0.0000 & -0.0264 & -0.0001 & 0.0000 & 0.0042 & 0.0000 \\
+				capital\_loss & 0.0000 & 0.0027 & -- & -0.0000 & -0.0034 & -- & -0.0000 & -0.0062 & -- & 0.0000 & -0.0115 & -- \\
+				married & 0.2785 & -0.0768 & 0.2749 & 0.2504 & -0.0064 & 0.2446 & 0.2423 & -0.0049 & 0.2357 & 0.2438 & 0.0149 & 0.1958 \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{sidewaystable}
 	
-	Table~\ref{tab:adult_method_comparison} compares AMEs against SHAP values and partial dependence plot slopes across all four models. The contrast is stark. The AME and PDP estimates are in close agreement throughout --- the married AME of 0.275 for logistic regression matches the PDP slope of 0.275, and similar agreement holds for the occupation indicators and hours per week. This agreement is reassuring: both methods are estimating derivatives of the prediction function, and their numerical proximity confirms that the finite difference approximation is well-behaved. The SHAP values, by contrast, are on a different scale and in several cases have the wrong sign relative to AME and PDP. The SHAP value for age is negative across all four models while the AME and PDP are both positive --- a direct contradiction that reflects the fact that mean signed SHAP values are not marginal effects and should not be interpreted as such. Crucially, no standard errors are reported for SHAP or PDP, so there is no basis for inference from those columns. A researcher using SHAP alone would have a point estimate of unknown precision with no ability to test whether age, education, or any other variable has a statistically distinguishable effect on the outcome.
+	Table~\ref{tab:adult_method_comparison} compares AMEs against SHAP values and partial dependence plot slopes across all four models. The SHAP column is the more straightforward contrast, and it is stark. Mean signed SHAP values are on a different scale entirely and in several cases carry the wrong sign: for logistic regression the SHAP value for education is $-$0.119 against an AME of 0.028, and for marital status it is $-$0.077 against an AME of 0.279 --- opposite in sign on the two largest effects in the application. The SHAP value for age is negative for three of the four models while every AME is positive. The most striking entry is capital gains, whose SHAP value of $-$0.263 for logistic regression is the largest SHAP magnitude anywhere in the table, attached to a variable whose AME is zero to four decimals and 92\% of whose observations are trimmed. None of this is a defect of the SHAP implementation; it is a consequence of mean signed SHAP values not being marginal effects and not admitting that interpretation.
+
+	The partial dependence column behaves as it did in the other two applications: it agrees with the debiased AME where the underlying plug-in is nearly unbiased and falls short of it elsewhere. For logistic regression, the best-specified model here, agreement is close on the large effects --- marital status 0.279 against 0.275, the white collar indicator 0.056 against 0.054, service $-$0.046 against $-$0.043, education 0.028 against 0.027. For the two tree ensembles the same features separate substantially: the random forest education AME of 0.034 sits against a PDP slope of 0.014, and its hours-per-week AME of 0.008 against a slope of 0.002. A piecewise constant fit has little local slope to report between splits, and the partial dependence average inherits that flatness while the orthogonal correction does not. Partial dependence slopes for capital losses are unavailable for every model, a limitation of the grid construction when almost all mass sits at a single value. As with SHAP, no standard errors accompany either column, so a researcher working from them has point estimates of unknown precision and no way to test whether any variable has a statistically distinguishable effect.
 	
 	\subsection{UCI Credit Default}
 	
-	The second dataset is the UCI Default of Credit Card Clients dataset \citep{yeh2009, UCI}, comprising 30,000 observations of Taiwanese credit card holders. The outcome is whether a cardholder defaulted on their payment in the following month. Features are organized into demographics (age, sex, education, marital status), payment history (average payment status, months delayed), and bill and payment amounts (average bill amount, average payment amount, payment ratio). The specification search considers logistic regression and a TensorFlow neural network, providing a direct comparison between a classical parametric model and a deep learning approach on the same inferential task.
+	The second dataset is the UCI Default of Credit Card Clients dataset \citep{yeh2009, UCI}, comprising 30,000 observations of Taiwanese credit card holders. The outcome is whether a cardholder defaulted on their payment in the following month. Features are organized into demographics (age, sex, education, marital status), payment history (average payment status, months delayed), and bill and payment amounts (average bill amount, average payment amount, payment ratio). The specification search considers logistic regression and a TensorFlow neural network, providing a direct comparison between a classical parametric model and a deep learning approach on the same inferential task. Two features here carry substantial trimming. Months delayed takes seven integer values and 70.9\% of the sample sits on one of the two outer ones, so its effect is identified among cardholders strictly inside that range; education takes four levels and is trimmed at 36.8\%. Both take the floored step size $h_j = 0.5$, so their reported effects are one-level contrasts. The payment ratio, which turns out to carry the largest effect in the application, is continuous and trimmed at 18.4\%.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1619,47 +1688,49 @@
 				\label{tab:credit_default_spec_search}
 				\begin{tabular}{lrrrrrrrr}
 					\toprule
-					Variable & \multicolumn{4}{c}{Logistic} & \multicolumn{4}{c}{Neural Net} \\
-					\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+					& \multicolumn{4}{c}{Logistic} & \multicolumn{4}{c}{Neural Net} \\
+					\cmidrule(lr){2-5} \cmidrule(lr){6-9}
 					& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
 					\midrule
 					\multicolumn{9}{l}{\textit{Panel A: Demographics}} \\
-					\quad age & -0.0004 & 0.0002 & 0.0002 & 0.0002 & -0.0022$^{**}$ & 0.0001 & -0.0001 & 0.0007 \\
-					& (0.0003) & (0.0003) & (0.0003) & (0.0002) & (0.0009) & (0.0008) & (0.0013) & (0.0005) \\
-					\quad female & -0.0358$^{***}$ & -0.0207$^{***}$ & -0.0294$^{***}$ & -0.0198$^{***}$ & -0.0343$^{***}$ & -0.0204$^{***}$ & -0.0250$^{***}$ & -0.0135$^{***}$ \\
-					& (0.0052) & (0.0045) & (0.0048) & (0.0045) & (0.0082) & (0.0064) & (0.0028) & (0.0028) \\
-					\quad education & 0.0173$^{***}$ & 0.0058$^{**}$ & 0.0017 & 0.0002 & 0.0194$^{**}$ & 0.0166$^{***}$ & 0.0034 & 0.0078$^{***}$ \\
-					& (0.0030) & (0.0028) & (0.0030) & (0.0028) & (0.0076) & (0.0046) & (0.0037) & (0.0013) \\
-					\quad married & 0.0253$^{***}$ & 0.0186$^{***}$ & 0.0280$^{***}$ & 0.0220$^{***}$ & 0.0324$^{***}$ & 0.0145$^{**}$ & 0.0274$^{***}$ & 0.0192$^{***}$ \\
-					& (0.0052) & (0.0049) & (0.0050) & (0.0050) & (0.0060) & (0.0058) & (0.0076) & (0.0049) \\
+					\quad age & -0.0015$^{***}$ & -0.0002 & -0.0005 & 0.0001 & -0.0026$^{***}$ & -0.0006$^{*}$ & -0.0010$^{***}$ & -0.0000 \\
+					& (0.0004) & (0.0003) & (0.0004) & (0.0003) & (0.0004) & (0.0003) & (0.0004) & (0.0003) \\
+					\quad female & -0.0358$^{***}$ & -0.0206$^{***}$ & -0.0291$^{***}$ & -0.0198$^{***}$ & -0.0364$^{***}$ & -0.0205$^{***}$ & -0.0265$^{***}$ & -0.0176$^{***}$ \\
+					& (0.0050) & (0.0046) & (0.0049) & (0.0046) & (0.0050) & (0.0046) & (0.0049) & (0.0045) \\
+					\quad education & -0.0001 & -0.0027 & -0.0054$^{**}$ & -0.0040$^{*}$ & -0.0008 & -0.0035 & -0.0048$^{**}$ & -0.0040$^{*}$ \\
+					& (0.0022) & (0.0022) & (0.0023) & (0.0022) & (0.0021) & (0.0021) & (0.0022) & (0.0022) \\
+					\quad married & 0.0253$^{***}$ & 0.0189$^{***}$ & 0.0303$^{***}$ & 0.0206$^{***}$ & 0.0260$^{***}$ & 0.0152$^{**}$ & 0.0269$^{***}$ & 0.0186$^{***}$ \\
+					& (0.0068) & (0.0064) & (0.0066) & (0.0063) & (0.0068) & (0.0064) & (0.0067) & (0.0063) \\
 					\midrule
 					\multicolumn{9}{l}{\textit{Panel B: Payment History}} \\
-					\quad avg\_pay\_status & -- & -0.0161$^{***}$ & -- & -0.0256$^{***}$ & -- & 0.0231$^{***}$ & -- & 0.0270 \\
-					&  & (0.0036) &  & (0.0042) &  & (0.0082) &  & (0.0299) \\
-					\quad months\_delayed & -- & 0.0835$^{***}$ & -- & 0.0826$^{***}$ & -- & 0.1151$^{***}$ & -- & 0.1118$^{***}$ \\
-					&  & (0.0019) &  & (0.0021) &  & (0.0165) &  & (0.0321) \\
+					\quad avg\_pay\_status & -- & -0.0140$^{***}$ & -- & -0.0218$^{***}$ & -- & 0.0073$^{*}$ & -- & 0.0040 \\
+					&  & (0.0041) &  & (0.0075) &  & (0.0041) &  & (0.0072) \\
+					\quad months\_delayed & -- & 0.0347$^{***}$ & -- & 0.0301$^{***}$ & -- & 0.0298$^{***}$ & -- & 0.0254$^{***}$ \\
+					&  & (0.0011) &  & (0.0012) &  & (0.0011) &  & (0.0012) \\
 					\midrule
 					\multicolumn{9}{l}{\textit{Panel C: Bill and Payment Amounts}} \\
-					\quad avg\_bill\_amt & -- & -- & -0.0000 & 0.0000 & -- & -- & 0.0000 & 0.0000 \\
+					\quad avg\_bill\_amt & -- & -- & -0.0000$^{***}$ & -0.0000$^{**}$ & -- & -- & -0.0000 & -0.0000$^{*}$ \\
 					&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
-					\quad avg\_pay\_amt & -- & -- & -0.0000$^{***}$ & -0.0000$^{***}$ & -- & -- & -0.0000 & -0.0000 \\
-					&  &  & (0.0000) & (0.0000) &  &  & (0.0001) & (0.0001) \\
-					\quad pay\_ratio & -- & -- & -0.1196$^{***}$ & -0.0454$^{***}$ & -- & -- & -0.1215$^{***}$ & 0.0009 \\
-					&  &  & (0.0073) & (0.0072) &  &  & (0.0030) & (0.0029) \\
+					\quad avg\_pay\_amt & -- & -- & -0.0000$^{***}$ & 0.0000 & -- & -- & -0.0000$^{***}$ & -0.0000$^{***}$ \\
+					&  &  & (0.0000) & (0.0000) &  &  & (0.0000) & (0.0000) \\
+					\quad pay\_ratio & -- & -- & -0.3521$^{***}$ & -0.2651$^{***}$ & -- & -- & -0.2572$^{***}$ & -0.1943$^{**}$ \\
+					&  &  & (0.0731) & (0.0730) &  &  & (0.0792) & (0.0773) \\
 					\midrule
-					McFadden $R^2$ & 0.003 & 0.130 & 0.031 & 0.137 & 0.011 & 0.152 & 0.060 & 0.171 \\
-					Accuracy & 0.779 & 0.803 & 0.779 & 0.803 & 0.779 & 0.807 & 0.780 & 0.808 \\
+					McFadden $R^2$ & 0.003 & 0.130 & 0.031 & 0.137 & 0.010 & 0.155 & 0.055 & 0.166 \\
+					Accuracy & 0.779 & 0.803 & 0.779 & 0.803 & 0.779 & 0.808 & 0.779 & 0.808 \\
 					\bottomrule
-				\end{tabular}
-				\begin{tablenotes}
+					\end{tabular}
+					\begin{tablenotes}
 					\footnotesize
-					\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
-				\end{tablenotes}
+					\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are the debiased cross-fitted window AME with $K=5$ folds; standard errors from the orthogonal score in parentheses. Step sizes $h_j$ and trimmed fractions are reported in Table~\ref{tab:window_settings}.
+					\end{tablenotes}
 			\end{threeparttable}
 		}%
 	\end{table*}
 	
-	Table~\ref{tab:credit_default_spec_search} presents the specification search. The dominant finding is the importance of payment history. Months delayed enters with an AME of 0.084 for logistic regression and 0.115 for the neural network in specification A+B, and remains large and significant in the full specification --- the largest effect in the table by a substantial margin. The demographic panel tells a different story from the Adult Income dataset: age is statistically indistinguishable from zero in nearly every specification for logistic regression, and the female indicator, while consistently negative and significant for both models, shrinks substantially once payment history is controlled for, falling from $-$\$0.036 to $-$0.020 for logistic regression and from $-$0.034 to $-$0.014 for the neural network. This pattern of attenuation is cleanly legible in the AME framework because the coefficients are on a common probability scale across specifications. The neural network and logistic regression produce broadly comparable AMEs throughout the demographic panel, with model fit improving steadily as features are added --- McFadden $R^2$ rising from 0.011 in specification A to 0.171 in the full specification for the neural network, slightly higher than logistic regression's 0.137. The bootstrap standard errors for the neural network are wider than those for logistic regression in the full specification, particularly for the payment history variables, reflecting the additional uncertainty introduced by hyperparameter selection on each replicate.
+	Table~\ref{tab:credit_default_spec_search} presents the specification search. The dominant finding is the importance of payment history and of the payment ratio. Months delayed enters at 0.035 for logistic regression and 0.030 for the neural network in specification A+B and remains at 0.030 and 0.025 in the full specification, while the payment ratio, once it is available in specifications A+C and A+B+C, is much the largest effect in the table: $-$0.265 for logistic regression and $-$0.194 for the neural network in the full specification. The demographic panel tells a different story from the Adult Income dataset: age is statistically indistinguishable from zero in nearly every specification for both models, and the female indicator, while consistently negative and significant, shrinks substantially once payment history is controlled for, falling from $-$0.036 to $-$0.020 for logistic regression and from $-$0.036 to $-$0.018 for the neural network. This pattern of attenuation is cleanly legible in the AME framework because the estimates are on a common probability scale across specifications.
+
+	What is most striking in this table is how little separates the two columns. In specification A the female AME is $-$0.0358 for logistic regression and $-$0.0364 for the neural network; married is 0.0253 and 0.0260; in the full specification the pair is $-$0.0198 and $-$0.0176, and 0.0206 and 0.0186. A parametric model and a four-layer network, differing in McFadden $R^2$ by three percentage points, produce estimates that agree to the third decimal place across sixteen model-specification cells. This is what the orthogonal score is supposed to deliver and what the plug-in did not: since each column estimates the same $\theta_{j,h}$ and the correction absorbs the first-order effect of the fitted regression, the remaining gap between the two columns reflects only the second-order term and sampling noise. The standard errors are also now nearly identical between the two models --- 0.0046 and 0.0045 on the female indicator, 0.0012 and 0.0012 on months delayed --- rather than differing by the order of magnitude the refitting bootstrap reported, where the network's standard error for months delayed was 0.032 against the logistic model's 0.002. Both figures were describing the stability of a particular fitting procedure under resampling rather than the sampling variability of an estimate of a fixed target.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1669,41 +1740,45 @@
 			\label{tab:credit_default_model_comparison}
 			\begin{tabular}{lrrrr}
 				\toprule
-				Variable & Logistic & Random Forest & XGBoost & Neural Net \\
+				Feature & Logistic & Random Forest & XGBoost & Neural Net \\
 				\midrule
-				age & 0.0002 & -0.0000 & -0.0004 & 0.0007 \\
-				& (0.0002) & (0.0000) & (0.0006) & (0.0005) \\
-				female & -0.0198$^{***}$ & -0.0062$^{***}$ & -0.0146$^{***}$ & -0.0135$^{***}$ \\
-				& (0.0045) & (0.0000) & (0.0031) & (0.0028) \\
-				education & 0.0002 & 0.0029$^{***}$ & 0.0030$^{*}$ & 0.0078$^{***}$ \\
-				& (0.0028) & (0.0001) & (0.0016) & (0.0013) \\
-				married & 0.0220$^{***}$ & 0.0054$^{***}$ & 0.0142$^{***}$ & 0.0192$^{***}$ \\
-				& (0.0050) & (0.0000) & (0.0035) & (0.0049) \\
+				age & 0.0001 & -0.0002 & -0.0005 & -0.0000 \\
+				& (0.0003) & (0.0003) & (0.0003) & (0.0003) \\
+				female & -0.0198$^{***}$ & -0.0161$^{***}$ & -0.0175$^{***}$ & -0.0176$^{***}$ \\
+				& (0.0046) & (0.0045) & (0.0045) & (0.0045) \\
+				education & -0.0040$^{*}$ & -0.0018 & 0.0034 & -0.0040$^{*}$ \\
+				& (0.0022) & (0.0022) & (0.0022) & (0.0022) \\
+				married & 0.0206$^{***}$ & 0.0222$^{***}$ & 0.0205$^{***}$ & 0.0186$^{***}$ \\
+				& (0.0063) & (0.0062) & (0.0062) & (0.0063) \\
 				\midrule
-				avg\_pay\_status & -0.0256$^{***}$ & -0.0000 & 0.1027$^{***}$ & 0.0270 \\
-				& (0.0042) & (0.0000) & (0.0225) & (0.0299) \\
-				months\_delayed & 0.0826$^{***}$ & 0.0179$^{***}$ & 0.0209$^{***}$ & 0.1118$^{***}$ \\
-				& (0.0021) & (0.0002) & (0.0009) & (0.0321) \\
+				avg\_pay\_status & -0.0218$^{***}$ & 0.0061 & 0.0907$^{***}$ & 0.0040 \\
+				& (0.0075) & (0.0074) & (0.0075) & (0.0072) \\
+				months\_delayed & 0.0301$^{***}$ & 0.0134$^{***}$ & 0.0191$^{***}$ & 0.0254$^{***}$ \\
+				& (0.0012) & (0.0011) & (0.0011) & (0.0012) \\
 				\midrule
-				avg\_bill\_amt & 0.0000 & -0.0000$^{***}$ & -0.0000$^{*}$ & 0.0000 \\
+				avg\_bill\_amt & -0.0000$^{**}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{*}$ \\
 				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
-				avg\_pay\_amt & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000 \\
-				& (0.0000) & (0.0000) & (0.0000) & (0.0001) \\
-				pay\_ratio & -0.0454$^{***}$ & -0.4306$^{***}$ & -0.4396$^{***}$ & 0.0009 \\
-				& (0.0072) & (0.0058) & (0.1289) & (0.0029) \\
+				avg\_pay\_amt & 0.0000 & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ \\
+				& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+				pay\_ratio & -0.2651$^{***}$ & -0.4890$^{***}$ & -0.5836$^{***}$ & -0.1943$^{**}$ \\
+				& (0.0730) & (0.0670) & (0.0685) & (0.0773) \\
 				\midrule
-				McFadden $R^2$ & 0.137 & 0.210 & 0.194 & 0.171 \\
+				McFadden $R^2$ & 0.137 & 0.210 & 0.194 & 0.166 \\
 				Accuracy & 0.803 & 0.821 & 0.815 & 0.808 \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
-				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
-			\end{tablenotes}
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are the debiased cross-fitted window AME with $K=5$ folds; standard errors from the orthogonal score in parentheses. Step sizes $h_j$ and trimmed fractions are reported in Table~\ref{tab:window_settings}.
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:credit_default_model_comparison} compares all four models on the full specification. The payment history variables again dominate, but the models disagree substantially on their magnitudes in a way that is informative rather than troubling. Months delayed is 0.083 for logistic regression, 0.018 for random forest, 0.021 for XGBoost, and 0.112 for the neural network --- a wide range that reflects genuine differences in how each model weighs this variable against the payment ratio, which random forest and XGBoost estimate at $-$0.431 and $-$0.440 respectively while logistic regression estimates only $-$0.045 and the neural network estimates near zero at 0.001. This is a case where the black-box tree-based models detect a strong nonlinear relationship between payment ratio and default probability, while the neural network instead loads that information onto months delayed, and logistic regression splits the effect between the two variables. The AME framework makes these disagreements visible and quantifiable in a way that point estimates from a single model would not. The random forest standard errors are again notably tight --- the female AME of $-$0.006 has a standard error of 0.000 to four decimal places --- reflecting the stability of the ensemble prediction surface. The neural network standard errors for the payment history variables are the widest in the table at around 0.030 to 0.032, which is the appropriate response of the bootstrap to a flexible model that distributes effects differently across replicates.
+	Table~\ref{tab:credit_default_model_comparison} compares all four models on the full specification, and it is the sharpest illustration in the paper of what the orthogonal correction changes. Under the plug-in the four models flatly contradicted one another on the two variables that matter. Months delayed was 0.083 for logistic regression, 0.018 for the random forest, 0.021 for XGBoost and 0.112 for the neural network, a sixfold spread; the payment ratio was $-$0.431 and $-$0.440 for the two tree ensembles, $-$0.045 for logistic regression, and 0.0009 --- indistinguishable from no effect at all --- for the neural network. A researcher reading that table had to conclude either that the models were detecting genuinely different structure, or that at least three of the four were wrong, with no way to tell which.
+
+	The debiased estimates resolve the contradiction rather than splitting the difference. Months delayed becomes 0.030, 0.013, 0.019 and 0.025, and the payment ratio becomes $-$0.265, $-$0.489, $-$0.584 and $-$0.194: every model now agrees that a higher payment ratio is associated with a substantially lower probability of default, including the neural network, whose plug-in estimate had put the effect at zero. The demographic panel converges the same way. The female AME was $-$0.020, $-$0.006, $-$0.015 and $-$0.014 under the plug-in and is $-$0.0198, $-$0.0161, $-$0.0175 and $-$0.0176 under the correction; married was 0.022, 0.005, 0.014 and 0.019 and is now 0.0206, 0.0222, 0.0205 and 0.0186. The variation that the earlier draft read as four models weighing the covariates differently was in the main the regularization bias $\E[\alpha_h(\hat f - f)]$, which differs across learners because their regularization differs, and which the correction removes. What survives is a common estimate of a common target.
+
+	Convergence is not complete, and the payment ratio shows where it stops. The four debiased estimates still span $-$0.194 to $-$0.584, a range far wider than their standard errors of roughly 0.07, so the models have not been brought into agreement to within sampling error on that variable. Payment ratio is the most skewed feature in the design and is trimmed at 18.4\%, and the second-order product term that Theorem~\ref{thm:main} requires to be $o_p(n^{-1/2})$ is plausibly not negligible here for the weaker nuisance fits. The correct reading is that the correction removes the first-order bias and leaves a residual that the theory bounds but does not eliminate, which is visible precisely where the nuisance problem is hardest. Finally, the random forest standard errors, which the plug-in bootstrap reported as 0.0000 to four decimal places on the female indicator, are 0.0045 under the influence-function formula --- essentially identical to the other three models, as they should be for a common estimand at a common sample size.
 	
 		\begin{sidewaystable}[htbp]
 		\centering
@@ -1713,35 +1788,37 @@
 			\label{tab:credit_default_method_comparison}
 			\begin{tabular}{lrrrrrrrrrrrr}
 				\toprule
-				Variable & \multicolumn{3}{c}{Logistic} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
-				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+				& \multicolumn{3}{c}{Logistic} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
+				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
 				& AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
 				\midrule
-				age & 0.0002 & -0.0003 & 0.0002 & -0.0000 & 0.0011 & -0.0000 & -0.0004 & 0.0004 & -0.0002 & 0.0007 & -0.0010 & 0.0012 \\
-				female & -0.0198 & -0.0005 & -0.0198 & -0.0062 & 0.0001 & -0.0062 & -0.0146 & 0.0002 & -0.0146 & -0.0135 & 0.0009 & -0.0200 \\
-				education & 0.0002 & 0.0002 & 0.0002 & 0.0029 & 0.0006 & -0.0057 & 0.0030 & -0.0005 & -0.0356 & 0.0078 & -0.0016 & 0.0082 \\
-				married & 0.0220 & -0.0038 & 0.0220 & 0.0054 & 0.0002 & 0.0054 & 0.0142 & 0.0002 & 0.0142 & 0.0192 & 0.0022 & 0.0217 \\
+				age & 0.0001 & -0.0003 & 0.0002 & -0.0002 & 0.0011 & -0.0000 & -0.0005 & 0.0004 & -0.0002 & -0.0000 & -0.0010 & 0.0012 \\
+				female & -0.0198 & -0.0005 & -0.0198 & -0.0161 & 0.0001 & -0.0062 & -0.0175 & 0.0002 & -0.0146 & -0.0176 & 0.0009 & -0.0200 \\
+				education & -0.0040 & 0.0002 & 0.0002 & -0.0018 & 0.0006 & -0.0057 & 0.0034 & -0.0005 & -0.0356 & -0.0040 & -0.0016 & 0.0082 \\
+				married & 0.0206 & -0.0038 & 0.0220 & 0.0222 & 0.0002 & 0.0054 & 0.0205 & 0.0002 & 0.0142 & 0.0186 & 0.0022 & 0.0217 \\
 				\midrule
-				avg\_pay\_status & -0.0256 & -0.0144 & -0.0246 & -0.0000 & 0.0029 & 0.0610 & 0.1027 & 0.0027 & 0.0404 & 0.0270 & -0.0116 & 0.0097 \\
-				months\_delayed & 0.0826 & -0.0148 & 0.1107 & 0.0179 & -0.0008 & 0.0456 & 0.0209 & 0.0001 & 0.0404 & 0.1118 & -0.0154 & 0.0653 \\
+				avg\_pay\_status & -0.0218 & -0.0144 & -0.0246 & 0.0061 & 0.0029 & 0.0610 & 0.0907 & 0.0027 & 0.0404 & 0.0040 & -0.0116 & 0.0097 \\
+				months\_delayed & 0.0301 & -0.0148 & 0.1107 & 0.0134 & -0.0008 & 0.0456 & 0.0191 & 0.0001 & 0.0404 & 0.0254 & -0.0154 & 0.0653 \\
 				\midrule
-				avg\_bill\_amt & 0.0000 & -0.0001 & 0.0000 & -0.0000 & -0.0018 & -0.0000 & -0.0000 & -0.0046 & -0.0000 & 0.0000 & 0.0036 & 0.0000 \\
-				avg\_pay\_amt & -0.0000 & 0.0026 & -0.0000 & -0.0000 & -0.0006 & -0.0000 & -0.0000 & -0.0005 & -0.0000 & -0.0000 & -0.0025 & -0.0000 \\
-				pay\_ratio & -0.0454 & 0.0100 & -0.0444 & -0.4306 & 0.0012 & -0.0998 & -0.4396 & 0.0005 & -0.0953 & 0.0009 & 0.0015 & -0.0170 \\
+				avg\_bill\_amt & -0.0000 & -0.0001 & 0.0000 & -0.0000 & -0.0018 & -0.0000 & -0.0000 & -0.0046 & -0.0000 & -0.0000 & 0.0036 & 0.0000 \\
+				avg\_pay\_amt & 0.0000 & 0.0026 & -0.0000 & -0.0000 & -0.0006 & -0.0000 & -0.0000 & -0.0005 & -0.0000 & -0.0000 & -0.0025 & -0.0000 \\
+				pay\_ratio & -0.2651 & 0.0100 & -0.0444 & -0.4890 & 0.0012 & -0.0998 & -0.5836 & 0.0005 & -0.0953 & -0.1943 & 0.0015 & -0.0170 \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{sidewaystable}
 	
-	Table~\ref{tab:credit_default_method_comparison} again reveals a systematic disconnect between SHAP values and AMEs. For the payment history variables the disagreement is particularly stark: the AME for months delayed is 0.083 for logistic regression while the mean signed SHAP value is $-$0.015 --- opposite in sign. The AME and PDP are in close agreement throughout, with the PDP slope for months delayed of 0.111 reasonably close to the AME of 0.083 given that PDP slopes are sensitive to the choice of evaluation grid. The pay ratio variable illustrates the most consequential divergence: the random forest and XGBoost AMEs are $-$0.431 and $-$0.440, indicating that a one-unit increase in the payment ratio is associated with a large reduction in default probability, while the corresponding SHAP values are 0.001 and 0.001 --- near zero and in the wrong direction. A researcher relying on SHAP alone would conclude that payment ratio is essentially irrelevant to default risk, which directly contradicts the AME and PDP evidence. And as before, with no standard errors attached to the SHAP or PDP estimates, there is no statistical basis for adjudicating between these conflicting signals.
+	Table~\ref{tab:credit_default_method_comparison} again reveals a systematic disconnect between SHAP values and AMEs. For the payment history variables the disagreement is stark: the AME for months delayed is 0.030 for logistic regression while the mean signed SHAP value is $-$0.015, opposite in sign. The payment ratio illustrates the most consequential divergence: the random forest and XGBoost AMEs are $-$0.489 and $-$0.584, indicating that a higher payment ratio is associated with a large reduction in default probability, while the corresponding SHAP values are 0.0012 and 0.0005 --- near zero and in the wrong direction. A researcher relying on SHAP alone would conclude that payment ratio is essentially irrelevant to default risk. With no standard errors attached to the SHAP estimates there is no statistical basis on which to adjudicate.
+
+	The partial dependence column separates from the AME column here in the same pattern as in the Ames application, and for the same reason: a partial dependence slope is a plug-in average over a single full-sample fit, so it carries the regularization bias that the correction removes. The separation tracks the quality of the underlying fit. On the female indicator, where the logistic model is close to correctly specified, the AME of $-$0.0198 and the PDP slope of $-$0.0198 agree exactly; for the random forest on the same variable they are $-$0.0161 and $-$0.0062. On the payment ratio, the hardest nuisance problem in the design, the gap is largest and always toward zero: $-$0.265 against $-$0.044 for logistic regression, $-$0.489 against $-$0.100 for the random forest, $-$0.584 against $-$0.095 for XGBoost, $-$0.194 against $-$0.017 for the neural network. Months delayed runs the other way, with PDP slopes of 0.111, 0.046, 0.040 and 0.065 against debiased AMEs of 0.030, 0.013, 0.019 and 0.025, which is what one expects when an uncorrected estimator distributes a shared effect between two correlated features differently than the corrected one does. Taken across all three applications, the attenuation is the dominant pattern rather than a universal one: restricting attention to the effects the debiased estimator resolves away from zero, the partial dependence slope is smaller in absolute value than the AME in 62 of 84 cases, with a median ratio of 0.47 on Ames Housing, 0.60 here and 0.95 on Adult Income. It is most pronounced for the random forest, the learner whose regularization bias the simulations isolate.
 	
 	\subsection{Ames Housing}
 	
-	The third dataset is the Ames Housing dataset \citep{decock2011}, comprising approximately 1,460 observations of residential home sales in Ames, Iowa between 2006 and 2010. The outcome is sale price in dollars, so average marginal effects are interpreted in dollar units --- a one-unit change in a continuous feature is associated with a $\widehat{\mathrm{AME}}_j$ change in predicted sale price, on averege across the sample. Features are organized into physical characteristics (above-ground living area, number of bedrooms, number of bathrooms), quality and condition (overall quality rating, condition rating, year built, year remodeled), and lot and location (lot area, garage area, neighborhood tier indicators). The specification search considers linear regression and a random forest, covering the regression case and completing the sweep across outcome types.
+	The third dataset is the Ames Housing dataset \citep{decock2011}, comprising approximately 1,460 observations of residential home sales in Ames, Iowa between 2006 and 2010. The outcome is sale price in dollars, so average marginal effects are interpreted in dollar units --- a one-unit change in a continuous feature is associated with a $\widehat{\theta}_{j,h}$ change in predicted sale price, on average across the untrimmed sample. Features are organized into physical characteristics (above-ground living area, number of bedrooms, number of bathrooms), quality and condition (overall quality rating, condition rating, year built, year remodeled), and lot and location (lot area, garage area, neighborhood tier indicators). The specification search considers linear regression and a random forest, covering the regression case and completing the sweep across outcome types. Six of the ten continuous features here are integer counts or ratings and so take the floored step size $h_j = 0.5$, which makes their reported effects one-unit contrasts: one more bedroom, one more point of overall quality. One feature requires a narrower reading than the rest. Half bathrooms take only the values zero, one and two, and both outer levels lie on the boundary of the observed support, so 63.4\% of the sample is trimmed and the half-bath effect is identified only among homes that have exactly one. The remaining features in this application are trimmed at 15\% or below.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1752,53 +1829,55 @@
 				\label{tab:ames_housing_spec_search}
 				\begin{tabular}{lrrrrrrrr}
 					\toprule
-					Variable & \multicolumn{4}{c}{Linear} & \multicolumn{4}{c}{Random Forest} \\
-					\cmidrule(lr){2-5} \cmidrule(lr){6-9} 
+					& \multicolumn{4}{c}{Linear} & \multicolumn{4}{c}{Random Forest} \\
+					\cmidrule(lr){2-5} \cmidrule(lr){6-9}
 					& Spec A & A+B & A+C & A+B+C & Spec A & A+B & A+C & A+B+C \\
 					\midrule
 					\multicolumn{9}{l}{\textit{Panel A: Physical Characteristics}} \\
-					\quad GrLivArea & 108.22$^{***}$ & 85.99$^{***}$ & 74.32$^{***}$ & 65.57$^{***}$ & 126.41$^{***}$ & 79.37$^{***}$ & 78.92$^{***}$ & 56.44$^{***}$ \\
-					& (13.45) & (15.05) & (11.03) & (13.84) & (8.22) & (3.47) & (3.61) & (1.93) \\
-					\quad BedroomAbvGr & -27911.62$^{***}$ & -10181.55$^{***}$ & -11440.18$^{***}$ & -6189.02$^{**}$ & -23128.28$^{***}$ & -3055.72$^{***}$ & -5528.45$^{***}$ & -1470.18$^{***}$ \\
-					& (3632.79) & (3107.43) & (3193.68) & (3042.41) & (1115.11) & (246.78) & (470.90) & (127.74) \\
-					\quad FullBath & 30380.78$^{***}$ & -9793.90$^{*}$ & 5378.67 & -6287.42 & 18535.37$^{***}$ & 382.25$^{***}$ & 1687.49$^{***}$ & 498.18$^{***}$ \\
-					& (5236.69) & (5750.79) & (3666.97) & (4593.14) & (601.00) & (104.69) & (108.04) & (73.44) \\
-					\quad HalfBath & 3586.62 & -13111.01$^{***}$ & -728.29 & -6967.90$^{*}$ & 493.43 & -1160.44$^{***}$ & 420.55$^{***}$ & -198.68$^{***}$ \\
-					& (4187.08) & (4093.96) & (2954.56) & (3607.14) & (491.19) & (111.48) & (97.27) & (51.07) \\
+					\quad GrLivArea & 138.96$^{***}$ & 106.16$^{***}$ & 84.82$^{***}$ & 68.05$^{***}$ & 128.77$^{***}$ & 103.42$^{***}$ & 90.19$^{***}$ & 81.50$^{***}$ \\
+					& (20.51) & (15.58) & (14.25) & (12.14) & (13.06) & (8.98) & (8.97) & (8.77) \\
+					\quad BedroomAbvGr & -33209.66$^{***}$ & -14046.40$^{*}$ & -24282.55$^{***}$ & -26454.60$^{*}$ & -28632.01$^{***}$ & -11415.18$^{***}$ & -11292.79$^{**}$ & -9212.02 \\
+					& (5594.51) & (7435.20) & (9027.62) & (14881.54) & (3382.73) & (3920.43) & (5576.82) & (8925.07) \\
+					\quad FullBath & 18589.00$^{***}$ & -10533.55$^{**}$ & 7261.14 & -10578.42 & 16236.01$^{***}$ & -6616.40$^{*}$ & 5652.46 & 7858.42 \\
+					& (5990.54) & (4912.27) & (4987.91) & (9969.12) & (3779.18) & (3670.56) & (3754.82) & (8988.79) \\
+					\quad HalfBath & -11228.94$^{**}$ & -8180.81$^{**}$ & -9092.88$^{**}$ & 1028.31 & -7189.23$^{*}$ & -6638.05$^{***}$ & -11578.88$^{**}$ & -10317.96$^{**}$ \\
+					& (4624.11) & (3242.49) & (4451.09) & (5697.41) & (4264.04) & (2525.05) & (4601.22) & (4713.92) \\
 					\midrule
 					\multicolumn{9}{l}{\textit{Panel B: Quality and Condition}} \\
-					\quad OverallQual & -- & 21388.25$^{***}$ & -- & 16465.22$^{***}$ & -- & 17049.34$^{***}$ & -- & 15636.08$^{***}$ \\
-					&  & (1824.85) &  & (1228.91) &  & (560.81) &  & (519.24) \\
-					\quad OverallCond & -- & 5810.75$^{***}$ & -- & 6311.48$^{***}$ & -- & 2774.28$^{***}$ & -- & 1974.55$^{***}$ \\
-					&  & (1112.27) &  & (934.11) &  & (126.97) &  & (89.75) \\
-					\quad YearBuilt & -- & 685.31$^{***}$ & -- & 440.47$^{***}$ & -- & 729.64$^{***}$ & -- & 576.01$^{***}$ \\
-					&  & (87.70) &  & (113.18) &  & (143.44) &  & (112.13) \\
-					\quad YearRemodAdd & -- & 72.76 & -- & 101.51$^{*}$ & -- & 756.23$^{***}$ & -- & 518.52$^{***}$ \\
-					&  & (62.62) &  & (53.22) &  & (72.12) &  & (46.58) \\
+					\quad OverallQual & -- & 15819.18$^{***}$ & -- & 5436.28 & -- & 11911.79$^{***}$ & -- & 16255.82$^{***}$ \\
+					&  & (1589.02) &  & (4964.23) &  & (1342.87) &  & (4829.24) \\
+					\quad OverallCond & -- & 6477.48$^{*}$ & -- & 2890.60 & -- & 8281.97$^{***}$ & -- & 9190.11$^{***}$ \\
+					&  & (3687.03) &  & (5496.46) &  & (2434.71) &  & (3492.01) \\
+					\quad YearBuilt & -- & 443.39 & -- & -141.08 & -- & 1033.46$^{***}$ & -- & 1323.39$^{***}$ \\
+					&  & (277.71) &  & (404.21) &  & (190.55) &  & (419.89) \\
+					\quad YearRemodAdd & -- & 192.69 & -- & 1743.45$^{**}$ & -- & 556.20$^{***}$ & -- & -311.44 \\
+					&  & (161.82) &  & (740.09) &  & (173.98) &  & (753.53) \\
 					\midrule
 					\multicolumn{9}{l}{\textit{Panel C: Lot and Location}} \\
-					\quad LotArea & -- & -- & 0.33 & 0.61$^{***}$ & -- & -- & 1.97$^{***}$ & 1.81$^{***}$ \\
-					&  &  & (0.21) & (0.24) &  &  & (0.15) & (0.09) \\
-					\quad GarageArea & -- & -- & 72.25$^{***}$ & 38.68$^{***}$ & -- & -- & 82.79$^{***}$ & 50.03$^{***}$ \\
-					&  &  & (6.92) & (6.01) &  &  & (5.75) & (3.11) \\
-					\quad nbhd\_high & -- & -- & 90316.66$^{***}$ & 51433.02$^{***}$ & -- & -- & 51108.94$^{***}$ & 5058.64$^{***}$ \\
-					&  &  & (7451.69) & (9809.90) &  &  & (999.15) & (255.98) \\
-					\quad nbhd\_mid & -- & -- & 31391.51$^{***}$ & 7508.07 & -- & -- & 25973.59$^{***}$ & 5949.97$^{***}$ \\
-					&  &  & (3266.03) & (5151.49) &  &  & (531.38) & (259.64) \\
+					\quad LotArea & -- & -- & 5.51 & 23.02$^{**}$ & -- & -- & -7.53 & -12.51 \\
+					&  &  & (3.93) & (11.37) &  &  & (8.06) & (11.14) \\
+					\quad GarageArea & -- & -- & 40.08$^{*}$ & -102.78 & -- & -- & 103.31$^{***}$ & 90.33 \\
+					&  &  & (20.94) & (71.57) &  &  & (34.64) & (59.74) \\
+					\quad nbhd\_high & -- & -- & 128801.76$^{***}$ & 89812.31$^{**}$ & -- & -- & 66978.55$^{***}$ & 43512.42$^{*}$ \\
+					&  &  & (34103.92) & (38393.43) &  &  & (16110.93) & (24635.87) \\
+					\quad nbhd\_mid & -- & -- & 77339.38$^{**}$ & 74336.31$^{*}$ & -- & -- & 42305.81$^{***}$ & 33767.43 \\
+					&  &  & (33663.73) & (39182.81) &  &  & (15387.40) & (26676.67) \\
 					\midrule
 					$R^2$ & 0.584 & 0.758 & 0.739 & 0.802 & 0.829 & 0.937 & 0.926 & 0.953 \\
 					RMSE & 51,243.9 & 39,080.1 & 40,596.4 & 35,355.5 & 32,830.9 & 19,881.6 & 21,534.2 & 17,244.4 \\
 					\bottomrule
-				\end{tabular}
-				\begin{tablenotes}
+					\end{tabular}
+					\begin{tablenotes}
 					\footnotesize
-					\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
-				\end{tablenotes}
+					\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are the debiased cross-fitted window AME with $K=5$ folds; standard errors from the orthogonal score in parentheses. Step sizes $h_j$ and trimmed fractions are reported in Table~\ref{tab:window_settings}.
+					\end{tablenotes}
 			\end{threeparttable}
 		}%
 	\end{table*}
 	
-	Table~\ref{tab:ames_housing_spec_search} presents the specification search. The regression setting allows AMEs to be interpreted directly in dollar units, which makes the substantive findings immediately legible. Above-ground living area carries an AME of \$108 per square foot in the demographics-only specification for linear regression, falling to \$66 in the full specification as quality, condition, and location controls absorb variation --- a pattern of positive omitted variable bias that makes intuitive sense, since larger homes tend to be in better neighborhoods and of higher quality. The random forest standard errors are dramatically tighter than those from linear regression throughout: the GrLivArea AME of \$56 in the full specification has a standard error of \$1.93 for the random forest versus \$13.84 for linear regression, a sevenfold reduction that reflects both the better model fit --- $R^2$ of 0.953 versus 0.802 --- and the smoother prediction surface of the ensemble. The overall quality rating is the largest single predictor in the quality panel, with an AME of approximately \$21,000 per rating point for linear regression and \$17,000 for the random forest in specification A+B, both precisely estimated. The neighborhood tier indicators show substantial attenuation as quality controls are added --- the high neighborhood AME falls from \$90,000 to \$51,000 for linear regression and from \$51,000 to \$5,000 for the random forest --- suggesting that neighborhood effects in the black-box model are largely mediated by the quality and condition variables in a way the linear model cannot fully represent.
+	Table~\ref{tab:ames_housing_spec_search} presents the specification search. The regression setting allows AMEs to be interpreted directly in dollar units, which makes the substantive findings immediately legible. Above-ground living area carries an AME of \$139 per square foot in the physical-characteristics specification for linear regression, falling to \$106, \$85 and finally \$68 as quality, condition, and location controls are added --- a pattern of positive omitted variable bias that makes intuitive sense, since larger homes tend to be in better neighborhoods and of higher quality. The random forest traces the same path from \$129 to \$81. That the two model classes track each other this closely across the sequence is the first thing to note about the debiased estimates: because the orthogonal correction removes the first-order dependence on the fitted regression, the two columns are estimating the same window effect rather than reporting the slope each model happens to believe, and the linear column is no longer simply the ordinary least squares coefficient. The standard errors are now of comparable size across the two model classes --- \$12 for linear regression and \$9 for the random forest on GrLivArea in the full specification --- rather than differing by the order of magnitude that the refitting bootstrap produced, where the ensemble's smooth prediction surface made every replicate agree with every other and drove the reported standard error to \$1.93. Those intervals were narrow around a biased center; the influence-function intervals are wider and honest.
+
+	The cost of that honesty is visible in the quality panel. The overall quality rating is estimated at \$15,819 per point for linear regression and \$11,912 for the random forest in specification A+B, both precisely determined, but in the full specification the linear estimate falls to \$5,436 with a standard error of \$4,964 and is no longer distinguishable from zero, while the random forest gives \$16,256 with a standard error of \$4,829. With $n = 1{,}460$ observations, twelve features and a second-order sieve for the representer, the full specification is close to the limit of what this sample can support: the estimator reports that limit rather than concealing it. The neighborhood tier indicators show the same attenuation as before --- the high neighborhood effect falls from \$128,802 to \$89,812 for linear regression and from \$66,979 to \$43,512 for the random forest as quality controls are added --- but with standard errors near \$25{,}000 to \$38{,}000, the attenuation is a pattern in the point estimates rather than a difference the data can resolve.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -1808,47 +1887,51 @@
 			\label{tab:ames_housing_model_comparison}
 			\begin{tabular}{lrrrr}
 				\toprule
-				Variable & Linear & Random Forest & XGBoost & Neural Net \\
+				Feature & Linear & Random Forest & XGBoost & Neural Net \\
 				\midrule
-				GrLivArea & 65.57$^{***}$ & 56.44$^{***}$ & 61.91$^{***}$ & 66.71$^{***}$ \\
-				& (13.84) & (1.93) & (4.00) & (7.14) \\
-				BedroomAbvGr & -6189.02$^{**}$ & -1470.18$^{***}$ & -2921.99$^{***}$ & -8026.62$^{***}$ \\
-				& (3042.41) & (127.74) & (651.83) & (6.75) \\
-				FullBath & -6287.42 & 498.18$^{***}$ & 372.18 & -874.83$^{***}$ \\
-				& (4593.14) & (73.44) & (789.08) & (6.10) \\
-				HalfBath & -6967.90$^{*}$ & -198.68$^{***}$ & -756.76$^{*}$ & -1967.74$^{***}$ \\
-				& (3607.14) & (51.07) & (404.59) & (8.20) \\
+				GrLivArea & 68.05$^{***}$ & 81.50$^{***}$ & 70.27$^{***}$ & 66.20$^{***}$ \\
+				& (12.14) & (8.77) & (6.60) & (6.24) \\
+				BedroomAbvGr & -26454.60$^{*}$ & -9212.02 & -3464.31 & -12638.60$^{***}$ \\
+				& (14881.54) & (8925.07) & (4508.19) & (3830.14) \\
+				FullBath & -10578.42 & 7858.42 & 4761.27 & -5055.91 \\
+				& (9969.12) & (8988.79) & (7661.72) & (5080.88) \\
+				HalfBath & 1028.31 & -10317.96$^{**}$ & -10906.00$^{***}$ & -2175.44 \\
+				& (5697.41) & (4713.92) & (3940.81) & (3286.03) \\
 				\midrule
-				OverallQual & 16465.22$^{***}$ & 15636.08$^{***}$ & 13735.72$^{***}$ & 11140.42$^{***}$ \\
-				& (1228.91) & (519.24) & (500.14) & (7.96) \\
-				OverallCond & 6311.48$^{***}$ & 1974.55$^{***}$ & 4596.29$^{***}$ & 6074.62$^{***}$ \\
-				& (934.11) & (89.75) & (533.35) & (6.22) \\
-				YearBuilt & 440.47$^{***}$ & 576.01$^{***}$ & 619.02$^{***}$ & 335.19$^{***}$ \\
-				& (113.18) & (112.13) & (125.80) & (3.21) \\
-				YearRemodAdd & 101.51$^{*}$ & 518.52$^{***}$ & 647.81$^{***}$ & 612.99$^{***}$ \\
-				& (53.22) & (46.58) & (187.76) & (4.04) \\
+				OverallQual & 5436.28 & 16255.82$^{***}$ & 14913.45$^{***}$ & 8524.39$^{***}$ \\
+				& (4964.23) & (4829.24) & (4271.98) & (2394.41) \\
+				OverallCond & 2890.60 & 9190.11$^{***}$ & 12102.59$^{***}$ & 7234.42$^{**}$ \\
+				& (5496.46) & (3492.01) & (2519.57) & (2920.49) \\
+				YearBuilt & -141.08 & 1323.39$^{***}$ & 1352.73$^{***}$ & 230.04 \\
+				& (404.21) & (419.89) & (366.04) & (267.61) \\
+				YearRemodAdd & 1743.45$^{**}$ & -311.44 & -289.89 & 942.55$^{***}$ \\
+				& (740.09) & (753.53) & (673.39) & (351.83) \\
 				\midrule
-				LotArea & 0.61$^{***}$ & 1.81$^{***}$ & 2.11$^{***}$ & 2.28$^{***}$ \\
-				& (0.24) & (0.09) & (0.27) & (0.53) \\
-				GarageArea & 38.68$^{***}$ & 50.03$^{***}$ & 43.09$^{***}$ & 36.41$^{***}$ \\
-				& (6.01) & (3.11) & (9.21) & (8.34) \\
-				nbhd\_high & 51433.02$^{***}$ & 5058.64$^{***}$ & 20307.33$^{***}$ & 19166.75$^{***}$ \\
-				& (9809.90) & (255.98) & (1644.21) & (17.29) \\
-				nbhd\_mid & 7508.07 & 5949.97$^{***}$ & 9744.98$^{***}$ & 12711.08$^{***}$ \\
-				& (5151.49) & (259.64) & (557.43) & (9.87) \\
+				LotArea & 23.02$^{**}$ & -12.51 & -10.83 & 10.04$^{**}$ \\
+				& (11.37) & (11.14) & (9.91) & (4.81) \\
+				GarageArea & -102.78 & 90.33 & 92.29$^{*}$ & -6.11 \\
+				& (71.57) & (59.74) & (49.36) & (27.32) \\
+				nbhd\_high & 89812.31$^{**}$ & 43512.42$^{*}$ & 33476.93$^{**}$ & 35458.39$^{**}$ \\
+				& (38393.43) & (24635.87) & (16103.49) & (17705.63) \\
+				nbhd\_mid & 74336.31$^{*}$ & 33767.43 & 17468.12 & 36951.86$^{**}$ \\
+				& (39182.81) & (26676.67) & (18286.73) & (17998.56) \\
 				\midrule
-				$R^2$ & 0.802 & 0.953 & 0.954 & 0.939 \\
-				RMSE & 35,355.5 & 17,244.4 & 17,036.6 & 19,574.7 \\
+				$R^2$ & 0.802 & 0.953 & 0.954 & 0.932 \\
+				RMSE & 35,355.5 & 17,244.4 & 17,036.6 & 20,699.9 \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
-				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Standard errors from nonparametric bootstrap (200 replicates) in parentheses.
-			\end{tablenotes}
+				\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are the debiased cross-fitted window AME with $K=5$ folds; standard errors from the orthogonal score in parentheses. Step sizes $h_j$ and trimmed fractions are reported in Table~\ref{tab:window_settings}.
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:ames_housing_model_comparison} compares all four models on the full specification. All four models are well-fitted, with $R^2$ ranging from 0.802 for linear regression to 0.954 for XGBoost and the neural network reaching 0.939 with normalization. The core variables show striking agreement across architectures. The GrLivArea AME is \$66, \$56, \$62, and \$67 for linear regression, random forest, XGBoost, and neural network respectively --- a range of \$11 across four models that differ fundamentally in their functional form. The overall quality AME ranges from \$11,140 to \$16,465, all precisely estimated and within the same order of magnitude. This stability is not guaranteed by the method --- it reflects genuine agreement across models about the underlying conditional expectation function --- and it is the kind of cross-model validation that the AME framework makes possible precisely because it produces output on a common scale. The bedroom variable illustrates genuine model disagreement: the AME is $-$\$6,189 for linear regression, $-$\$1,470 for random forest, $-$\$2,922 for XGBoost, and $-$\$8,027 for the neural network, all negative and significant. The negative bedroom effect, conditional on living area, is a well-known finding in the hedonic pricing literature --- holding square footage fixed, more bedrooms means smaller rooms --- and all four models recover it, though with magnitudes spanning a fivefold range. The neural network standard errors are implausibly tight throughout, on the order of single dollars for several variables, which is a known artifact of deterministic gradient computation through a fixed trained network rather than a genuine reflection of estimation uncertainty; the bootstrap resampling propagates uncertainty through the model fitting but the neural network's smooth differentiable surface produces nearly identical finite differences across replicates.
+	Table~\ref{tab:ames_housing_model_comparison} compares all four models on the full specification. All four are well fitted, with $R^2$ ranging from 0.802 for linear regression to 0.954 for XGBoost, the random forest at 0.953 and the neural network at 0.932 with normalization. The GrLivArea AME is \$68, \$81, \$70, and \$66 for linear regression, random forest, XGBoost, and neural network respectively --- a range of \$15 across four models that differ fundamentally in their functional form, and all four intervals overlap comfortably. Under the debiased estimator this agreement means something different from what it meant under the plug-in. Every column is now an estimate of the same $\theta_{j,h}$, so agreement is evidence that the four nuisance estimates are all good enough for the correction to do its work, not evidence that four different models happen to have similar slopes. Disagreement, correspondingly, is now diagnostic of nuisance quality rather than of functional form.
+
+	The most consequential change from the plug-in results is in the standard errors, and it runs in the opposite direction to the one the refitting bootstrap suggested. Under that bootstrap the neural network's standard errors were implausibly tight --- on the order of single dollars for several variables, \$7 for bedrooms and \$8 for overall quality --- because resampling propagated uncertainty through the model fitting but the smooth differentiable surface produced nearly identical finite differences across replicates. The influence-function standard errors for the same quantities are \$3,830 and \$2,394. The random forest shows the same correction: the high-neighborhood standard error rises from \$256 to \$24,636. Those earlier figures were not precision but the bootstrap's inability to see a bias that every replicate shared, which is the failure mode of Remark~\ref{rem:refit}, and their disappearance is the clearest single indication in the empirical results that the orthogonal score is doing what it was constructed to do.
+
+	Read with those intervals attached, the bedroom variable is more equivocal than the plug-in made it look. The AME is $-$\$26,455 for linear regression, $-$\$9,212 for the random forest, $-$\$3,464 for XGBoost, and $-$\$12,639 for the neural network. All four are negative, consistent with the well-known hedonic finding that holding square footage fixed, more bedrooms means smaller rooms, but only the neural network estimate is significant at conventional levels and the linear estimate only marginally so. The plug-in reported all four as significant with standard errors between \$7 and \$3,042. The honest reading is that the sign is stable across architectures while this sample cannot pin down the magnitude, which is a weaker conclusion than the paper could previously state and a better supported one.
 	
 	\begin{sidewaystable}[htbp]
 		\centering
@@ -1858,34 +1941,36 @@
 			\label{tab:ames_housing_method_comparison}
 			\begin{tabular}{lrrrrrrrrrrrr}
 				\toprule
-				Variable & \multicolumn{3}{c}{Linear} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
-				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+				& \multicolumn{3}{c}{Linear} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
+				\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13}
 				& AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
 				\midrule
-				GrLivArea & 65.57 & 3423.49 & 65.57 & 56.44 & 61.69 & 38.64 & 61.91 & -971.88 & 39.06 & 66.71 & -- & 55.83 \\
-				BedroomAbvGr & -6189.02 & 145.82 & -6189.02 & -1470.18 & 90.87 & -1272.27 & -2921.99 & 158.44 & -4456.61 & -8026.62 & -- & -7803.94 \\
-				FullBath & -6287.42 & 31.01 & -6287.42 & 498.18 & 34.06 & 543.63 & 372.18 & 54.86 & 193.04 & -874.83 & -- & 339.37 \\
-				HalfBath & -6967.90 & -298.76 & -6967.90 & -198.68 & 50.46 & -125.75 & -756.76 & 30.53 & -1495.20 & -1967.74 & -- & -3985.01 \\
+				GrLivArea & 68.05 & 3423.49 & 65.57 & 81.50 & 61.69 & 38.64 & 70.27 & -971.88 & 39.06 & 66.20 & -- & 58.62 \\
+				BedroomAbvGr & -26454.60 & 145.82 & -6189.02 & -9212.02 & 90.87 & -1272.27 & -3464.31 & 158.44 & -4456.61 & -12638.60 & -- & -9294.43 \\
+				FullBath & -10578.42 & 31.01 & -6287.42 & 7858.42 & 34.06 & 543.63 & 4761.27 & 54.86 & 193.04 & -5055.91 & -- & 2427.62 \\
+				HalfBath & 1028.31 & -298.76 & -6967.90 & -10317.96 & 50.46 & -125.75 & -10906.00 & 30.53 & -1495.20 & -2175.44 & -- & -2723.69 \\
 				\midrule
-				OverallQual & 16465.22 & 1635.24 & 16465.22 & 15636.08 & 596.70 & 20776.14 & 13735.72 & 713.13 & 20130.92 & 11140.42 & -- & 11855.02 \\
-				OverallCond & 6311.48 & 980.44 & 6311.48 & 1974.55 & 161.26 & 2030.44 & 4596.29 & -481.60 & 5071.47 & 6074.62 & -- & 6504.98 \\
-				YearBuilt & 440.47 & -415.01 & 440.47 & 576.01 & 288.29 & 209.05 & 619.02 & 569.00 & 397.33 & 335.19 & -- & 415.03 \\
-				YearRemodAdd & 101.51 & 86.86 & 101.51 & 518.52 & 373.04 & 118.06 & 647.81 & 499.84 & 152.00 & 612.99 & -- & 475.07 \\
+				OverallQual & 5436.28 & 1635.24 & 16465.22 & 16255.82 & 596.70 & 20776.14 & 14913.45 & 713.13 & 20130.92 & 8524.39 & -- & 10802.73 \\
+				OverallCond & 2890.60 & 980.44 & 6311.48 & 9190.11 & 161.26 & 2030.44 & 12102.59 & -481.60 & 5071.47 & 7234.42 & -- & 6365.50 \\
+				YearBuilt & -141.08 & -415.01 & 440.47 & 1323.39 & 288.29 & 209.05 & 1352.73 & 569.00 & 397.33 & 230.04 & -- & 421.27 \\
+				YearRemodAdd & 1743.45 & 86.86 & 101.51 & -311.44 & 373.04 & 118.06 & -289.89 & 499.84 & 152.00 & 942.55 & -- & 561.16 \\
 				\midrule
-				LotArea & 0.61 & 267.44 & 0.61 & 1.81 & -183.50 & 1.33 & 2.11 & 216.28 & 2.38 & 2.28 & -- & 2.24 \\
-				GarageArea & 38.68 & 93.22 & 38.68 & 50.03 & -884.31 & 23.77 & 43.09 & -704.59 & 28.98 & 36.41 & -- & 47.34 \\
-				nbhd\_high & 51433.02 & 77.50 & 51433.02 & 5058.64 & -506.36 & 5058.64 & 20307.33 & 50.70 & 20307.34 & 19166.75 & -- & 6383.02 \\
-				nbhd\_mid & 7508.07 & 266.38 & 7508.07 & 5949.97 & 40.68 & 5949.97 & 9744.98 & -134.71 & 9744.97 & 12711.08 & -- & 9748.84 \\
+				LotArea & 23.02 & 267.44 & 0.61 & -12.51 & -183.50 & 1.33 & -10.83 & 216.28 & 2.38 & 10.04 & -- & 2.35 \\
+				GarageArea & -102.78 & 93.22 & 38.68 & 90.33 & -884.31 & 23.77 & 92.29 & -704.59 & 28.98 & -6.11 & -- & 41.48 \\
+				nbhd\_high & 89812.31 & 77.50 & 51433.02 & 43512.42 & -506.36 & 5058.64 & 33476.93 & 50.70 & 20307.34 & 35458.39 & -- & 12399.98 \\
+				nbhd\_mid & 74336.31 & 266.38 & 7508.07 & 33767.43 & 40.68 & 5949.97 & 17468.12 & -134.71 & 9744.97 & 36951.86 & -- & 11392.44 \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{sidewaystable}
 	
-	Table~\ref{tab:ames_housing_method_comparison} brings the SHAP comparison into sharpest relief in the regression setting, where the units are dollars and the magnitudes are large enough to make the divergences concrete. SHAP values are unavailable for the neural network in this table, reflecting a limitation of the GradientExplainer implementation for this architecture. For the other three models the divergence between SHAP and AME is stark. The SHAP value for GrLivArea is \$3,423 for the linear model, which attributes to that variable an effect fifty times larger than the AME of \$66 --- a number that is not interpretable as a marginal effect in any standard sense. The SHAP values for garage area ($-$\$884), lot area ($-$\$184), and overall condition ($-$\$482) are negative for the random forest while the AME and PDP estimates are positive for all three. The AME and PDP estimates are in close agreement throughout for all four models --- the neighborhood tier indicators match almost exactly between AME and PDP for random forest and XGBoost, the bedroom AME of $-$\$8,027 for the neural network is close to its PDP slope of $-$\$7,804, and the quality variables align across estimators within reasonable range. The Ames Housing results complete the sweep across outcome types: the framework produces dollar-denominated marginal effects with valid standard errors for a continuous regression outcome, using exactly the same estimation procedure as the binary classification examples, with no modification required.
+	Table~\ref{tab:ames_housing_method_comparison} brings the SHAP comparison into sharpest relief in the regression setting, where the units are dollars and the magnitudes are large enough to make the divergences concrete. SHAP values are unavailable for the neural network in this table, reflecting a limitation of the GradientExplainer implementation for this architecture. For the other three models the divergence between SHAP and AME is stark. The SHAP value for GrLivArea is \$3,423 for the linear model, which attributes to that variable an effect fifty times larger than the AME of \$68 --- a number that is not interpretable as a marginal effect in any standard sense. The SHAP values for garage area ($-$\$884), lot area ($-$\$183), and the high neighborhood indicator ($-$\$506) are negative for the random forest while the AME estimates are positive for all three. And as before, no standard errors attach to the SHAP column, so there is no basis on which to adjudicate any of these conflicts.
+
+	The partial dependence column requires a different reading than it did under the plug-in, and the change is itself informative. A partial dependence slope is computed by perturbing a single full-sample fit and averaging, which makes it a plug-in average of exactly the kind the orthogonal correction is designed to repair; it carries no correction term and no standard error. Where the plug-in is nearly unbiased the two therefore continue to agree closely: on above-ground living area, the best supported and smoothest feature in the data, the AME is \$68 and the PDP slope \$66 for linear regression, \$66 and \$59 for the neural network. Where the regularization bias bites, they separate, and they separate in the direction the theory predicts --- toward zero for the uncorrected quantity. The bedroom AME of $-$\$26,455 for linear regression sits against a PDP slope of $-$\$6,189; the high-neighborhood AME of \$43,512 for the random forest sits against a PDP slope of \$5,059, and the mid-neighborhood AME of \$33,767 against \$5,950. These are the count and binary contrasts, where the fitted surface is flattest between levels and where the plug-in has the most to lose. The pattern that once read as mutual corroboration between two estimators now reads as a measurement of the bias separating them, which is the same quantity Simulation~2 isolates in the coverage of the refitting bootstrap. The Ames Housing results complete the sweep across outcome types: the framework produces dollar-denominated marginal effects with valid standard errors for a continuous regression outcome, using exactly the same estimation procedure as the binary classification examples, with no modification required.
 	
 	\section{Simulation}
 	
@@ -2449,21 +2534,48 @@
 	The empirical results across three datasets --- UCI Adult Income \citep{kohavi1996,
 		UCI}, UCI Credit Card Default \citep{yeh2009, UCI}, and Ames Housing
 	\citep{decock2011} --- validate the framework on binary classification and continuous
-	regression outcomes. The AME estimates are stable across model classes where the
-	underlying models are well-fitted, the bootstrap standard errors narrow as model fit
-	improves, and the AME and partial dependence plot estimates are in close agreement
-	throughout. The comparison with SHAP values reveals a systematic divergence: SHAP
-	values are on a different scale, in several cases have the wrong sign relative to AME
-	and PDP, and carry no inferential apparatus. The Ames Housing application is
-	particularly informative because the dollar-denominated units make the divergence
-	concrete --- SHAP attributes to above-ground living area an effect sixty times larger
-	than the AME for the linear model, a number that is not interpretable as a marginal
-	effect in any standard sense. An additional finding is that Breiman random forests
-	produce less stable plug-in AME estimates than the other estimator classes, and the
-	simulation study traces the resulting coverage failure to the regularization bias of
-	the plug-in --- the first-order term that the orthogonal correction removes, and the
-	clearest empirical argument for reporting the debiased estimator rather than the
-	uncorrected average.
+	regression outcomes. Under the debiased estimator the four model classes agree far
+	more closely than they did under the plug-in, and they do so because they are now
+	estimating the same quantity rather than each reporting the slope of its own fit.
+	The credit default application shows this most sharply: the plug-in put the effect
+	of the payment ratio at $-$0.431 and $-$0.440 for the two tree ensembles, $-$0.045
+	for logistic regression and 0.0009 --- effectively nothing --- for the neural
+	network, a set of estimates that cannot all be describing the same world; the
+	corrected estimates are $-$0.489, $-$0.584, $-$0.265 and $-$0.194, all negative,
+	all significant, and all telling one story. The variation that the plug-in
+	displayed was in the main the regularization bias, which differs across learners
+	because their regularization differs.
+
+	The standard errors move in the direction the theory predicts as well, and in
+	several places that means upward. The refitting bootstrap reported standard errors
+	of a few dollars for the neural network on Ames Housing and of 0.0000 to four
+	decimal places for the random forest on credit default; the influence-function
+	standard errors for the same quantities are three to four orders of magnitude
+	larger. Those earlier intervals were narrow around a displaced center, which is the
+	failure mode isolated in Simulation~2. The cost of the correction is visible in the
+	smallest application: with $n = 1{,}460$ observations, several Ames Housing effects
+	that the plug-in reported as precisely determined are no longer distinguishable
+	from zero, and the estimator reports that rather than concealing it.
+
+	The comparison with SHAP values reveals a systematic divergence: SHAP values are on
+	a different scale, in several cases have the wrong sign relative to the AME, and
+	carry no inferential apparatus. The Ames Housing application is particularly
+	informative because the dollar-denominated units make the divergence concrete ---
+	SHAP attributes to above-ground living area an effect fifty times larger than the
+	AME for the linear model, a number that is not interpretable as a marginal effect
+	in any standard sense. Partial dependence slopes require a subtler reading than the
+	earlier draft gave them. A partial dependence slope is itself a plug-in average
+	over a single full-sample fit, so it agrees with the debiased AME where the
+	plug-in is nearly unbiased --- on smooth, well-supported, continuous features ---
+	and falls short of it, in about three quarters of the resolved cases toward zero,
+	wherever regularization flattens the fitted surface. What once read as two
+	estimators corroborating each other is better read as a direct measurement of the
+	bias between them. An
+	additional finding is that Breiman random forests produce less stable plug-in AME
+	estimates than the other estimator classes, and the simulation study traces the
+	resulting coverage failure to the same regularization bias --- the first-order term
+	that the orthogonal correction removes, and the clearest empirical argument for
+	reporting the debiased estimator rather than the uncorrected average.
 	
 	Several important problems remain open. The most pressing concerns Breiman
 	forests, and the present framework splits it into two questions of very different
