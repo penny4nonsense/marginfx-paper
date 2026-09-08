@@ -1,0 +1,34 @@
+\begin{table*}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{Ames Housing: Method Comparison. AME, SHAP, and PDP estimates for Sale Price (USD), full specification (A+B+C).}
+\label{tab:ames_housing_method_comparison}
+\begin{tabular}{lrrrrrrrrrrrr}
+\toprule
+ & \multicolumn{3}{c}{Linear} & \multicolumn{3}{c}{Random Forest} & \multicolumn{3}{c}{XGBoost} & \multicolumn{3}{c}{Neural Net} \\
+\cmidrule(lr){2-4} \cmidrule(lr){5-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} 
+ & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP & AME & SHAP & PDP \\
+\midrule
+GrLivArea & 65.57 & 3423.49 & 65.57 & 56.44 & 61.69 & 38.64 & 61.91 & -971.88 & 39.06 & 65.25 & -- & 56.97 \\
+BedroomAbvGr & -6189.02 & 145.82 & -6189.02 & -1470.18 & 90.87 & -1272.27 & -2921.99 & 158.44 & -4456.61 & -7644.46 & -- & -7994.88 \\
+FullBath & -6287.42 & 31.01 & -6287.42 & 498.18 & 34.06 & 543.63 & 372.18 & 54.86 & 193.04 & 1974.76 & -- & 2283.10 \\
+HalfBath & -6967.90 & -298.76 & -6967.90 & -198.68 & 50.46 & -125.75 & -756.76 & 30.53 & -1495.20 & -2601.77 & -- & -2936.23 \\
+\midrule
+OverallQual & 16465.22 & 1635.24 & 16465.22 & 15636.08 & 596.70 & 20776.14 & 13735.72 & 713.13 & 20130.92 & 12371.13 & -- & 11198.54 \\
+OverallCond & 6311.48 & 980.44 & 6311.48 & 1974.55 & 161.26 & 2030.44 & 4596.29 & -481.60 & 5071.47 & 6613.44 & -- & 6948.90 \\
+YearBuilt & 440.47 & -415.01 & 440.47 & 576.01 & 288.29 & 209.05 & 619.02 & 569.00 & 397.33 & 277.27 & -- & 451.33 \\
+YearRemodAdd & 101.51 & 86.86 & 101.51 & 518.52 & 373.04 & 118.06 & 647.81 & 499.84 & 152.00 & 632.10 & -- & 526.77 \\
+\midrule
+LotArea & 0.61 & 267.44 & 0.61 & 1.81 & -183.50 & 1.33 & 2.11 & 216.28 & 2.38 & 2.31 & -- & 2.24 \\
+GarageArea & 38.68 & 93.22 & 38.68 & 50.03 & -884.31 & 23.77 & 43.09 & -704.59 & 28.98 & 32.70 & -- & 43.56 \\
+nbhd\_high & 51433.02 & 77.50 & 51433.02 & 5058.64 & -506.36 & 5058.64 & 20307.33 & 50.70 & 20307.34 & 4522.53 & -- & 12948.55 \\
+nbhd\_mid & 7508.07 & 266.38 & 7508.07 & 5949.97 & 40.68 & 5949.97 & 9744.98 & -134.71 & 9744.97 & 14078.53 & -- & 12583.73 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} AME = Average Marginal Effect (marginfx). SHAP = mean signed SHAP value (GradientExplainer). PDP = slope of partial dependence plot. Full specification (A+B+C) only. No standard errors reported for SHAP and PDP.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

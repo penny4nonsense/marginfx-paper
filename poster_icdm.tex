@@ -1,0 +1,302 @@
+% poster_icdm.tex -- ICDM poster.
+%
+% A0 portrait (841 x 1189 mm), three columns. Build with:
+%     pdflatex poster_icdm.tex
+%
+% Numbers here are pulled from the camera-ready results in empirical-icdm/
+% and simulations/sim2_se_calibration/results_icdm/, not from the originally
+% submitted tables. Where the two differ it is because the submitted bootstrap
+% warm-started its replicates; see the camera-ready for the correction.
+\documentclass[final]{beamer}
+\usepackage[size=a0,orientation=portrait,scale=1.5]{beamerposter}
+\usetheme{default}
+\usecolortheme{default}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+
+% ---------------------------------------------------------------- palette --
+\definecolor{ink}{HTML}{1A1A2E}
+\definecolor{accent}{HTML}{0F4C81}
+\definecolor{warm}{HTML}{B4451F}
+\definecolor{panel}{HTML}{F4F1EA}
+\definecolor{rule}{HTML}{C9C2B4}
+
+\setbeamercolor{background canvas}{bg=white}
+\setbeamercolor{block title}{fg=white,bg=accent}
+\setbeamercolor{block body}{fg=ink,bg=panel}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{caption}{\insertcaption}
+\setbeamertemplate{itemize item}{\color{accent}$\blacktriangleright$}
+\setbeamertemplate{block begin}{
+  \vskip.5ex
+  \begin{beamercolorbox}[leftskip=1cm,colsep*=.75ex]{block title}
+    \usebeamerfont{block title}\large\bfseries\insertblocktitle
+  \end{beamercolorbox}
+  \vskip-.5ex
+  \begin{beamercolorbox}[colsep*=.75ex,vmode]{block body}
+  \vskip.5ex
+}
+\setbeamertemplate{block end}{\vskip.5ex\end{beamercolorbox}\vskip1.5ex}
+
+\newcommand{\ame}{\widehat{\mathrm{AME}}}
+\newcommand{\keynum}[1]{{\color{warm}\bfseries #1}}
+
+\title{Model-Agnostic Interpretation of Machine Learning\\ via Average Marginal Effects}
+\author{Jason Parker}
+\institute{Southwest Airlines}
+\date{}
+
+\begin{document}
+\begin{frame}[t]
+
+% ------------------------------------------------------------------ header --
+\begin{beamercolorbox}[wd=\paperwidth,colsep*=.5ex]{block title}
+  \vskip1ex
+  \centering
+  {\Huge\bfseries Model-Agnostic Interpretation of Machine Learning}\\[.6ex]
+  {\Huge\bfseries via Average Marginal Effects}\\[1.2ex]
+  {\Large Jason Parker \quad\textbar\quad Southwest Airlines}\\[.6ex]
+  {\large IEEE International Conference on Data Mining (ICDM) 2026}
+  \vskip1ex
+\end{beamercolorbox}
+\vskip2ex
+
+\begin{columns}[t]
+
+% ================================================================ column 1 ==
+\begin{column}{.31\paperwidth}
+
+\begin{block}{The problem}
+The accuracy--interpretability tradeoff is usually treated as fundamental:
+either fit a linear model you can read, or fit a black box you cannot.
+
+We argue it is an artifact of \emph{how} black boxes are read. A logistic
+regression is interpretable not because it is linear but because it reports
+a table of effects with standard errors. Any model can be made to do that.
+\end{block}
+
+\begin{block}{The estimand}
+For a fitted prediction function $\hat f$ and feature $x_j$, the average
+marginal effect is the average partial derivative over the covariate
+distribution,
+\[
+  \mathrm{AME}_j \;=\; \mathbb{E}\!\left[\frac{\partial \hat f(\mathbf{x})}{\partial x_j}\right].
+\]
+This is standard in the econometrics of nonlinear models. It is well defined
+for \emph{any} supervised learner, and reduces to the usual coefficient when
+$\hat f$ is a generalized linear model.
+\end{block}
+
+\begin{block}{The estimator}
+Analytical derivatives are replaced by centered finite differences with an
+adaptive step size,
+\[
+  \ame_j = \frac{1}{n}\sum_{i=1}^{n}
+    \frac{\hat f(\mathbf{x}_i + h_j e_j) - \hat f(\mathbf{x}_i - h_j e_j)}{2h_j},
+\]
+with the step size scaled to each feature and floored on the integers,
+\[
+  h_j =
+  \begin{cases}
+    \max\!\left(0.05\,\hat\sigma_j,\; \tfrac12\right)
+      & x_j \text{ integer-valued},\\[.5ex]
+    0.05\,\hat\sigma_j & \text{otherwise.}
+  \end{cases}
+\]
+
+\begin{itemize}
+  \item The integer floor matters for tree ensembles: predictions are
+        piecewise constant, and a step that never crosses a split threshold
+        returns a derivative of exactly zero.
+  \item Binary features use the contrast
+        $\hat f(\mathbf{x}^{(j,1)}) - \hat f(\mathbf{x}^{(j,0)})$ instead.
+\end{itemize}
+\end{block}
+
+\begin{block}{Inference}
+Standard errors come from a nonparametric bootstrap over
+$(\mathbf{x}_i, y_i)$ pairs. Each replicate is \textbf{refit from a fresh
+initialization} on the resample and evaluated there.
+
+\begin{itemize}
+  \item Refitting from scratch, rather than warm-starting from $\hat f$, is
+        what makes the replicate spread reflect how far the fitted function
+        actually moves with the data.
+  \item Output is a coefficient table --- estimate, standard error,
+        significance --- with no restriction on the form of $\hat f$.
+\end{itemize}
+\end{block}
+
+\end{column}
+
+% ================================================================ column 2 ==
+\begin{column}{.31\paperwidth}
+
+\begin{block}{Effects agree across model classes}
+UCI Adult Income ($n = 48{,}842$), full specification. AME on
+$P(\text{income} > \$50\text{k})$.
+
+\vskip1ex
+\centering
+\begin{tabular}{lcccc}
+\toprule
+ & Logistic & Forest & XGBoost & Net \\
+\midrule
+education   & 0.031 & 0.029 & 0.031 & 0.028 \\
+married     & 0.275 & 0.245 & 0.236 & 0.239 \\
+female      & $-$0.027 & $-$0.022 & $-$0.012 & $-$0.027 \\
+\midrule
+McFadden $R^2$ & 0.400 & 0.450 & 0.492 & 0.455 \\
+\bottomrule
+\end{tabular}
+\vskip1ex
+\raggedright
+Four learners that differ substantially in fit report the same effect of
+education to within \keynum{0.3 percentage points}. This comparison is only
+possible because the AME puts every model on a common scale.
+\end{block}
+
+\begin{block}{Effects in the units of the problem}
+Ames Housing ($n = 1{,}460$). AME on sale price, in dollars.
+
+\vskip1ex
+\centering
+\begin{tabular}{lrr}
+\toprule
+ & Linear & Forest \\
+\midrule
+Living area (/sq ft) & \$66\phantom{,000} & \$56\phantom{,000} \\
+ & \small(13.06) & \small(5.25) \\
+Overall quality (/pt) & \$16,465 & \$15,636 \\
+ & \small(1,287) & \small(1,643) \\
+\bottomrule
+\end{tabular}
+\vskip1ex
+\raggedright
+Standard errors in parentheses. The ensemble is not uniformly more precise:
+it wins where the linear model must fit a nonlinear relationship with one
+slope, and loses where the relationship is nearly linear.
+\end{block}
+
+\begin{block}{Why not SHAP?}
+SHAP values, PDP slopes and LIME coefficients are \emph{descriptive}. There is
+no standard error, no confidence interval, no hypothesis test.
+
+They are also not on the scale of the outcome. Adult, logistic, full
+specification:
+
+\vskip1ex
+\centering
+\begin{tabular}{lrrr}
+\toprule
+ & AME & SHAP & PDP \\
+\midrule
+age            & 0.0027 & \keynum{$-$0.0270} & 0.0028 \\
+education      & 0.0306 & \keynum{$-$0.1186} & 0.0269 \\
+married        & 0.2752 & $-$0.0768 & 0.2749 \\
+female         & $-$0.0269 & 0.0022 & $-$0.0270 \\
+\bottomrule
+\end{tabular}
+\vskip1ex
+\raggedright
+The AME and the PDP slope agree to three decimals on three of four features
+--- as they should, since both are averaging the same surface. SHAP disagrees
+in \textbf{magnitude and in sign}: it reports age and education as pushing
+income \emph{down} in a model whose coefficients on both are positive and
+precisely estimated.
+
+For above-ground living area in Ames, the SHAP attribution is roughly
+\keynum{50$\times$} the AME for the same linear model --- not interpretable as
+a marginal effect in any standard sense.
+\end{block}
+
+\end{column}
+
+% ================================================================ column 3 ==
+\begin{column}{.31\paperwidth}
+
+\begin{block}{Simulation 1: the estimator recovers the truth}
+$x_1,\dots,x_4 \sim N(0,1)$ independently; $\eta = 2x_1 + 3x_2$; $x_3, x_4$ are
+noise with a true effect of zero. 500--1{,}000 Monte Carlo iterations.
+
+\begin{itemize}
+  \item Bias is negligible for every learner at every sample size on the
+        noise features.
+  \item Logistic and the network recover the signal effects at the
+        $O(n^{-1/2})$ rate.
+  \item Random forests develop a \textbf{negative bias that does not vanish}
+        with $n$ --- regularization from depth capping and subsampling.
+\end{itemize}
+\end{block}
+
+\begin{block}{Simulation 2: where the bootstrap fails}
+Coverage of nominal 95\% intervals, linear classification design.
+
+\vskip1ex
+\centering
+\begin{tabular}{lccc}
+\toprule
+ & $n{=}250$ & $n{=}1{,}000$ & $n{=}5{,}000$ \\
+\midrule
+Logistic & 0.934 & 0.930 & 0.924 \\
+XGBoost  & 0.938 & 0.888 & 0.994 \\
+Forest   & 0.992 & 0.978 & \keynum{0.802} \\
+\bottomrule
+\end{tabular}
+\vskip1ex
+\raggedright
+\textbf{The failure is bias, not variance.} The forest's bootstrap standard
+error is \emph{conservative} --- 1.2 to 1.5$\times$ the true sampling
+deviation --- so the intervals are, if anything, too wide.
+
+What breaks is that the bias stays put while the interval shrinks:
+
+\vskip1ex
+\centering
+\begin{tabular}{lccc}
+\toprule
+Forest, $x_1$ & $n{=}250$ & $n{=}1{,}000$ & $n{=}5{,}000$ \\
+\midrule
+bias        & 0.013 & $-$0.002 & $-$0.016 \\
+std.\ error & 0.061 & 0.023 & 0.007 \\
+bias / s.e. & 0.21 & 0.08 & \keynum{2.11} \\
+\bottomrule
+\end{tabular}
+\vskip1ex
+\raggedright
+At $n = 5{,}000$ the half-width of the interval (0.0145) is smaller than the
+bias (0.0157). XGBoost, whose bias \emph{does} vanish with $n$, keeps nominal
+coverage throughout --- so the failure is specific to learners whose
+regularization bias does not shrink.
+\end{block}
+
+\begin{block}{Takeaways}
+\begin{itemize}
+  \item Any supervised model can report a coefficient table on the scale of
+        the outcome, with inference.
+  \item Effects are stable across learners that differ substantially in fit.
+  \item The refitting bootstrap is valid where the learner's regularization
+        bias is negligible, and \textbf{fails silently where it is not}.
+  \item Open: bootstrap validity is conjectured, not proved. A companion
+        journal paper establishes gradient consistency for neural networks,
+        gradient boosting and Mondrian forests, and replaces the bootstrap
+        with a debiased, cross-fitted, Neyman-orthogonal estimator that
+        restores nominal coverage for Breiman forests.
+\end{itemize}
+\end{block}
+
+\begin{block}{Software}
+\centering
+\texttt{marginfx} --- \texttt{pip install marginfx}\\[.5ex]
+\small One call per model. scikit-learn, XGBoost, TensorFlow and PyTorch.
+\end{block}
+
+\end{column}
+\end{columns}
+\end{frame}
+\end{document}

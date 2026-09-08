@@ -1,0 +1,47 @@
+\begin{table*}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{Ames Housing: Model Comparison. Average marginal effects on Sale Price (USD), full specification (A+B+C).}
+\label{tab:ames_housing_model_comparison}
+\begin{tabular}{lrrrr}
+\toprule
+Feature & Linear & Random Forest & XGBoost & Neural Net \\
+\midrule
+GrLivArea & 65.57$^{***}$ & 56.44$^{***}$ & 61.91$^{***}$ & 65.25$^{***}$ \\
+ & (13.06) & (5.25) & (5.41) & (5.75) \\
+BedroomAbvGr & -6189.02$^{**}$ & -1470.18$^{**}$ & -2921.99$^{***}$ & -7644.46$^{***}$ \\
+ & (2879.08) & (662.67) & (1031.64) & (2338.44) \\
+FullBath & -6287.42 & 498.18 & 372.18 & 1974.76 \\
+ & (4381.13) & (1007.14) & (1002.37) & (4059.29) \\
+HalfBath & -6967.90$^{**}$ & -198.68 & -756.76 & -2601.77 \\
+ & (2991.66) & (241.35) & (474.22) & (3315.83) \\
+\midrule
+OverallQual & 16465.22$^{***}$ & 15636.08$^{***}$ & 13735.72$^{***}$ & 12371.13$^{***}$ \\
+ & (1286.53) & (1642.54) & (940.74) & (1413.00) \\
+OverallCond & 6311.48$^{***}$ & 1974.55$^{***}$ & 4596.29$^{***}$ & 6613.44$^{**}$ \\
+ & (923.64) & (589.68) & (897.02) & (2829.13) \\
+YearBuilt & 440.47$^{***}$ & 576.01$^{***}$ & 619.02$^{***}$ & 277.27$^{**}$ \\
+ & (102.13) & (150.36) & (169.71) & (116.37) \\
+YearRemodAdd & 101.51$^{*}$ & 518.52$^{***}$ & 647.81$^{**}$ & 632.10$^{***}$ \\
+ & (56.55) & (167.84) & (254.45) & (151.54) \\
+\midrule
+LotArea & 0.61$^{***}$ & 1.81$^{***}$ & 2.11$^{***}$ & 2.31$^{***}$ \\
+ & (0.23) & (0.33) & (0.31) & (0.30) \\
+GarageArea & 38.68$^{***}$ & 50.03$^{***}$ & 43.09$^{***}$ & 32.70$^{***}$ \\
+ & (6.87) & (10.37) & (9.17) & (8.78) \\
+nbhd\_high & 51433.02$^{***}$ & 5058.64$^{**}$ & 20307.33$^{***}$ & 4522.53 \\
+ & (9947.22) & (2138.24) & (3928.96) & (9314.23) \\
+nbhd\_mid & 7508.07 & 5949.97$^{***}$ & 9744.98$^{***}$ & 14078.53$^{***}$ \\
+ & (4816.36) & (1801.45) & (1642.55) & (4405.63) \\
+\midrule
+$R^2$ & 0.802 & 0.953 & 0.954 & 0.926 \\
+RMSE & 35,355.5 & 17,244.4 & 17,036.6 & 21,598.9 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are plug-in window AMEs with adaptive step sizes; standard errors in parentheses are the standard deviation across 200 nonparametric bootstrap replicates, each refit from a fresh initialization on the resample.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

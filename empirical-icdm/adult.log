@@ -1,0 +1,78 @@
+============================================================
+marginfx Empirical Analysis — UCI Adult Income
+============================================================
+
+Settings:
+  Models:      ['logistic', 'rf', 'xgboost', 'tensorflow']
+  Bootstrap:   200 replicates
+  Seed:        42
+
+Specifications:
+  A: ['age', 'female', 'education_num']
+  AB: ['age', 'female', 'education_num', 'hours_per_week', 'government', 'self_employed', 'white_collar', 'blue_collar', 'service']
+  AC: ['age', 'female', 'education_num', 'capital_gain', 'capital_loss', 'married']
+  ABC: ['age', 'female', 'education_num', 'hours_per_week', 'government', 'self_employed', 'white_collar', 'blue_collar', 'service', 'capital_gain', 'capital_loss', 'married']
+
+Loading processed data...
+  48,842 observations, 13 columns
+  Outcome prevalence: 23.9% earn > $50k
+
+Computing AMEs across all specifications...
+  Resuming from partial results (12 combinations already done)
+
+  Specification A: ['age', 'female', 'education_num']
+    Skipping logistic (already done)
+    Skipping rf (already done)
+    Skipping xgboost (already done)
+    Skipping tensorflow (already done)
+
+  Specification AB: ['age', 'female', 'education_num', 'hours_per_week', 'government', 'self_employed', 'white_collar', 'blue_collar', 'service']
+    Skipping logistic (already done)
+    Skipping rf (already done)
+    Skipping xgboost (already done)
+    Skipping tensorflow (already done)
+
+  Specification AC: ['age', 'female', 'education_num', 'capital_gain', 'capital_loss', 'married']
+    Skipping logistic (already done)
+    Skipping rf (already done)
+    Skipping xgboost (already done)
+    Skipping tensorflow (already done)
+
+  Specification ABC: ['age', 'female', 'education_num', 'hours_per_week', 'government', 'self_employed', 'white_collar', 'blue_collar', 'service', 'capital_gain', 'capital_loss', 'married']
+    Fitting logistic...      bootstrap: 200 replicates, 8 chunks, 24 workers
+ done (177.9s) | mcfadden_r2=0.400 accuracy=0.847
+      (saved partial: 84 rows)
+    Fitting rf...      bootstrap: 200 replicates, 8 chunks, 24 workers
+ done (349.3s) | mcfadden_r2=0.450 accuracy=0.863
+      (saved partial: 96 rows)
+    Fitting xgboost...      bootstrap: 200 replicates, 8 chunks, 24 workers
+ done (75.9s) | mcfadden_r2=0.492 accuracy=0.872
+      (saved partial: 108 rows)
+    Fitting tensorflow...      bootstrap: 200 replicates, 25 chunks, 10 workers
+ done (4438.0s) | mcfadden_r2=0.455 accuracy=0.860
+      (saved partial: 120 rows)
+SHAP results already exist, skipping...
+PDP results already exist, skipping...
+
+Saving results...
+  Saved AME results: C:\Users\jason\Dropbox\projects\marginfx-paper\empirical-icdm\adult\results\adult_ames.parquet
+  Saved SHAP results: C:\Users\jason\Dropbox\projects\marginfx-paper\empirical-icdm\adult\results\adult_shap.parquet
+  Saved PDP results: C:\Users\jason\Dropbox\projects\marginfx-paper\empirical-icdm\adult\results\adult_pdp.parquet
+
+Done in 5041.3s
+Results saved to: C:\Users\jason\Dropbox\projects\marginfx-paper\empirical-icdm\adult\results
+
+AME Results Preview (full spec, logistic):
+          term  estimate  std_error  p_value
+           age    0.0027     0.0001   0.0000
+        female   -0.0269     0.0039   0.0000
+ education_num    0.0306     0.0007   0.0000
+hours_per_week    0.0033     0.0001   0.0000
+    government    0.0033     0.0042   0.4358
+ self_employed   -0.0268     0.0042   0.0000
+  white_collar    0.0541     0.0049   0.0000
+   blue_collar   -0.0270     0.0049   0.0000
+       service   -0.0427     0.0057   0.0000
+  capital_gain    0.0000     0.0000   0.0000
+  capital_loss    0.0001     0.0000   0.0000
+       married    0.2752     0.0040   0.0000

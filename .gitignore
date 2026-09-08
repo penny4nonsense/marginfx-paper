@@ -41,3 +41,8 @@ htmlcov/
 
 # Figures — comment out if you want to track generated figures
 # figures/
+
+# Simulation run logs — transient stdout/stderr from the queue scripts.
+# The .err.log files are almost entirely TensorFlow startup warnings.
+simulations/*.log
+simulations/*.err.log
