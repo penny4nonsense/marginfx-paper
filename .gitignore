@@ -46,3 +46,5 @@ htmlcov/
 # The .err.log files are almost entirely TensorFlow startup warnings.
 simulations/*.log
 simulations/*.err.log
+empirical-icdm/*.log
+empirical-icdm/*.err.log
