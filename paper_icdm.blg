@@ -8,54 +8,6 @@ Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Database file #1: references.bib
-Repeated entry---line 431 of file references.bib
- : @article{decock2011
- :                    ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 451 of file references.bib
- : @misc{kohavi1996
- :                 ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 465 of file references.bib
- : @misc{UCI
- :          ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 669 of file references.bib
- : @article{wager2014confidence
- :                             ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 689 of file references.bib
- : @article{wager2018forests
- :                          ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 765 of file references.bib
- : @book{greene2012
- :                 ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 783 of file references.bib
- : @book{wooldridge2010
- :                     ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 815 of file references.bib
- : @article{efron1979
- :                   ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 837 of file references.bib
- : @book{efrontibshirani1993
- :                          ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 1115 of file references.bib
- : @article{wager2018forests
- :                          ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 1295 of file references.bib
- : @article{wager2014confidence
- :                             ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 1459 of file references.bib
- : @article{wager2018forests
- :                          ,
-I'm skipping whatever remains of this entry
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
@@ -103,4 +55,4 @@ warning$ -- 1
 while$ -- 68
 width$ -- 23
 write$ -- 222
-(There were 12 error messages)
+(There was 1 warning)
