@@ -41,7 +41,11 @@ from typing import Tuple
 # Feature generation
 # ---------------------------------------------------------------------------
 
-def generate_features(n: int, rng: np.random.Generator) -> np.ndarray:
+def generate_features(
+    n: int,
+    rng: np.random.Generator,
+    dgp_name: str = 'linear',
+) -> np.ndarray:
     """
     Generate feature matrix X with 4 standard normal features.
 
@@ -59,6 +63,9 @@ def generate_features(n: int, rng: np.random.Generator) -> np.ndarray:
     np.ndarray
         Feature matrix of shape (n, 4).
     """
+    if covariate_law(dgp_name) == 'uniform':
+        lo, hi = UNIFORM_SUPPORT
+        return rng.uniform(lo, hi, size=(n, 4))
     return rng.standard_normal((n, 4))
 
 
@@ -81,6 +88,49 @@ def _interaction_predictor(X: np.ndarray, beta1: float, beta2: float) -> np.ndar
     return beta1 * X[:, 0] + beta2 * X[:, 1] + beta1 * X[:, 0] * X[:, 1]
 
 
+# Half-width of the uniform support. Chosen so that each coordinate has
+# unit variance, matching the standard normal design: Var(U(-c, c)) = c^2/3,
+# so c = sqrt(3). This keeps the adaptive step size, and therefore the
+# estimand, comparable between the two covariate laws.
+UNIFORM_HALF_WIDTH = float(np.sqrt(3.0))
+UNIFORM_SUPPORT = (-UNIFORM_HALF_WIDTH, UNIFORM_HALF_WIDTH)
+
+UNIFORM_SUFFIX = '_uniform'
+
+
+def covariate_law(dgp_name: str) -> str:
+    """
+    Covariate law implied by a DGP name: 'uniform' or 'gaussian'.
+
+    A '_uniform' suffix selects bounded support and leaves the linear
+    predictor unchanged, so 'linear' and 'linear_uniform' differ only in
+    how X is drawn.
+    """
+    return 'uniform' if dgp_name.endswith(UNIFORM_SUFFIX) else 'gaussian'
+
+
+def predictor_key(dgp_name: str) -> str:
+    """Strip the covariate-law suffix from a DGP name."""
+    if dgp_name.endswith(UNIFORM_SUFFIX):
+        return dgp_name[:-len(UNIFORM_SUFFIX)]
+    return dgp_name
+
+
+def support_for(dgp_name: str):
+    """
+    True support of the covariates, or None when unbounded.
+
+    Returned as (lower, upper) arrays over the four coordinates, for use as
+    the fixed `bounds` of the trimming weight. Passing the true support
+    rather than the sample minimum and maximum keeps the estimand from
+    drifting with the sample, exactly as the step size is held fixed.
+    """
+    if covariate_law(dgp_name) != 'uniform':
+        return None
+    lo, hi = UNIFORM_SUPPORT
+    return (np.full(4, lo), np.full(4, hi))
+
+
 def _get_predictor(dgp_name: str):
     """Return the linear predictor function for a given DGP name."""
     predictors = {
@@ -88,12 +138,13 @@ def _get_predictor(dgp_name: str):
         'nonlinear':   _nonlinear_predictor,
         'interaction': _interaction_predictor,
     }
-    if dgp_name not in predictors:
+    key = predictor_key(dgp_name)
+    if key not in predictors:
         raise ValueError(
             f"Unknown DGP: '{dgp_name}'. "
-            f"Choose from: {list(predictors.keys())}"
+            f"Choose from: {list(predictors.keys())}, optionally suffixed '{UNIFORM_SUFFIX}'."
         )
-    return predictors[dgp_name]
+    return predictors[key]
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +195,7 @@ def generate_regression(
     Tuple[np.ndarray, np.ndarray]
         (X, y) where X is (n, 4) and y is (n,).
     """
-    X = generate_features(n, rng)
+    X = generate_features(n, rng, dgp_name)
     predictor = _get_predictor(dgp_name)
     mu = predictor(X, beta1, beta2)
     y = mu + rng.normal(0, noise_std, size=n)
@@ -181,7 +232,7 @@ def generate_classification(
     Tuple[np.ndarray, np.ndarray]
         (X, y) where X is (n, 4) and y is (n,) binary.
     """
-    X = generate_features(n, rng)
+    X = generate_features(n, rng, dgp_name)
     predictor = _get_predictor(dgp_name)
     prob = _sigmoid(predictor(X, beta1, beta2))
     y = rng.binomial(1, prob).astype(float)
@@ -289,7 +340,7 @@ def compute_ground_truth_ames(
     from marginfx.core import plugin_ames
 
     rng = np.random.default_rng(seed)
-    X = generate_features(n, rng)
+    X = generate_features(n, rng, dgp_name)
     predictor = _get_predictor(dgp_name)
 
     # True prediction function — no model, just the DGP
@@ -302,12 +353,18 @@ def compute_ground_truth_ames(
 
     feature_names = ['x1', 'x2', 'x3', 'x4']
 
+    # Trimming is vacuous on the unbounded Gaussian design and active on the
+    # bounded one, where it is part of the estimand. The bounds passed are the
+    # TRUE support rather than the sample extremes, so that the target does not
+    # drift with the Monte Carlo draw.
+    bounds = support_for(dgp_name)
     true_ames = plugin_ames(
         X=X,
         predict_fn=true_predict_fn,
         feature_names=feature_names,
         h=h,
-        trim=False,
+        trim=bounds is not None,
+        bounds=bounds,
     )
 
     return true_ames

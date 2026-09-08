@@ -75,6 +75,8 @@ sys.path.insert(0, PAPER_DIR)
 sys.path.insert(0, SIMULATIONS_DIR)
 
 from dgp import (
+    UNIFORM_SUPPORT,
+    support_for,
     generate_regression,
     generate_classification,
     compute_ground_truth_ames,
@@ -148,6 +150,14 @@ def _recycle_workers() -> None:
 ARMS = {
     'closed': 'results',
     'sieve': 'results_sieve',
+    'uniform': 'results_uniform',
+}
+
+# The bounded-support arm runs one design rather than three: the point is to
+# exhibit the theorems under the density-bounded assumption, not to re-sweep
+# the DGP space.
+ARM_DGPS = {
+    'uniform': ['linear_uniform'],
 }
 
 
@@ -156,14 +166,24 @@ def results_dir_for(arm: str) -> str:
     return os.path.join(os.path.dirname(SIM3_RESULTS_DIR), ARMS[arm])
 
 
+def dgps_for(arm: str) -> list:
+    """DGP names swept by one arm."""
+    return ARM_DGPS.get(arm, DGP_NAMES)
+
+
 def riesz_for(arm: str):
     """
     Representer specification for one arm.
 
-    'closed' supplies the exact Gaussian representer; 'sieve' returns None,
-    which makes mfx.fit estimate it by Riesz regression on each fold.
+    'closed' supplies the exact Gaussian representer, 'uniform' the exact
+    bounded-support one, and 'sieve' returns None, which makes mfx.fit estimate
+    the representer by Riesz regression on each fold.
     """
-    return gaussian_riesz_factory if arm == 'closed' else None
+    if arm == 'closed':
+        return gaussian_riesz_factory
+    if arm == 'uniform':
+        return uniform_riesz_factory
+    return None
 
 
 def gaussian_riesz_factory(feature_idx, h, is_categorical):
@@ -175,6 +195,20 @@ def gaussian_riesz_factory(feature_idx, h, is_categorical):
     ignored.
     """
     return mfx.gaussian_window_riesz(feature_idx, h)
+
+
+def uniform_riesz_factory(feature_idx, h, is_categorical):
+    """
+    Supply the bounded-support representer to the estimator.
+
+    On the uniform design the density is constant, so it cancels and only the
+    trimming weight survives: alpha_h is the step function taking -1/(2h) and
+    +1/(2h) on the two boundary shells and zero in between. The endpoints
+    passed are the true support, matching the bounds handed to mfx.fit, so that
+    the weight in the score and the weight assumed by the representer agree.
+    """
+    lo, hi = UNIFORM_SUPPORT
+    return mfx.uniform_window_riesz(feature_idx, h, lo, hi)
 
 
 # ---------------------------------------------------------------------------
@@ -316,12 +350,20 @@ def run_one_iteration(
     else:
         X, y = generate_classification(n, dgp_name, rng)
 
+    # On the Gaussian designs the support is unbounded, Omega_{j,h} is all of
+    # R^d and the trimming weight is identically one. On the bounded design it
+    # is active and is part of the estimand, so the true support is passed
+    # explicitly rather than letting the sample extremes stand in -- the sample
+    # minimum of a uniform sits strictly inside its support and moves with n,
+    # which would make theta_h a different target at every sample size.
+    bounds = support_for(dgp_name)
     t0 = time.time()
     result = mfx.fit(
         build_learner(model_name, outcome_type, seed),
         X, y,
         feature_names=FEATURE_NAMES,
-        trim=False,                      # unbounded Gaussian support
+        trim=bounds is not None,
+        bounds=bounds,
         riesz=riesz_for(arm),            # closed form, or estimated by sieve
         n_folds=N_FOLDS,
         alpha=ALPHA,
@@ -468,11 +510,16 @@ def main(outcomes: list, arm: str = 'closed') -> None:
     print("=" * 60)
     print_config()
     print(f"  Folds:               {N_FOLDS}")
-    representer = ('closed form (gaussian_window_riesz)' if arm == 'closed'
-                   else 'estimated by Riesz regression (sieve)')
+    representer = {
+        'closed': 'closed form (gaussian_window_riesz)',
+        'uniform': 'closed form (uniform_window_riesz)',
+    }.get(arm, 'estimated by Riesz regression (sieve)')
+    trimming = ('on, at the true support (bounded design)' if arm == 'uniform'
+                else 'off (unbounded support)')
     print(f"  Arm:                 {arm}")
+    print(f"  DGPs:                {dgps_for(arm)}")
     print(f"  Representer:         {representer}")
-    print(f"  Trimming:            off (unbounded support)")
+    print(f"  Trimming:            {trimming}")
     print(f"  Results:             {results_dir_for(arm)}")
     print()
 
@@ -487,7 +534,7 @@ def main(outcomes: list, arm: str = 'closed') -> None:
             for m in MODELS
         ]
 
-        for dgp_name in DGP_NAMES:
+        for dgp_name in dgps_for(arm):
             print(f"\n--- {outcome_type} / {dgp_name} ---")
             true_ames = ground_truth_for(dgp_name, outcome_type)
             print("  true AMEs:",
@@ -514,7 +561,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--riesz',
-        choices=['closed', 'sieve'],
+        choices=['closed', 'sieve', 'uniform'],
         default='closed',
         help=(
             'Representer: the exact Gaussian closed form, or estimated by '
