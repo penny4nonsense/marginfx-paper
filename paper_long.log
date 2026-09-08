@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  8 SEP 2026 14:51
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  8 SEP 2026 14:57
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -437,24 +437,24 @@ File: l3backend-pdftex.def 2023-04-19 L3 backend support: PDF output (pdfTeX)
 ) (./paper_long.aux)
 \openout1 = `paper_long.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 66.
-LaTeX Font Info:    ... okay on input line 66.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 67.
+LaTeX Font Info:    ... okay on input line 67.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -514,24 +514,24 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-Package hyperref Info: Link coloring OFF on input line 66.
+Package hyperref Info: Link coloring OFF on input line 67.
  (./paper_long.out) (./paper_long.out)
 \@outlinefile=\write3
 \openout3 = `paper_long.out'.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 73.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 74.
 
 
 (c:/ProgramData/texlive/2023/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 73.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 74.
 
 
 (c:/ProgramData/texlive/2023/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-Overfull \hbox (4.33446pt too wide) in paragraph at lines 76--108
+Overfull \hbox (4.33446pt too wide) in paragraph at lines 77--109
 []\OT1/cmr/m/n/10.95 We pro-pose a frame-work for in-ter-pret-ing any su-per-vi
 sed ma-chine learn-ing model through
  []
@@ -541,65 +541,88 @@ sed ma-chine learn-ing model through
 {c:/ProgramData/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/P
 rogramData/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}] 
 [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] [12] [13] [14] [15] [16] [17]
-[18] [19] [20] [21] [22] [23] [24] [25] [26] [27] [28] [29] [30] [31] [32]
-[33] [34] [35]
-Overfull \hbox (6.5751pt too wide) in paragraph at lines 1313--1315
+[18] [19] [20] [21] [22]
+Overfull \hbox (13.86603pt too wide) in paragraph at lines 760--766
+\OT1/cmr/m/it/12 Moreover $\U/msb/m/n/12 E\OT1/cmr/m/n/12 [\OML/cmm/m/it/12 []
+\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 X\OT1/cmr/m/n/12 )] = 0$\OT1/cmr/m/it/12 , an
+d un-der the den-sity bounds of As-sump-tion []1[], $[][] \OMS/cmsy/m/n/12 ^^T 
+\OML/cmm/m/it/12 p[]=\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 h p[]\OT1/cmr/m/n/12 )$\
+OT1/cmr/m/it/12 .
+ []
+
+[23] [24] [25] [26] [27] [28] [29] [30] [31] [32] [33] [34] [35] [36] [37]
+Overfull \hbox (6.5751pt too wide) in paragraph at lines 1402--1404
 []\OT1/cmr/m/it/12 If base learn-ers are smooth, $[]$ is well-behaved in the So
 bolev sense and $[][] []
  []
 
-[36] [37] [38] [39] [40] [41] [42] [43] [44] [45] [46] [47] [48] [49] [50]
-[51] [52] [53] [54] [55] [56] [57] [58] [59] [60] [61]
-Overfull \hbox (61.31367pt too wide) in paragraph at lines 1999--2028
+[38] [39] [40] [41] [42] [43] [44] [45] [46] [47] [48] [49] [50] [51] [52]
+[53] [54] [55] [56] [57] [58] [59] [60] [61] [62] [63]
+Overfull \hbox (61.31367pt too wide) in paragraph at lines 2088--2117
  [] 
  []
 
-[62] [63] [64] [65] [66] [67] [68] [69] [70] [71] [72] [73] [74]
+[64] [65] [66] [67] [68] [69] [70] [71] [72] [73] [74] [75] [76]
 
-LaTeX Warning: Float too large for page by 0.10208pt on input line 2474.
+LaTeX Warning: Float too large for page by 0.10208pt on input line 2564.
 
-[75] [76]
+[77] [78]
 
-LaTeX Warning: Float too large for page by 0.10208pt on input line 2536.
+LaTeX Warning: Float too large for page by 0.10208pt on input line 2626.
 
-[77] [78] [79]
+[79] [80]
 
-LaTeX Warning: Float too large for page by 9.72171pt on input line 2601.
+! LaTeX Error: Unicode character ^^G (U+0007)
+               not set up for use with LaTeX.
 
-[80] [81] [82]
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2633 ...elow on $\R^d$, and the representer $^^G
+                                                  lpha_h(u) = e^{-h^2/2}\sin...
 
-LaTeX Warning: Float too large for page by 9.66615pt on input line 2711.
+You may provide a definition with
+\DeclareUnicodeCharacter 
 
-[83] [84] [85] [86] [87] [88] [89] [90] [91] [92]
+[81]
+
+LaTeX Warning: Float too large for page by 9.72171pt on input line 2694.
+
+[82] [83] [84]
+
+LaTeX Warning: Float too large for page by 9.66615pt on input line 2804.
+
+[85] [86] [87] [88] [89] [90] [91] [92] [93] [94]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3055.
+(hyperref)                removing `math shift' on input line 3148.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3055.
+(hyperref)                removing `superscript' on input line 3148.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3055.
+(hyperref)                removing `math shift' on input line 3148.
 
-[93] [94] [95]
-Overfull \hbox (15.33356pt too wide) detected at line 3197
+[95] [96] [97] [98]
+Overfull \hbox (15.33356pt too wide) detected at line 3326
 [][][][] \OMS/cmsy/m/n/12 ^^T []  [][] [] \OT1/cmr/m/n/12 = [] \OML/cmm/m/it/12
  o[]\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 n[]\OT1/cmr/m/n/12 ) \OMS/cmsy/m/n/12 ^^A
  \OML/cmm/m/it/12 O[]\OT1/cmr/m/n/12 (1) = \OML/cmm/m/it/12 o[]\OT1/cmr/m/n/12 
 (1)
  []
 
-[96]
-Overfull \hbox (6.28714pt too wide) in paragraph at lines 3215--3232
+[99]
+Overfull \hbox (6.28714pt too wide) in paragraph at lines 3344--3368
 [] [][] \OT1/cmr/m/n/12 = \OML/cmm/m/it/12 o[]\OT1/cmr/m/n/12 (1)$ af-ter con-d
 i-tion-ing on $\OML/cmm/m/it/12 X$\OT1/cmr/m/n/12 ; the third by $([] + [][])[]
  [][] =
  []
 
-[97]
-Overfull \hbox (1.47334pt too wide) in paragraph at lines 3277--3284
+[100]
+Overfull \hbox (1.47334pt too wide) in paragraph at lines 3413--3420
 \U/msb/m/n/12 E\OT1/cmr/m/n/12 [(\OML/cmm/m/it/12 w\OT1/cmr/m/n/12 ^^A[]\OML/cm
 m/m/it/12 f\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 X\OT1/cmr/m/n/12 ) \OMS/cmsy/m/n/1
 2 ^^@ \OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 f\OT1/cmr/m/n/12 
@@ -610,73 +633,73 @@ m/m/it/12 f\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 X\OT1/cmr/m/n/12 ) \OMS/cmsy/m/n/1
 is $\OML/cmm/m/it/12 X$\OT1/cmr/m/n/12 -measurable.
  []
 
-[98]
+[101]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3329.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3329.
+(hyperref)                removing `math shift' on input line 3465.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3329.
-
-[99] [100] [101] [102] [103]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3544.
+(hyperref)                removing `superscript' on input line 3465.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 3544.
+(hyperref)                removing `math shift' on input line 3465.
+
+[102] [103] [104] [105] [106]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3680.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3544.
+(hyperref)                removing `subscript' on input line 3680.
 
-[104] [105] [106] [107] [108] [109] [110] [111]
-Overfull \hbox (8.81245pt too wide) in paragraph at lines 3860--3870
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3680.
+
+[107] [108] [109] [110] [111] [112] [113] [114]
+Overfull \hbox (8.81245pt too wide) in paragraph at lines 3996--4006
 []\OT1/cmr/bx/n/12 Remark 10. \OT1/cmr/m/it/12 The strict con-ver-gence up-grad
 e re-quires the ad-di-tional as-sump-tion $\U/msb/m/n/12 E\OT1/cmr/m/n/12 [\OMS
 /cmsy/m/n/12 j\OML/cmm/m/it/12 D[]\OMS/cmsy/m/n/12 j\OT1/cmr/m/n/12 (
 )] \OMS/cmsy/m/n/12 !
  []
 
-[112]
-Overfull \hbox (0.55759pt too wide) detected at line 3921
+[115]
+Overfull \hbox (0.55759pt too wide) detected at line 4057
 []
  []
 
-[113]
+[116] [117]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3980.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3980.
+(hyperref)                removing `math shift' on input line 4116.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3980.
-
-[114] [115] [116]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 4097.
+(hyperref)                removing `superscript' on input line 4116.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 4097.
+(hyperref)                removing `math shift' on input line 4116.
+
+[118] [119]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 4233.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 4097.
+(hyperref)                removing `superscript' on input line 4233.
 
-[117] [118] [119] [120] [121] [122] [123] [124] [125] [126] (./paper_long.bbl
-[127] [128] [129] [130]) [131] (./paper_long.aux)
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 4233.
+
+[120] [121] [122] [123] [124] [125] [126] [127] [128] [129] [130]
+(./paper_long.bbl [131] [132] [133] [134]) [135] (./paper_long.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
@@ -685,13 +708,13 @@ Package rerunfilecheck Info: File `paper_long.out' has not changed.
 (rerunfilecheck)             Checksum: 69A32CF60B08AE1B511128B5A1EF84FC;16235.
  ) 
 Here is how much of TeX's memory you used:
- 12793 strings out of 474934
- 196012 string characters out of 5757826
+ 12809 strings out of 474934
+ 196202 string characters out of 5757826
  1955785 words of memory out of 5000000
- 33638 multiletter control sequences out of 15000+600000
+ 33645 multiletter control sequences out of 15000+600000
  575810 words of font info for 101 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,13n,79p,3199b,617s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,13n,79p,3199b,621s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10
 .pfb><c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmb
 x12.pfb><c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/
@@ -724,10 +747,10 @@ Data/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb><c:
 c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb
 ><c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1200.p
 fb>
-Output written on paper_long.pdf (131 pages, 721701 bytes).
+Output written on paper_long.pdf (135 pages, 734816 bytes).
 PDF statistics:
- 1931 PDF objects out of 2073 (max. 8388607)
- 1720 compressed objects within 18 object streams
- 513 named destinations out of 1000 (max. 500000)
+ 1990 PDF objects out of 2073 (max. 8388607)
+ 1775 compressed objects within 18 object streams
+ 522 named destinations out of 1000 (max. 500000)
  593 words of extra memory for PDF output out of 10000 (max. 10000000)
 

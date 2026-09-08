@@ -62,6 +62,7 @@
 \newcommand{\abs}[1]{\left| #1 \right|}
 \newcommand{\Dh}{\Delta_{j,h}}
 \newcommand{\Ptwo}[1]{\norm{#1}_{P,2}}
+\newcommand{\Pq}[2]{\norm{#1}_{P,#2}}
 
 \begin{document}
 	
@@ -559,6 +560,53 @@
 	marginal effect functional and are standard in the average derivative literature
 	\citep{powell1989, newey1993}. They enter the theory only through the ratio
 	$p_{\max}/p_{\min}$, which bounds the Riesz representer below.
+
+	The bounds are genuinely restrictive, and one design of interest violates them.
+	Independent Gaussian covariates have a density that is not bounded below on
+	$\R^d$, and the representer of Lemma~\ref{lem:riesz} is then unbounded. That case
+	is covered by an alternative to the density bounds, under which every result of
+	this section continues to hold with the sup-norm conditions replaced by moment
+	conditions.
+
+	\begin{assumption}[Unbounded support]
+		\label{ass:unbounded}
+		In place of the density bounds of Assumption~\ref{ass:sampling}: (a)
+		$p(x) > 0$ for every $x \in \Omega$; (b) there exists $r > 1$ with
+		\begin{equation}
+			\E\left[\left(\frac{p(X - h e_j)}{p(X)}\right)^{r}\right] < \infty
+			\quad\text{and}\quad
+			\E\left[\left(\frac{p(X + h e_j)}{p(X)}\right)^{r}\right] < \infty
+			\label{eq:shiftmoment}
+		\end{equation}
+		and (c) $\alpha_h \in L^{q}(P)$ for some $q > 2$. The moment conditions on
+		$Y$ in Assumption~\ref{ass:sampling} are retained unchanged.
+	\end{assumption}
+
+	Condition (b) is precisely what the density bounds were doing in the proofs. Every
+	appeal to $p_{\min}$ below reduces to controlling a shifted second moment,
+	$\E[g(X \pm h e_j)^2] = \E[g(X)^2\, p(X \mp h e_j)/p(X)]$, which a uniform density
+	bound handles by brute force and which \eqref{eq:shiftmoment} handles by
+	H\"{o}lder, at the cost of a slightly higher integrability requirement on $g$.
+	Condition (c) replaces the sup-norm bound that Lemma~\ref{lem:riesz} supplies in
+	the bounded case; it is an assumption here rather than a conclusion, because with
+	an unbounded density the explicit formula for $\alpha_h$ need not be bounded even
+	though it remains square integrable.
+
+	The Gaussian design of Section~\ref{sec:simulation} satisfies
+	Assumption~\ref{ass:unbounded} while failing Assumption~\ref{ass:sampling}. For
+	independent standard normal covariates the shift ratio is
+	$p(u - h e_j)/p(u) = \exp(h u_j - h^2/2)$, which has moments of every order, so (b)
+	holds for every $r$; and the representer is
+	$\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, for which
+	\begin{equation}
+		\E\left[\alpha_h(X)^2\right]
+		= \frac{e^{-h^2}}{h^2}\,\E\left[\sinh^2(h X_j)\right]
+		= \frac{e^{-h^2}\left(e^{2h^2} - 1\right)}{2h^2} < \infty
+		\label{eq:gaussalpha}
+	\end{equation}
+	with all higher moments finite as well, so (c) holds for every $q$. The
+	representer is unbounded --- $\sinh$ grows exponentially --- which is exactly why
+	the sup-norm route is unavailable and the moment route is needed.
 	
 	We work with two function spaces depending on the estimator class. The choice of
 	function space is not arbitrary---each space is the natural habitat of the estimator
@@ -710,8 +758,11 @@
 			\E\left[w(X)\, \Dh g(X)\right] = \E\left[\alpha_h(X)\, g(X)\right]
 			\label{eq:riesz}
 		\end{equation}
-		Moreover $\norm{\alpha_h}_\infty \leq p_{\max} / (h\, p_{\min})$ and
-		$\E[\alpha_h(X)] = 0$.
+		Moreover $\E[\alpha_h(X)] = 0$, and under the density bounds of
+		Assumption~\ref{ass:sampling},
+		$\norm{\alpha_h}_\infty \leq p_{\max} / (h\, p_{\min})$. Under
+		Assumption~\ref{ass:unbounded} the representer need not be bounded, and
+		\eqref{eq:riesz} holds for every $g$ with $\alpha_h g \in L^1(P)$.
 	\end{lemma}
 	
 	The proof is a change of variables in each half of the finite difference and nothing
@@ -859,6 +910,44 @@
 	verify for specific learners in Section~\ref{sec:rates} is that both nuisances
 	converge faster than $n^{-1/4}$; the product form also permits trading accuracy in
 	one nuisance against the other.
+
+	Under Assumption~\ref{ass:unbounded} in place of the density bounds, the three
+	conditions are read as follows. Condition (a) is strengthened to
+	$\Pq{\hat{f}^{(-k)} - f}{2 + \delta} = o_p(1)$ for a $\delta > 0$ with
+	$(2 + \delta)/2$ conjugate to the $r$ of \eqref{eq:shiftmoment}; condition (c) is
+	replaced by $\Pq{\hat{\alpha}^{(-k)}}{q} \leq \bar{A}_q < \infty$ for the $q$ of
+	Assumption~\ref{ass:unbounded}(c); and condition (b) is unchanged.
+
+	That last point is the one worth emphasizing. What changes between the two
+	assumption sets are a consistency requirement and a boundedness requirement; the
+	product condition (b), which governs how fast the nuisances must converge, is
+	identical in both. The reason is the exactness of Lemma~\ref{lem:orth}: the bias
+	is a product of two $L^2$ errors with no linearization remainder to control, so
+	the step of the argument that carries the rates never touches a density bound.
+	Everything in Section~\ref{sec:rates} therefore applies verbatim under either
+	assumption set. Had the bias carried the usual remainder term, the higher
+	integrability would have propagated into the rate conditions and the thresholds
+	of Section~\ref{sec:rates} would have moved.
+
+	Where the learner's error is uniformly bounded --- as it is in the compactly
+	supported settings in which the rate results of Section~\ref{sec:rates} are
+	proved, whose estimators are truncated at a known bound on $f$ --- the
+	strengthening of (a) is free. Writing $\Delta = \hat{f}^{(-k)} - f$,
+	interpolation gives
+	\begin{equation}
+		\Pq{\Delta}{2 + \delta}
+		\leq \norm{\Delta}_\infty^{\delta/(2 + \delta)}\,
+		\Ptwo{\Delta}^{2/(2 + \delta)}
+		\label{eq:interp}
+	\end{equation}
+	so $L^2$ consistency implies $L^{2+\delta}$ consistency with no additional
+	assumption. On unbounded support it is a genuine additional requirement, though a
+	mild one, and it holds for the learners used in the Gaussian design of
+	Section~\ref{sec:simulation}.
+
+	Theorem~\ref{thm:main}, Theorem~\ref{thm:efficiency} and
+	Proposition~\ref{prop:robust} hold under either assumption set. The appendix
+	proofs carry the two cases side by side at the three points where they differ.
 	
 	\begin{theorem}[Asymptotic Linearity and Normality]
 		\label{thm:main}
@@ -2032,6 +2121,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	The partial dependence column requires a different reading than it did under the plug-in, and the change is itself informative. A partial dependence slope is computed by perturbing a single full-sample fit and averaging, which makes it a plug-in average of exactly the kind the orthogonal correction is designed to repair; it carries no correction term and no standard error. Where the plug-in is nearly unbiased the two therefore continue to agree closely: on above-ground living area, the best supported and smoothest feature in the data, the AME is \$68 and the PDP slope \$66 for linear regression, \$66 and \$59 for the neural network. Where the regularization bias bites, they separate, and they separate in the direction the theory predicts --- toward zero for the uncorrected quantity. The bedroom AME of $-$\$26,455 for linear regression sits against a PDP slope of $-$\$6,189; the high-neighborhood AME of \$43,512 for the random forest sits against a PDP slope of \$5,059, and the mid-neighborhood AME of \$33,767 against \$5,950. These are the count and binary contrasts, where the fitted surface is flattest between levels and where the plug-in has the most to lose. The pattern that once read as mutual corroboration between two estimators now reads as a measurement of the bias separating them, which is the same quantity Simulation~2 isolates in the coverage of the refitting bootstrap. The Ames Housing results complete the sweep across outcome types: the framework produces dollar-denominated marginal effects with valid standard errors for a continuous regression outcome, using exactly the same estimation procedure as the binary classification examples, with no modification required.
 	
 	\section{Simulation}
+	\label{sec:simulation}
 	
 	We evaluate the estimator through three simulation studies, which together separate what the window average recovers from what can be said about it. Simulation 1 examines the bias and root mean squared error of the uncorrected plug-in window average as a function of sample size, across three data generating processes and two outcome types. Simulation 2 asks whether the refitting bootstrap of Section~\ref{sec:inference} delivers valid intervals for that plug-in, comparing empirical coverage of nominal 95\% intervals against the target. Simulation 3 repeats both exercises for the debiased cross-fitted estimator of Section~\ref{sec:inference}, holding the designs, learners and windows fixed so that the two estimators differ only in the orthogonal correction. The three are best read in order: the first locates a bias, the second shows that resampling cannot see it, and the third removes it. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1\,000, 2\,500, 5\,000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
 	
@@ -2538,7 +2628,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	Table~\ref{tab:sim2_calibration_regression_linear} reports the corresponding calibration results for the linear regression DGP, where the magnitudes of the AMEs are larger and the bias-coverage interaction becomes even more visible. Linear regression achieves coverage between 0.918 and 0.952 across all variables and sample sizes, well-calibrated throughout. The neural network performs well at small and moderate samples, with coverage approaching the nominal level by $n=1{,}000$, before drifting upward to exactly 1.000 at $n=5{,}000$ for all four variables --- the same conservatism observed in the classification case, amplified in the regression setting where the smooth prediction surface produces highly stable finite differences. XGBoost shows pronounced undercoverage for the signal features at $n=250$ --- 0.526 for $x_1$ and 0.752 for $x_2$ --- driven by the large positive bias documented in Simulation 1 at small samples, but coverage recovers toward and above the nominal level by $n=1{,}000$ and is well-calibrated at $n=5{,}000$. The most striking result is again random forests: coverage at $n=5{,}000$ falls to 0.104 for $x_1$ and 0.204 for $x_2$, the worst calibration in either table. The mechanism is identical to the classification case --- the bootstrap intervals narrow at the expected rate but the bias does not vanish, so the intervals fail to cover the true AME at large samples. The noise features under random forests show coverage of around 0.6 across all sample sizes, indicating that even where the bias is small, the bootstrap intervals are systematically too narrow to achieve nominal coverage. Taken together, the two calibration tables show that the refitting bootstrap applied to the uncorrected plug-in tracks sampling variability adequately when the learner's regularization bias is negligible at the sample sizes considered --- logistic and linear regression, the neural network, and XGBoost beyond small samples --- and fails without warning when the bias term dominates, as it does for random forests at large $n$. The tables should therefore be read as a controlled demonstration of the mechanism analyzed in Remark~\ref{rem:refit}, not as a validation of the plug-in bootstrap as an inferential procedure: the failure is not specific to forests but to any learner whose $L^2$ bias shrinks more slowly than its intervals, and forests at default tuning are simply the class for which this occurs within the sample sizes examined. In the designs of this section the covariate density is known, so the representer $\alpha_h$ is available in closed form and the debiased estimator of Section~2.4 requires no representer estimation at all. The forests here are moreover depth-capped, and a depth-capped forest converges to a depth-limited approximation of the regression function rather than to the regression function itself; Proposition~\ref{prop:robust} applies verbatim to this case, and asserts that coverage of the true window effect requires no consistency from the forest --- only the known representer --- with the forest's approximation error paid in interval width rather than in location.
 	\subsection{Simulation 3: The Debiased Estimator}
 	
-	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one.
+	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one. For the same reason the design satisfies Assumption~ef{ass:unbounded} rather than the density bounds of Assumption~ef{ass:sampling}: a Gaussian density is not bounded below on $\R^d$, and the representer $lpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$ is unbounded. It is square integrable, with second moment \eqref{eq:gaussalpha}, and the shift ratio $\exp(h u_j - h^2/2)$ has moments of every order, so both conditions of Assumption~ef{ass:unbounded} hold for every $r$ and $q$. The theorems demonstrated here are therefore the ones proved under that assumption set, and the closed-form representer used below is the exact one for this design rather than a bounded approximation to it.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -3119,14 +3209,43 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		+ (\hat{\alpha}^{(-k)} - \alpha_h)(y - f)
 		- \hat{\alpha}^{(-k)}\,(\hat{f}^{(-k)} - f)
 	\end{equation}
-	and bound each piece in $L^2(P)$: the first by
-	$\kappa \Ptwo{\hat{f}^{(-k)} - f}$ via \eqref{eq:opbound_proof}; the second by
-	$\bar{\sigma}\, \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}$ after conditioning on
-	$X$; the third by $\bar{A}\, \Ptwo{\hat{f}^{(-k)} - f}$ using
-	Assumption~\ref{ass:nuisance}(c). All three are $o_p(1)$ by
-	Assumption~\ref{ass:nuisance}(a), so
-	$\E_k[(\hat{\psi} - \psi)^2] = o_p(1)$ and conditional Chebyshev gives
-	$\sqrt{n_k}\, B_k = o_p(1)$.
+	and bound each piece in $L^2(P)$. The middle piece is bounded by
+	$\bar{\sigma}\, \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}$ after conditioning on $X$
+	under either assumption set, since it uses only the conditional variance bound of
+	Assumption~\ref{ass:sampling}. The first and third pieces are where the two
+	assumption sets diverge.
+
+	Under the density bounds of Assumption~\ref{ass:sampling}, the first is bounded by
+	$\kappa \Ptwo{\hat{f}^{(-k)} - f}$ via \eqref{eq:opbound_proof} and the third by
+	$\bar{A}\, \Ptwo{\hat{f}^{(-k)} - f}$ using Assumption~\ref{ass:nuisance}(c). All
+	three are then $o_p(1)$ by Assumption~\ref{ass:nuisance}(a).
+
+	Under Assumption~\ref{ass:unbounded} neither bound is available: the representer
+	is unbounded, and the finite-difference operator is genuinely unbounded on
+	$L^2(P)$ rather than merely unbounded by this argument. For independent standard
+	normal covariates, taking $g_a(x) = e^{a x_j}$ gives
+	$\Ptwo{g_a}^2 = e^{2a^2}$ and $\Ptwo{g_a(\cdot + h e_j)}^2 = e^{2ah}e^{2a^2}$, so
+	the operator norm is $\sup_a e^{ah} = \infty$. Both pieces are instead bounded by
+	H\"{o}lder. Writing $\Delta = \hat{f}^{(-k)} - f$ and letting $r$ be as in
+	\eqref{eq:shiftmoment} with conjugate $r'$, a change of variables gives
+	\begin{equation}
+		\E\left[\Delta(X \pm h e_j)^2\right]
+		= \E\left[\Delta(X)^2\, \frac{p(X \mp h e_j)}{p(X)}\right]
+		\leq \Pq{\Delta}{2r'}^2
+		\left(\E\left[\left(\frac{p(X \mp h e_j)}{p(X)}\right)^{r}\right]\right)^{1/r}
+		\label{eq:shiftbound}
+	\end{equation}
+	which is $o_p(1)$ by Assumption~\ref{ass:nuisance}(a) in its $L^{2+\delta}$ form,
+	with $2r' = 2 + \delta$; the first piece follows from \eqref{eq:shiftbound} and
+	$\abs{w} \leq 1$. For the third,
+	$\E[(\hat{\alpha}^{(-k)})^2 \Delta^2]
+	\leq \Pq{\hat{\alpha}^{(-k)}}{q}^2 \Pq{\Delta}{2s'}^2$ by H\"{o}lder with
+	$s = q/2$, which is $o_p(1)$ by Assumption~\ref{ass:nuisance}(c) in its moment
+	form together with (a).
+
+	Either way $\E_k[(\hat{\psi} - \psi)^2] = o_p(1)$, and conditional Chebyshev gives
+	$\sqrt{n_k}\, B_k = o_p(1)$. Note that only consistency of the nuisances is used
+	here, never a rate; the rate enters at Step~2 alone.
 	
 	\subsection{Step 4: Central Limit Theorem and Variance Estimation}
 	
@@ -3137,8 +3256,13 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		\leq 2\,\E\left[(w \Dh f)^2\right] + 2\,\norm{\alpha_h}_\infty^2\,
 		\E[\sigma^2(X)] < \infty
 	\end{equation}
-	by \eqref{eq:opbound_proof} and Lemma~\ref{lem:riesz}, so the classical CLT
-	applies. For the variance estimator, write
+	by \eqref{eq:opbound_proof} and Lemma~\ref{lem:riesz} under the density bounds of
+	Assumption~\ref{ass:sampling}. Under Assumption~\ref{ass:unbounded} the same
+	finiteness follows from \eqref{eq:shiftbound} applied to $f$, which is bounded,
+	together with $\alpha_h \in L^2(P)$ from
+	Assumption~\ref{ass:unbounded}(c) and $\E[Y^2] < \infty$; for the Gaussian design
+	the representer's second moment is \eqref{eq:gaussalpha}. Either way
+	$\mathrm{Var}(\psi) < \infty$ and the classical CLT applies. For the variance estimator, write
 	$\hat{\psi}_i(\hat{\theta}_h) = \hat{\psi}_i - (\hat{\theta}_h - \theta)$; then:
 	\begin{equation}
 		\hat{V}_h = \frac{1}{n} \sum_i \hat{\psi}_i^2
@@ -3183,7 +3307,9 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	$\mathrm{Var}(\psi_{g,i} \mid X) = \alpha_h(X)^2 \sigma^2(X)$, so
 	$\mathrm{Var}(\psi_{g,i}) = V_h(g)$ by the law of total variance; finiteness
 	follows from \eqref{eq:opbound_proof}, $g \in L^2(\Omega)$, the bound on
-	$\alpha_h$ from Lemma~\ref{lem:riesz}, and $\E[Y^2] < \infty$.
+	$\alpha_h$ from Lemma~\ref{lem:riesz}, and $\E[Y^2] < \infty$ under the density
+	bounds; under Assumption~\ref{ass:unbounded} it follows from
+	\eqref{eq:shiftbound}, $\alpha_h \in L^2(P)$, and $\E[Y^2] < \infty$.
 	
 	\subsection{Step 2: The Bias Term}
 	
@@ -3223,10 +3349,17 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	conditioning on $X$; the third by
 	$(\bar{A} + \norm{\alpha_h}_\infty)^2 \Ptwo{\hat{f}^{(-k)} - g}^2 = o_p(1)$; and
 	the second piece, $\E[(\hat{\alpha}^{(-k)} - \alpha_h)^2 (f - g)^2]$, tends to
-	zero by dominated convergence along subsequences: the factor
-	$(\hat{\alpha}^{(-k)} - \alpha_h)^2$ is bounded by
+	zero. Under the density bounds this is dominated convergence along subsequences:
+	the factor $(\hat{\alpha}^{(-k)} - \alpha_h)^2$ is bounded by
 	$(\bar{A} + \norm{\alpha_h}_\infty)^2$ and converges to zero in $P$-measure by
-	condition (b), while $(f - g)^2 \in L^1(P)$ dominates. Conditional Chebyshev then
+	condition (b), while $(f - g)^2 \in L^1(P)$ dominates. Under
+	Assumption~\ref{ass:unbounded} the domination is unavailable and H\"{o}lder is
+	used instead:
+	$\E[(\hat{\alpha}^{(-k)} - \alpha_h)^2 (f - g)^2]
+	\leq \Pq{\hat{\alpha}^{(-k)} - \alpha_h}{q}^2\, \Pq{f - g}{2t'}^2$ with
+	$t = q/2$, which requires the fixed approximation error $f - g$ to lie in
+	$L^{2t'}(P)$ --- a mild condition, and one that holds whenever $g$ and $f$ are
+	bounded. Conditional Chebyshev then
 	gives $\sqrt{n_k}\, B_k = o_p(1)$ exactly as in Step~3 of the proof of
 	Theorem~\ref{thm:main}.
 	
