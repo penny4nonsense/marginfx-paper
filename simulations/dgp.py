@@ -270,14 +270,23 @@ def compute_ground_truth_ames(
     beta2 : float
         Coefficient for x2. Default 3.0.
     h : str or float
-        Step size for finite differences. Default 'adaptive'.
+        Step size defining the estimand. Default 'adaptive'. Pass the same
+        value the estimator will use: theta_h depends on h, so a ground truth
+        computed at a different step size is a different target.
 
     Returns
     -------
     dict
-        Feature name -> true AME.
+        Feature name -> true window AME.
+
+    Notes
+    -----
+    Trimming is switched off. The features are independent standard normals,
+    so the support is unbounded, Omega_{j,h} is all of R^d and the trimming
+    weight is identically one. The estimator must be called with trim=False
+    on this design for the same reason.
     """
-    from marginfx.core import all_ames
+    from marginfx.core import plugin_ames
 
     rng = np.random.default_rng(seed)
     X = generate_features(n, rng)
@@ -293,11 +302,12 @@ def compute_ground_truth_ames(
 
     feature_names = ['x1', 'x2', 'x3', 'x4']
 
-    true_ames = all_ames(
+    true_ames = plugin_ames(
         X=X,
         predict_fn=true_predict_fn,
         feature_names=feature_names,
         h=h,
+        trim=False,
     )
 
     return true_ames

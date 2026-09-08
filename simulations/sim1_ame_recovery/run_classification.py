@@ -76,6 +76,7 @@ from config import (
 )
 
 import marginfx as mfx
+from marginfx.learner import make_predict_fn
 
 
 # ---------------------------------------------------------------------------
@@ -201,18 +202,23 @@ def run_one_iteration(
         model.fit(X, y)
 
     # Compute AMEs — no bootstrap, point estimates only
-    result = mfx.fit(
-        model, X, y,
+    # Plug-in window AMEs. This is the uncorrected estimator whose bias
+    # Simulation 1 is measuring, so it deliberately does NOT use mfx.fit,
+    # which applies the orthogonal correction. Trimming is off because the
+    # features are unbounded standard normals, so the trimming weight is
+    # identically one.
+    result_estimates = mfx.plugin_ames(
+        X=X,
+        predict_fn=make_predict_fn(model),
         feature_names=FEATURE_NAMES,
-        n_bootstrap=0,
-        verbose=False,
+        trim=False,
     )
     elapsed = time.time() - t0
 
     # Collect results — one row per feature
     rows = []
     for feature in FEATURE_NAMES:
-        est = result.estimates[feature]
+        est = result_estimates[feature]
         true_ame = true_ames[feature]
         rows.append({
             'iteration':    iteration,

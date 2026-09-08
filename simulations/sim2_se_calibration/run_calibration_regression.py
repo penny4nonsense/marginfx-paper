@@ -30,6 +30,8 @@ from config import (
     MODE,
     N_ITER_CALIBRATION,
     N_BOOTSTRAP_CALIBRATION,
+    calibration_counts,
+    calibration_jobs,
     CALIBRATION_SAMPLE_SIZES,
     RF_N_ESTIMATORS,
     RF_MAX_DEPTH,
@@ -50,6 +52,7 @@ from config import (
 )
 
 import marginfx as mfx
+from parallel_bootstrap import run_iterations
 
 CALIBRATION_DGP = 'linear'
 CALIBRATION_MODELS_REGRESSION = ['linear', 'rf', 'xgboost', 'tensorflow']
@@ -192,12 +195,23 @@ def run_one_iteration(
     t0 = time.time()
     model = build_model(model_name, seed, X, y)
 
-    result = mfx.fit(
+    # Refitting-bootstrap dispersion of the plug-in, which is the procedure
+    # whose calibration Simulation 2 is measuring. Trimming is off because
+    # the features are unbounded standard normals.
+    result = mfx.bootstrap_diagnostic(
         model, X, y,
         feature_names=FEATURE_NAMES,
-        n_bootstrap=N_BOOTSTRAP_CALIBRATION,
+        n_bootstrap=calibration_counts(model_name)[1],
+        trim=False,
         seed=seed,
         verbose=False,
+        # Match the schedule the model being diagnosed was trained with.
+        # Without these the replicates fall back to the package defaults of
+        # 10 epochs at batch 32, so the bootstrap would describe the spread
+        # of a differently-trained network than the point estimate it is
+        # centred on. Ignored for the learners that are not Keras.
+        n_epochs=TF_EPOCHS,
+        batch_size=TF_BATCH_SIZE,
     )
     elapsed = time.time() - t0
 
@@ -258,33 +272,61 @@ def run_calibration(n: int, model_name: str, true_ames: dict) -> pd.DataFrame:
         all_dfs.append(existing_df)
         print(f"  Resuming from {len(completed_iterations)} completed iterations...")
 
-    remaining = [i for i in range(N_ITER_CALIBRATION) if i not in completed_iterations]
+    n_iter, n_boot = calibration_counts(model_name)
+    remaining = [i for i in range(n_iter) if i not in completed_iterations]
     print(f"  Running: n={n}, model={model_name}, {len(remaining)} iterations remaining...")
 
-    batch_size = N_JOBS
+    # For most learners a task is one whole Monte Carlo iteration, with
+    # maxtasksperchild=1 so the worker is replaced afterwards.
+    #
+    # TensorFlow splits the other way, across slices of the resamples, because
+    # one iteration builds n_bootstrap networks in a single process and holds
+    # that memory until the process ends. Chunking bounds a worker by the
+    # slice rather than by n_bootstrap. It also refits through
+    # calibration_models, which keeps the rescaling wrapper attached to the
+    # regression network -- rebuilding from the Keras config drops it, and the
+    # replicates then come back on the standardized scale while the point
+    # estimate is in the outcome's own units.
+    n_jobs = calibration_jobs(model_name)
+    chunked = model_name == 'tensorflow'
+    batch_size = n_jobs if not chunked else max(n_jobs, 12)
+
     for batch_start in range(0, len(remaining), batch_size):
         batch = remaining[batch_start:batch_start + batch_size]
 
-        n_jobs_actual = N_JOBS if model_name != 'tensorflow' else N_JOBS
-        batch_rows = Parallel(
-            n_jobs=n_jobs_actual,
-            maxtasksperchild=1 if model_name == 'tensorflow' else None,
-        )(
-            delayed(run_one_iteration)(
-                iteration=i,
-                n=n,
+        if chunked:
+            batch_rows = [run_iterations(
+                outcome_type='regression',
                 model_name=model_name,
+                n=n,
+                dgp_name=CALIBRATION_DGP,
+                iterations=batch,
                 true_ames=true_ames,
+                feature_names=FEATURE_NAMES,
+                n_bootstrap=n_boot,
+                n_jobs=n_jobs,
+                trim=False,
+            )]
+        else:
+            batch_rows = Parallel(
+                n_jobs=n_jobs,
+                maxtasksperchild=1,
+            )(
+                delayed(run_one_iteration)(
+                    iteration=i,
+                    n=n,
+                    model_name=model_name,
+                    true_ames=true_ames,
+                )
+                for i in batch
             )
-            for i in batch
-        )
 
         rows = [row for iter_rows in batch_rows for row in iter_rows]
         all_dfs.append(pd.DataFrame(rows))
 
         partial_df = pd.concat(all_dfs, ignore_index=True)
         partial_df.to_parquet(partial_path, index=False)
-        print(f"\n    {len(partial_df['iteration'].unique())}/{N_ITER_CALIBRATION} iterations done")
+        print(f"\n    {len(partial_df['iteration'].unique())}/{n_iter} iterations done")
 
     df = pd.concat(all_dfs, ignore_index=True)
     df.to_parquet(filepath, index=False)
