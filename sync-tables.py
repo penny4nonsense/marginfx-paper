@@ -34,6 +34,21 @@ TABLE_FILES = {
     'tab:ames_housing_model_comparison':      'ames_housing_table2.tex',
     'tab:ames_housing_method_comparison':     'ames_housing_table3.tex',
     'tab:window_settings':                    'window_settings.tex',
+
+    'tab:sim1_classification_linear':         'sim1_classification_linear.tex',
+    'tab:sim1_classification_nonlinear':      'sim1_classification_nonlinear.tex',
+    'tab:sim1_classification_interaction':    'sim1_classification_interaction.tex',
+    'tab:sim1_regression_linear':             'sim1_regression_linear.tex',
+    'tab:sim1_regression_nonlinear':          'sim1_regression_nonlinear.tex',
+    'tab:sim1_regression_interaction':        'sim1_regression_interaction.tex',
+
+    'tab:sim2_calibration_linear':            'sim2_calibration_linear.tex',
+    'tab:sim2_calibration_regression_linear': 'sim2_calibration_regression_linear.tex',
+
+    'tab:sim3_bias_regression_linear':        'sim3_bias_regression_linear.tex',
+    'tab:sim3_bias_classification_linear':    'sim3_bias_classification_linear.tex',
+    'tab:sim3_coverage_regression_linear':    'sim3_coverage_regression_linear.tex',
+    'tab:sim3_coverage_classification_linear': 'sim3_coverage_classification_linear.tex',
 }
 
 BODY = re.compile(
@@ -73,11 +88,17 @@ def indent_like(body, indent):
 
 
 def replace_one(paper, label, body):
-    """Swap the body of the table carrying `label`. Returns (text, changed)."""
+    """
+    Swap the body of the table carrying `label`.
+
+    Returns (text, status), status one of 'updated', 'current', 'absent'.
+    A label the paper does not carry is 'absent' rather than an error: the
+    journal paper and the ICDM paper embed overlapping but different sets.
+    """
     anchor = f'\\label{{{label}}}'
     at = paper.find(anchor)
     if at < 0:
-        raise ValueError(f'{label} not found in {PAPER}')
+        return paper, 'absent'
 
     m = BODY.search(paper, at)
     if m is None:
@@ -91,12 +112,21 @@ def replace_one(paper, label, body):
 
     new_body = indent_like(body, indent)
     if paper[m.start():m.end()] == new_body:
-        return paper, False
-    return paper[:m.start()] + new_body + paper[m.end():], True
+        return paper, 'current'
+    return paper[:m.start()] + new_body + paper[m.end():], 'updated'
 
 
 def main():
+    # Both targets are settable so the ICDM camera-ready can be synced from
+    # its own pipeline's tables:
+    #     python sync-tables.py --paper paper_icdm.tex --tables tables-icdm
+    global PAPER, TABLES_DIR
     check = '--check' in sys.argv
+    if '--paper' in sys.argv:
+        PAPER = sys.argv[sys.argv.index('--paper') + 1]
+    if '--tables' in sys.argv:
+        TABLES_DIR = sys.argv[sys.argv.index('--tables') + 1]
+    print(f'{PAPER}  <-  {TABLES_DIR}/\n')
 
     # newline='' so the file's own line endings survive the round trip --
     # paper_long.tex is CRLF, and rewriting it as LF would make every line of
@@ -106,19 +136,24 @@ def main():
     crlf = '\r\n' in raw
     paper = raw.replace('\r\n', '\n')
 
-    changed, skipped = [], []
+    changed, skipped, absent = [], [], []
     for label, filename in TABLE_FILES.items():
         path = os.path.join(TABLES_DIR, filename)
         if not os.path.exists(path):
             skipped.append(f'{label}: {path} missing')
             continue
-        paper, did = replace_one(paper, label, extract_body(path))
-        (changed if did else skipped).append(
-            f'{label}: {"updated" if did else "already current"}'
-        )
+        paper, status = replace_one(paper, label, extract_body(path))
+        if status == 'updated':
+            changed.append(f'{label}: updated')
+        elif status == 'current':
+            skipped.append(f'{label}: already current')
+        else:
+            absent.append(label)
 
     for line in changed + skipped:
         print(' ', line)
+    if absent:
+        print(f'\n  ({len(absent)} table(s) not embedded in {PAPER})')
 
     if check:
         print('\n--check: nothing written')

@@ -1,0 +1,43 @@
+\begin{table*}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{Coverage of nominal 95\% confidence intervals, linear classification DGP: refitting bootstrap against the influence function.}
+\label{tab:sim3_coverage_classification_linear}
+\begin{tabular}{lrrrrrrr}
+\toprule
+ & & \multicolumn{3}{c}{Refitting bootstrap} & \multicolumn{3}{c}{Influence function} \\
+\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ & $n=250$ & $n=1,000$ & $n=5,000$ \\
+\midrule
+\multicolumn{8}{l}{\textit{Panel: Logistic}} \\
+\quad x1 & 0.199 & 0.881 & 0.878 & 0.886 & 0.944 & 0.934 & 0.940 \\
+\quad x2 & 0.298 & 0.726 & 0.766 & 0.781 & 0.924 & 0.956 & 0.954 \\
+\quad x3 & 0.000 & 0.944 & 0.939 & 0.946 & 0.934 & 0.950 & 0.952 \\
+\quad x4 & 0.000 & 0.933 & 0.954 & 0.944 & 0.948 & 0.950 & 0.944 \\
+\midrule
+\multicolumn{8}{l}{\textit{Panel: Random Forest}} \\
+\quad x1 & 0.199 & 0.968 & 0.933 & 0.186 & 0.942 & 0.956 & 0.944 \\
+\quad x2 & 0.298 & 0.961 & 0.958 & 0.268 & 0.932 & 0.952 & 0.946 \\
+\quad x3 & 0.000 & 0.962 & 0.942 & 0.949 & 0.944 & 0.960 & 0.948 \\
+\quad x4 & 0.000 & 0.969 & 0.964 & 0.953 & 0.944 & 0.944 & 0.944 \\
+\midrule
+\multicolumn{8}{l}{\textit{Panel: XGBoost}} \\
+\quad x1 & 0.199 & 0.926 & 0.947 & 0.877 & 0.932 & 0.952 & 0.950 \\
+\quad x2 & 0.298 & 0.908 & 0.954 & 0.910 & 0.934 & 0.968 & 0.972 \\
+\quad x3 & 0.000 & 0.976 & 0.961 & 0.960 & 0.964 & 0.948 & 0.946 \\
+\quad x4 & 0.000 & 0.973 & 0.969 & 0.959 & 0.954 & 0.938 & 0.946 \\
+\midrule
+\multicolumn{8}{l}{\textit{Panel: Neural Net}} \\
+\quad x1 & 0.199 & 0.870 & 0.870 & 0.958 & 0.940 & 0.930 & 0.942 \\
+\quad x2 & 0.298 & 0.658 & 0.774 & 0.894 & 0.934 & 0.950 & 0.958 \\
+\quad x3 & 0.000 & 0.936 & 0.936 & 0.986 & 0.932 & 0.946 & 0.954 \\
+\quad x4 & 0.000 & 0.938 & 0.936 & 0.982 & 0.946 & 0.932 & 0.944 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} Empirical coverage of nominal 95\% intervals. The bootstrap columns resample and refit the learner, centring on the plug-in average; the influence-function columns use the debiased cross-fitted estimator with $K=5$ folds and the closed-form representer. Both are evaluated against the same window estimand $\theta_{j,h}$ and the same Monte Carlo ground truth. Noise features $x_3$ and $x_4$ have a true effect of zero.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

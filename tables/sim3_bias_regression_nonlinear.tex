@@ -1,0 +1,59 @@
+\begin{table*}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{Simulation 3: debiased estimator, nonlinear regression DGP. Bias and RMSE (in parentheses) by sample size.}
+\label{tab:sim3_bias_regression_nonlinear}
+\begin{tabular}{lrrrrrr}
+\toprule
+ & & \multicolumn{5}{c}{Bias (RMSE)} \\
+\cmidrule(lr){3-7}
+Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+\quad x1 & 0.000 & 0.025 & 0.027 & 0.015 & 0.005 & 0.001 \\
+ &  & (0.395) & (0.286) & (0.198) & (0.128) & (0.091) \\
+\quad x2 & 3.000 & -0.014 & -0.004 & -0.001 & -0.000 & 0.000 \\
+ &  & (0.195) & (0.129) & (0.094) & (0.057) & (0.042) \\
+\quad x3 & 0.000 & -0.003 & 0.000 & -0.002 & -0.002 & -0.001 \\
+ &  & (0.193) & (0.135) & (0.095) & (0.058) & (0.041) \\
+\quad x4 & 0.000 & -0.011 & -0.001 & 0.002 & 0.000 & -0.002 \\
+ &  & (0.189) & (0.134) & (0.093) & (0.060) & (0.043) \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+\quad x1 & 0.000 & 0.011 & 0.026 & 0.007 & 0.001 & 0.002 \\
+ &  & (0.365) & (0.265) & (0.179) & (0.110) & (0.079) \\
+\quad x2 & 3.000 & -0.002 & 0.003 & -0.002 & -0.000 & -0.000 \\
+ &  & (0.278) & (0.166) & (0.111) & (0.065) & (0.049) \\
+\quad x3 & 0.000 & -0.001 & 0.001 & -0.001 & 0.001 & -0.000 \\
+ &  & (0.117) & (0.069) & (0.045) & (0.026) & (0.018) \\
+\quad x4 & 0.000 & -0.006 & 0.001 & -0.001 & 0.000 & 0.000 \\
+ &  & (0.117) & (0.071) & (0.046) & (0.027) & (0.018) \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+\quad x1 & 0.000 & 0.002 & 0.025 & 0.010 & -0.001 & 0.000 \\
+ &  & (0.470) & (0.306) & (0.191) & (0.111) & (0.078) \\
+\quad x2 & 3.000 & 0.008 & 0.006 & 0.001 & 0.001 & -0.000 \\
+ &  & (0.324) & (0.177) & (0.110) & (0.058) & (0.035) \\
+\quad x3 & 0.000 & -0.000 & 0.002 & -0.000 & 0.000 & -0.000 \\
+ &  & (0.115) & (0.069) & (0.044) & (0.024) & (0.016) \\
+\quad x4 & 0.000 & -0.007 & 0.002 & 0.000 & -0.000 & -0.000 \\
+ &  & (0.115) & (0.069) & (0.044) & (0.024) & (0.016) \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+\quad x1 & 0.000 & 0.019 & 0.022 & 0.008 & -0.000 & -0.000 \\
+ &  & (0.326) & (0.201) & (0.143) & (0.087) & (0.060) \\
+\quad x2 & 3.000 & -0.008 & -0.003 & -0.001 & -0.000 & -0.000 \\
+ &  & (0.167) & (0.073) & (0.046) & (0.024) & (0.015) \\
+\quad x3 & 0.000 & 0.000 & 0.002 & 0.000 & 0.001 & -0.000 \\
+ &  & (0.156) & (0.071) & (0.042) & (0.023) & (0.015) \\
+\quad x4 & 0.000 & -0.008 & 0.002 & -0.001 & -0.000 & -0.000 \\
+ &  & (0.150) & (0.070) & (0.043) & (0.024) & (0.015) \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent standard normal covariates. Trimming is inactive because the support is unbounded. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
+\end{tablenotes}
+\end{threeparttable}
+\end{table*}

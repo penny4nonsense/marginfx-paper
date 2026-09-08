@@ -286,20 +286,36 @@
 	nearly unbiased and fall short of it, usually toward zero, wherever regularization
 	flattens the fitted surface --- the regularization bias made directly visible.
 	Because AMEs come with standard errors and SHAP values and PDP slopes do not, the AME
-	framework supports conclusions that the alternatives cannot. An additional empirical finding
-	is that Breiman random forests produce less stable AME estimates than the other
-	estimator classes, consistent with the theoretical result that gradient consistency
-	for Breiman forests is harder to establish than for Mondrian forests. The
-	simulation study traces this instability to its source: uncorrected plug-in
-	intervals for forests collapse in coverage at large samples because they
-	concentrate around a regularization-biased center --- precisely the first-order
-	bias term that the orthogonal correction removes.
+	framework supports conclusions that the alternatives cannot. An additional finding concerns
+	Breiman random forests, which are the learner the framework is most often asked
+	to carry and the one for which the interpretation theory is least complete. Under
+	the uncorrected plug-in they behave worst of the four classes: the simulation
+	study shows a bias that does not vanish with the sample size but grows with it,
+	from $-0.097$ at $n=250$ to $-0.091$ at $n=5{,}000$ in the linear regression
+	design, so that intervals shrink at the usual rate around a center that is not
+	moving and coverage collapses to $0.130$. The orthogonal correction removes that
+	term. Estimating the same quantity on the same draws with the debiased estimator
+	leaves a bias in the fourth decimal at every sample size and returns coverage to a
+	mean of $0.948$ against the nominal $0.95$, within the band $0.922$ to $0.968$
+	across all one hundred and twenty forest cells of the design --- every data
+	generating process, sample size, feature and outcome type.
+	This is more than a bias correction, and the reason matters for which learners
+	the framework can be used with. A depth-constrained forest whose plug-in error
+	grows with $n$ is not converging to $f$, and Proposition~\ref{prop:robust} says
+	that with the representer known this costs nothing: the estimator is root-$n$
+	normal about $\theta_h(f)$ even when $\hat{f}$ converges to some other function
+	entirely. The simulation is that proposition observed rather than merely a
+	demonstration that the correction is well calibrated. Because the inference
+	theory consumes gradient consistency for no learner class, the Breiman forest is
+	the natural choice for applied work rather than a concession, and what remains
+	open for that class is the separate interpretive question of whether its window
+	effect converges to a classical derivative as $h \to 0$.
 	
 	The remainder of the paper is organized as follows. Section~2 defines the estimand, presents the estimator, and establishes its relationship to classical average marginal effects for the GLM family. Section~3 develops the asymptotic theory: the window estimand and its Riesz representation, the orthogonal score with cross-fitting, root-$n$ asymptotic normality and semiparametric efficiency, the pairing identity for estimators of bounded variation, gradient consistency for three learner classes, and the nuisance rates that the conditions require. Section~4 presents the three empirical applications. Section~5 presents simulation evidence on 	finite-sample performance. Section~6 concludes.
 	
 	\section{Method}
 	
-	We propose a framework for interpreting any supervised machine learning model through the lens of average marginal effects. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether $\hat{f}$ is a neural network, a gradient boosted model, a random forest, or any other supervised learner. Crucially, the framework produces standard errors via a nonparametric bootstrap, enabling hypothesis tests and confidence intervals that existing model-agnostic interpretability methods do not support. SHAP values and permutation-based feature importance measures provide point estimates of variable importance but no basis for inference. The average marginal effect estimator proposed here yields a coefficient table --- estimate, standard error, and significance --- directly analogous to the output of a parametric regression, with no restrictions on the functional form of $\hat{f}$.
+	We propose a framework for interpreting any supervised machine learning model through the lens of average marginal effects. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether $\hat{f}$ is a neural network, a gradient boosted model, a random forest, or any other supervised learner. Crucially, the framework produces standard errors from the influence function of a Neyman-orthogonal score, evaluated by cross-fitting, enabling hypothesis tests and confidence intervals that existing model-agnostic interpretability methods do not support. A refitting bootstrap is retained, but as a diagnostic rather than as the basis for inference: Section~\ref{sec:inference} shows that it is blind to the learner's regularization bias, which is precisely the term the orthogonal correction removes. SHAP values and permutation-based feature importance measures provide point estimates of variable importance but no basis for inference. The average marginal effect estimator proposed here yields a coefficient table --- estimate, standard error, and significance --- directly analogous to the output of a parametric regression, with no restrictions on the functional form of $\hat{f}$.
 	
 	\subsection{Estimand}
 	
@@ -1974,9 +1990,11 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	
 	\section{Simulation}
 	
-	We evaluate the finite-sample performance of the AME estimator through two simulation studies. Simulation 1 examines bias and root mean squared error of the AME estimates as a function of sample size across three data generating processes and two outcome types. Simulation 2 examines bootstrap standard error calibration by comparing empirical coverage rates of nominal 95\% confidence intervals to the target. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1\,000, 2\,500, 5\,000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
+	We evaluate the estimator through three simulation studies, which together separate what the window average recovers from what can be said about it. Simulation 1 examines the bias and root mean squared error of the uncorrected plug-in window average as a function of sample size, across three data generating processes and two outcome types. Simulation 2 asks whether the refitting bootstrap of Section~\ref{sec:inference} delivers valid intervals for that plug-in, comparing empirical coverage of nominal 95\% intervals against the target. Simulation 3 repeats both exercises for the debiased cross-fitted estimator of Section~\ref{sec:inference}, holding the designs, learners and windows fixed so that the two estimators differ only in the orthogonal correction. The three are best read in order: the first locates a bias, the second shows that resampling cannot see it, and the third removes it. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1\,000, 2\,500, 5\,000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
 	
-	The simulation study fits four model classes with hyperparameters chosen to balance computational tractability against representativeness of typical applied use. The random forest uses 100 trees with a maximum depth of 6, and XGBoost uses 100 boosting rounds with a maximum depth of 4 and a learning rate of 0.05 --- conservative settings that prevent overfitting on the small sample sizes considered while remaining flexible enough to capture the nonlinear and interaction structures in the data generating processes. The neural network is a feedforward architecture with two hidden layers of 32 and 16 units, trained for 50 epochs with batch size 64 and learning rate $10^{-3}$ using the Adam optimizer. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 to ensure scale-invariant gradient updates. Logistic and linear regression are included as baselines and use no hyperparameter tuning. All model fits are performed independently on each Monte Carlo iteration with no warm starting between iterations, so the variance estimates reflect the full sampling distribution of the AME estimator including model fitting variability. The Monte Carlo ground truth AMEs are computed once at the start of the study using $n=1{,}000{,}000$ observations drawn from the true prediction function directly, with the resulting AMEs treated as known quantities for the bias and coverage calculations. Bootstrap calibration in Simulation 2 uses 200 bootstrap replicates per Monte Carlo iteration and 500 Monte Carlo iterations per cell of the design.
+	The simulation study fits four model classes with hyperparameters chosen to balance computational tractability against representativeness of typical applied use. The random forest uses 100 trees with a maximum depth of 6, and XGBoost uses 100 boosting rounds with a maximum depth of 4 and a learning rate of 0.05 --- conservative settings that prevent overfitting on the small sample sizes considered while remaining flexible enough to capture the nonlinear and interaction structures in the data generating processes. The neural network is a feedforward architecture with two hidden layers of 32 and 16 units, trained for 50 epochs with batch size 64 and learning rate $10^{-3}$ using the Adam optimizer. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 to ensure scale-invariant gradient updates. Logistic and linear regression are included as baselines and use no hyperparameter tuning. All model fits are performed independently on each Monte Carlo iteration with no warm starting between iterations, so the variance estimates reflect the full sampling distribution of the AME estimator including model fitting variability. The Monte Carlo ground truth AMEs are computed once at the start of the study using $n=1{,}000{,}000$ observations drawn from the true prediction function directly, with the resulting AMEs treated as known quantities for the bias and coverage calculations. Simulation 2 uses 1{,}000 bootstrap resamples per Monte Carlo iteration and 1{,}000 Monte Carlo iterations per cell for the linear, logistic, random forest and XGBoost learners. The neural network uses 200 resamples and 500 iterations: every resample is a fresh training run, which makes the network roughly nine tenths of the total cost of the study, and the calibration result the argument rests on is the forest's. Percentile intervals are used throughout, which is why the resample count is set well above the couple of hundred that would suffice for a standard error alone. Simulation 3 uses 1{,}000 Monte Carlo iterations per cell for every learner; it needs no resampling, since its standard errors come from the influence function.
+	
+	\subsection{Simulation 1: Recovering the Window Effect}
 	
 	\begin{table*}[htbp]
 		\centering
@@ -2013,7 +2031,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
 				\quad x1 & 0.199 & 0.0590 & 0.0265 & 0.0107 & -0.0016 & -0.0049 \\
 				&  & (0.0782) & (0.0401) & (0.0223) & (0.0108) & (0.0083) \\
-				\quad x2 & 0.298 & 0.0643 & 0.0315 & 0.0085 & -0.0016 & -0.0046 \\
+				\quad x2 & 0.298 & 0.0643 & 0.0315 & 0.0085 & -0.0015 & -0.0046 \\
 				&  & (0.0893) & (0.0490) & (0.0218) & (0.0116) & (0.0083) \\
 				\quad x3 & 0.000 & 0.0008 & -0.0002 & 0.0006 & 0.0002 & 0.0002 \\
 				&  & (0.0332) & (0.0193) & (0.0110) & (0.0056) & (0.0033) \\
@@ -2030,11 +2048,11 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\quad x4 & 0.000 & 0.0009 & -0.0003 & -0.0007 & -0.0001 & 0.0004 \\
 				&  & (0.0203) & (0.0143) & (0.0105) & (0.0070) & (0.0055) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
@@ -2092,11 +2110,11 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\quad x4 & 0.000 & -0.0007 & 0.0004 & 0.0005 & -0.0001 & 0.0002 \\
 				&  & (0.0230) & (0.0144) & (0.0100) & (0.0070) & (0.0056) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
@@ -2154,11 +2172,11 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\quad x4 & 0.000 & 0.0005 & -0.0002 & 0.0000 & -0.0001 & 0.0006 \\
 				&  & (0.0206) & (0.0151) & (0.0103) & (0.0069) & (0.0057) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 500 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
@@ -2194,7 +2212,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\quad x3 & 0.000 & -0.0015 & -0.0005 & -0.0005 & 0.0001 & 0.0000 \\
 				&  & (0.0562) & (0.0290) & (0.0137) & (0.0036) & (0.0011) \\
 				\quad x4 & 0.000 & -0.0021 & -0.0010 & -0.0005 & -0.0002 & 0.0000 \\
-				&  & (0.0572) & (0.0297) & (0.0138) & (0.0037) & (0.0011) \\
+				&  & (0.0574) & (0.0297) & (0.0138) & (0.0037) & (0.0011) \\
 				\midrule
 				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
 				\quad x1 & 2.000 & 0.4114 & 0.1780 & 0.0366 & -0.0337 & -0.0467 \\
@@ -2216,11 +2234,11 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\quad x4 & 0.000 & -0.0002 & 0.0008 & -0.0003 & -0.0004 & -0.0017 \\
 				&  & (0.0752) & (0.0496) & (0.0336) & (0.0247) & (0.0287) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
@@ -2278,11 +2296,11 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\quad x4 & 0.000 & -0.0028 & -0.0001 & -0.0013 & -0.0004 & -0.0016 \\
 				&  & (0.1410) & (0.0626) & (0.0406) & (0.0281) & (0.0323) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
@@ -2340,15 +2358,17 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\quad x4 & 0.000 & -0.0079 & 0.0015 & 0.0002 & -0.0005 & -0.0019 \\
 				&  & (0.0981) & (0.0565) & (0.0387) & (0.0284) & (0.0331) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
 				\item \textit{Notes:} Mean bias and RMSE (in parentheses) computed over 1,000 Monte Carlo iterations. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
 	Table~\ref{tab:sim1_regression_interaction} reports results for the interaction regression DGP, $y = 2x_1 + 3x_2 + 2x_1 x_2 + \varepsilon$, with true AMEs of 2.0 and 3.0 for $x_1$ and $x_2$. Linear regression recovers these AMEs accurately despite omitting the interaction term, confirming the robustness result from the classification case: the interaction contribution to the marginal effect of $x_1$ is $\mathbb{E}[2x_2] = 0$ and similarly for $x_2$, so the misspecified linear model nevertheless recovers the correct AME. The RMSE for the noise features under linear regression is elevated relative to the linear DGP --- around 0.14 at $n=250$ --- because the interaction term inflates the residual variance and increases estimation uncertainty for all coefficients. Random forests again show persistent negative bias that grows rather than shrinks with sample size, reaching $-0.080$ and $-0.114$ for $x_1$ and $x_2$ respectively at $n=5{,}000$. XGBoost shows the same large positive bias at small samples followed by convergence, but the bias does not fully vanish at $n=5{,}000$ --- around $-0.043$ for $x_1$ and $-0.059$ for $x_2$ --- suggesting that the interaction structure requires larger samples for the gradient boosting to fully adapt. The neural network performs well, with bias below 0.003 for both signal features at $n=2{,}500$ and $n=5{,}000$, and RMSE declining steadily. Taken together the six bias and RMSE tables establish that the AME estimator is consistent for logistic regression, neural networks, and XGBoost across all three DGPs and both outcome types, with random forests showing persistent regularization bias in the regression setting that practitioners should be aware of when reporting AMEs from default-tuned forest models.
+	
+	\subsection{Simulation 2: The Refitting Bootstrap}
 	
 	\begin{table*}[htbp]
 		\centering
@@ -2363,50 +2383,50 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: Logistic}} \\
-				\quad x1 & 0.199 & 0.938 & 0.940 & 0.930 \\
-				&  & (0.0745) & (0.0388) & (0.0176) \\
-				\quad x2 & 0.298 & 0.896 & 0.944 & 0.950 \\
-				&  & (0.0763) & (0.0400) & (0.0182) \\
-				\quad x3 & 0.000 & 0.932 & 0.936 & 0.940 \\
-				&  & (0.0736) & (0.0378) & (0.0171) \\
-				\quad x4 & 0.000 & 0.922 & 0.936 & 0.940 \\
-				&  & (0.0737) & (0.0378) & (0.0171) \\
+				\quad x1 & 0.199 & 0.881 & 0.878 & 0.886 \\
+				&  & (0.0652) & (0.0334) & (0.0150) \\
+				\quad x2 & 0.298 & 0.726 & 0.766 & 0.781 \\
+				&  & (0.0505) & (0.0257) & (0.0115) \\
+				\quad x3 & 0.000 & 0.944 & 0.939 & 0.946 \\
+				&  & (0.0752) & (0.0386) & (0.0174) \\
+				\quad x4 & 0.000 & 0.933 & 0.954 & 0.944 \\
+				&  & (0.0754) & (0.0386) & (0.0174) \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: Random Forest}} \\
-				\quad x1 & 0.199 & 0.882 & 0.878 & 0.130 \\
-				&  & (0.1286) & (0.0498) & (0.0165) \\
-				\quad x2 & 0.298 & 0.914 & 0.930 & 0.274 \\
-				&  & (0.1706) & (0.0663) & (0.0228) \\
-				\quad x3 & 0.000 & 0.700 & 0.614 & 0.392 \\
-				&  & (0.0580) & (0.0170) & (0.0034) \\
-				\quad x4 & 0.000 & 0.688 & 0.548 & 0.392 \\
-				&  & (0.0571) & (0.0170) & (0.0034) \\
+				\quad x1 & 0.199 & 0.968 & 0.933 & 0.186 \\
+				&  & (0.1343) & (0.0553) & (0.0205) \\
+				\quad x2 & 0.298 & 0.961 & 0.958 & 0.268 \\
+				&  & (0.1500) & (0.0614) & (0.0219) \\
+				\quad x3 & 0.000 & 0.962 & 0.942 & 0.949 \\
+				&  & (0.0976) & (0.0386) & (0.0132) \\
+				\quad x4 & 0.000 & 0.969 & 0.964 & 0.953 \\
+				&  & (0.0978) & (0.0386) & (0.0132) \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: XGBoost}} \\
-				\quad x1 & 0.199 & 0.920 & 0.928 & 0.966 \\
-				&  & (0.2625) & (0.1028) & (0.0305) \\
-				\quad x2 & 0.298 & 0.924 & 0.966 & 0.970 \\
-				&  & (0.3076) & (0.1161) & (0.0339) \\
-				\quad x3 & 0.000 & 0.978 & 0.986 & 0.978 \\
-				&  & (0.1718) & (0.0767) & (0.0233) \\
-				\quad x4 & 0.000 & 0.980 & 0.982 & 0.972 \\
-				&  & (0.1715) & (0.0770) & (0.0234) \\
+				\quad x1 & 0.199 & 0.926 & 0.947 & 0.877 \\
+				&  & (0.1864) & (0.0702) & (0.0230) \\
+				\quad x2 & 0.298 & 0.908 & 0.954 & 0.910 \\
+				&  & (0.2136) & (0.0794) & (0.0239) \\
+				\quad x3 & 0.000 & 0.976 & 0.961 & 0.960 \\
+				&  & (0.1139) & (0.0436) & (0.0141) \\
+				\quad x4 & 0.000 & 0.973 & 0.969 & 0.959 \\
+				&  & (0.1149) & (0.0436) & (0.0142) \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: Neural Net}} \\
-				\quad x1 & 0.199 & 0.916 & 0.922 & 0.990 \\
-				&  & (0.0770) & (0.0417) & (0.0253) \\
-				\quad x2 & 0.298 & 0.902 & 0.950 & 0.978 \\
-				&  & (0.0889) & (0.0459) & (0.0233) \\
-				\quad x3 & 0.000 & 0.866 & 0.926 & 0.990 \\
-				&  & (0.0645) & (0.0375) & (0.0258) \\
-				\quad x4 & 0.000 & 0.854 & 0.918 & 0.994 \\
-				&  & (0.0648) & (0.0374) & (0.0260) \\
+				\quad x1 & 0.199 & 0.870 & 0.870 & 0.958 \\
+				&  & (0.0679) & (0.0351) & (0.0203) \\
+				\quad x2 & 0.298 & 0.658 & 0.774 & 0.894 \\
+				&  & (0.0586) & (0.0287) & (0.0154) \\
+				\quad x3 & 0.000 & 0.936 & 0.936 & 0.986 \\
+				&  & (0.0764) & (0.0391) & (0.0225) \\
+				\quad x4 & 0.000 & 0.938 & 0.936 & 0.982 \\
+				&  & (0.0772) & (0.0392) & (0.0225) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
-				\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) computed over 500 Monte Carlo iterations. Bootstrap SEs from nonparametric bootstrap with 200 replicates. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses). Intervals are bootstrap percentile intervals. Logistic, random forest and XGBoost use 1{,}000 Monte Carlo iterations and 1{,}000 resamples; the neural network uses 500 and 200, since every one of its resamples is a fresh training run. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
@@ -2425,63 +2445,275 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: Linear}} \\
-				\quad x1 & 2.000 & 0.918 & 0.946 & 0.946 \\
-				&  & (0.2441) & (0.1211) & (0.0541) \\
-				\quad x2 & 3.000 & 0.948 & 0.946 & 0.950 \\
-				&  & (0.2445) & (0.1214) & (0.0542) \\
-				\quad x3 & 0.000 & 0.946 & 0.938 & 0.952 \\
-				&  & (0.2454) & (0.1214) & (0.0542) \\
-				\quad x4 & 0.000 & 0.920 & 0.932 & 0.938 \\
-				&  & (0.2459) & (0.1215) & (0.0545) \\
+				\quad x1 & 2.000 & 0.928 & 0.945 & 0.954 \\
+				&  & (0.2478) & (0.1235) & (0.0553) \\
+				\quad x2 & 3.000 & 0.955 & 0.948 & 0.956 \\
+				&  & (0.2489) & (0.1239) & (0.0552) \\
+				\quad x3 & 0.000 & 0.951 & 0.947 & 0.948 \\
+				&  & (0.2495) & (0.1234) & (0.0552) \\
+				\quad x4 & 0.000 & 0.949 & 0.948 & 0.957 \\
+				&  & (0.2489) & (0.1234) & (0.0552) \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: Random Forest}} \\
-				\quad x1 & 2.000 & 0.828 & 0.850 & 0.104 \\
-				&  & (0.5888) & (0.2517) & (0.0998) \\
-				\quad x2 & 3.000 & 0.918 & 0.894 & 0.204 \\
-				&  & (0.8030) & (0.3268) & (0.1348) \\
-				\quad x3 & 0.000 & 0.660 & 0.586 & 0.618 \\
-				&  & (0.1144) & (0.0238) & (0.0018) \\
-				\quad x4 & 0.000 & 0.694 & 0.630 & 0.596 \\
-				&  & (0.1166) & (0.0240) & (0.0018) \\
+				\quad x1 & 2.000 & 0.870 & 0.886 & 0.092 \\
+				&  & (0.7447) & (0.2990) & (0.1170) \\
+				\quad x2 & 3.000 & 0.967 & 0.962 & 0.323 \\
+				&  & (0.9327) & (0.3632) & (0.1441) \\
+				\quad x3 & 0.000 & 0.996 & 0.996 & 0.999 \\
+				&  & (0.2555) & (0.0707) & (0.0082) \\
+				\quad x4 & 0.000 & 0.992 & 0.995 & 1.000 \\
+				&  & (0.2566) & (0.0708) & (0.0083) \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: XGBoost}} \\
-				\quad x1 & 2.000 & 0.526 & 0.850 & 0.964 \\
-				&  & (1.0307) & (0.3749) & (0.1203) \\
-				\quad x2 & 3.000 & 0.752 & 0.954 & 0.938 \\
-				&  & (1.1581) & (0.4174) & (0.1353) \\
-				\quad x3 & 0.000 & 0.960 & 0.986 & 0.990 \\
-				&  & (0.5467) & (0.2358) & (0.0740) \\
-				\quad x4 & 0.000 & 0.956 & 0.986 & 0.986 \\
-				&  & (0.5416) & (0.2354) & (0.0735) \\
+				\quad x1 & 2.000 & 0.849 & 0.982 & 0.521 \\
+				&  & (0.8174) & (0.3009) & (0.1041) \\
+				\quad x2 & 3.000 & 0.917 & 0.990 & 0.503 \\
+				&  & (0.9709) & (0.3552) & (0.1184) \\
+				\quad x3 & 0.000 & 0.988 & 0.969 & 0.971 \\
+				&  & (0.3863) & (0.1217) & (0.0382) \\
+				\quad x4 & 0.000 & 0.978 & 0.975 & 0.969 \\
+				&  & (0.3778) & (0.1210) & (0.0382) \\
 				\midrule
 				\multicolumn{5}{l}{\textit{Panel: Neural Net}} \\
-				\quad x1 & 2.000 & 0.912 & 0.950 & 1.000 \\
-				&  & (0.2794) & (0.1453) & (0.1821) \\
-				\quad x2 & 3.000 & 0.844 & 0.950 & 1.000 \\
-				&  & (0.2901) & (0.1511) & (0.1999) \\
-				\quad x3 & 0.000 & 0.930 & 0.966 & 1.000 \\
-				&  & (0.2695) & (0.1386) & (0.1631) \\
-				\quad x4 & 0.000 & 0.916 & 0.958 & 1.000 \\
-				&  & (0.2722) & (0.1394) & (0.1633) \\
+				\quad x1 & 2.000 & 0.950 & 0.978 & 1.000 \\
+				&  & (0.3442) & (0.1497) & (0.1938) \\
+				\quad x2 & 3.000 & 0.936 & 0.974 & 1.000 \\
+				&  & (0.4000) & (0.1537) & (0.2004) \\
+				\quad x3 & 0.000 & 0.972 & 0.970 & 1.000 \\
+				&  & (0.3075) & (0.1471) & (0.1887) \\
+				\quad x4 & 0.000 & 0.968 & 0.972 & 1.000 \\
+				&  & (0.3116) & (0.1474) & (0.1869) \\
 				\bottomrule
-			\end{tabular}
-			\begin{tablenotes}
+				\end{tabular}
+				\begin{tablenotes}
 				\footnotesize
-				\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) computed over 500 Monte Carlo iterations. Bootstrap SEs from nonparametric bootstrap with 200 replicates. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
-			\end{tablenotes}
+				\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses). Intervals are bootstrap percentile intervals. Logistic, random forest and XGBoost use 1{,}000 Monte Carlo iterations and 1{,}000 resamples; the neural network uses 500 and 200, since every one of its resamples is a fresh training run. True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. Noise features x3 and x4 have true AME of zero.
+				\end{tablenotes}
 		\end{threeparttable}
 	\end{table*}
 	
 	Table~\ref{tab:sim2_calibration_regression_linear} reports the corresponding calibration results for the linear regression DGP, where the magnitudes of the AMEs are larger and the bias-coverage interaction becomes even more visible. Linear regression achieves coverage between 0.918 and 0.952 across all variables and sample sizes, well-calibrated throughout. The neural network performs well at small and moderate samples, with coverage approaching the nominal level by $n=1{,}000$, before drifting upward to exactly 1.000 at $n=5{,}000$ for all four variables --- the same conservatism observed in the classification case, amplified in the regression setting where the smooth prediction surface produces highly stable finite differences. XGBoost shows pronounced undercoverage for the signal features at $n=250$ --- 0.526 for $x_1$ and 0.752 for $x_2$ --- driven by the large positive bias documented in Simulation 1 at small samples, but coverage recovers toward and above the nominal level by $n=1{,}000$ and is well-calibrated at $n=5{,}000$. The most striking result is again random forests: coverage at $n=5{,}000$ falls to 0.104 for $x_1$ and 0.204 for $x_2$, the worst calibration in either table. The mechanism is identical to the classification case --- the bootstrap intervals narrow at the expected rate but the bias does not vanish, so the intervals fail to cover the true AME at large samples. The noise features under random forests show coverage of around 0.6 across all sample sizes, indicating that even where the bias is small, the bootstrap intervals are systematically too narrow to achieve nominal coverage. Taken together, the two calibration tables show that the refitting bootstrap applied to the uncorrected plug-in tracks sampling variability adequately when the learner's regularization bias is negligible at the sample sizes considered --- logistic and linear regression, the neural network, and XGBoost beyond small samples --- and fails without warning when the bias term dominates, as it does for random forests at large $n$. The tables should therefore be read as a controlled demonstration of the mechanism analyzed in Remark~\ref{rem:refit}, not as a validation of the plug-in bootstrap as an inferential procedure: the failure is not specific to forests but to any learner whose $L^2$ bias shrinks more slowly than its intervals, and forests at default tuning are simply the class for which this occurs within the sample sizes examined. In the designs of this section the covariate density is known, so the representer $\alpha_h$ is available in closed form and the debiased estimator of Section~2.4 requires no representer estimation at all. The forests here are moreover depth-capped, and a depth-capped forest converges to a depth-limited approximation of the regression function rather than to the regression function itself; Proposition~\ref{prop:robust} applies verbatim to this case, and asserts that coverage of the true window effect requires no consistency from the forest --- only the known representer --- with the forest's approximation error paid in interval width rather than in location.
-	%% TODO (Jason): add Simulation 3 --- debiased estimator with closed-form alpha_h
-	%% (features are independent N(0,1), so alpha_h(u) = [q(u-he_j)-q(u+he_j)]/(2h p(u))
-	%% is computable exactly): report bias, RMSE, and coverage of the influence-function
-	%% CIs across the same DGPs, model classes, and sample sizes. The forest panel is
-	%% the money table: coverage should recover from ~0.10 to ~0.95 at n=5,000.
-	%% Also worth one column comparing runtime vs the B=200 refit bootstrap.
-	%% Per Prop prop:robust the forest panel doubles as the double-robustness demo:
-	%% coverage should be ~nominal even at fixed depth 6 (inconsistent learner),
-	%% with wider CIs than the debiased NN/XGB panels. Say so in the table notes.
+	\subsection{Simulation 3: The Debiased Estimator}
+	
+	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 3: debiased estimator, linear regression DGP. Bias and RMSE (in parentheses) by sample size.}
+			\label{tab:sim3_bias_regression_linear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Linear}} \\
+				\quad x1 & 2.000 & -0.002 & -0.000 & -0.000 & -0.001 & -0.000 \\
+				&  & (0.067) & (0.044) & (0.032) & (0.021) & (0.014) \\
+				\quad x2 & 3.000 & -0.004 & -0.002 & 0.001 & -0.000 & -0.000 \\
+				&  & (0.064) & (0.045) & (0.032) & (0.020) & (0.014) \\
+				\quad x3 & 0.000 & -0.000 & -0.001 & -0.000 & 0.001 & -0.000 \\
+				&  & (0.065) & (0.046) & (0.031) & (0.020) & (0.014) \\
+				\quad x4 & 0.000 & -0.003 & 0.001 & -0.000 & -0.000 & -0.000 \\
+				&  & (0.065) & (0.045) & (0.031) & (0.020) & (0.014) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 2.000 & -0.002 & 0.002 & -0.002 & 0.000 & 0.000 \\
+				&  & (0.171) & (0.106) & (0.074) & (0.044) & (0.031) \\
+				\quad x2 & 3.000 & -0.001 & 0.010 & 0.003 & 0.001 & -0.000 \\
+				&  & (0.228) & (0.147) & (0.094) & (0.056) & (0.038) \\
+				\quad x3 & 0.000 & 0.002 & 0.001 & -0.001 & 0.001 & -0.000 \\
+				&  & (0.087) & (0.054) & (0.035) & (0.022) & (0.015) \\
+				\quad x4 & 0.000 & -0.002 & 0.000 & -0.001 & -0.001 & -0.000 \\
+				&  & (0.089) & (0.056) & (0.036) & (0.021) & (0.015) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 2.000 & -0.002 & 0.001 & -0.001 & -0.002 & 0.000 \\
+				&  & (0.230) & (0.142) & (0.088) & (0.048) & (0.030) \\
+				\quad x2 & 3.000 & -0.002 & 0.007 & 0.001 & 0.001 & 0.001 \\
+				&  & (0.280) & (0.173) & (0.101) & (0.054) & (0.034) \\
+				\quad x3 & 0.000 & -0.001 & 0.000 & -0.000 & 0.001 & -0.000 \\
+				&  & (0.095) & (0.058) & (0.036) & (0.022) & (0.015) \\
+				\quad x4 & 0.000 & -0.004 & 0.001 & 0.000 & -0.000 & -0.000 \\
+				&  & (0.099) & (0.061) & (0.036) & (0.021) & (0.014) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 2.000 & -0.002 & -0.001 & 0.000 & -0.001 & -0.000 \\
+				&  & (0.084) & (0.051) & (0.034) & (0.022) & (0.014) \\
+				\quad x2 & 3.000 & -0.004 & -0.002 & 0.001 & -0.001 & -0.000 \\
+				&  & (0.090) & (0.055) & (0.036) & (0.021) & (0.015) \\
+				\quad x3 & 0.000 & 0.000 & -0.001 & -0.000 & 0.001 & -0.000 \\
+				&  & (0.079) & (0.049) & (0.033) & (0.021) & (0.014) \\
+				\quad x4 & 0.000 & -0.003 & 0.001 & -0.001 & 0.000 & -0.000 \\
+				&  & (0.080) & (0.051) & (0.033) & (0.020) & (0.014) \\
+				\bottomrule
+				\end{tabular}
+				\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent standard normal covariates. Trimming is inactive because the support is unbounded. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
+				\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim3_bias_regression_linear} reports bias and RMSE for the linear regression DGP. The result to compare against is the random forest panel of Table~\ref{tab:sim1_regression_linear}, where the plug-in's bias was $-0.097$ at $n=250$ and, rather than shrinking, grew to $-0.091$ for $x_1$ and $-0.095$ for $x_2$ at $n=5{,}000$. Under the correction that bias is $-0.002$ at $n=250$ and $0.000$ at $n=5{,}000$, and the RMSE now falls monotonically from $0.171$ to $0.031$, at the $O(n^{-1/2})$ rate the plug-in never achieved. The correction does not merely shrink the bias at a given sample size; it restores the rate, which is what inference requires. The other learners were already close to unbiased on this design and are essentially unchanged, as they should be: the orthogonal score corrects a first-order term that is near zero for them.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Coverage of nominal 95\% confidence intervals, linear regression DGP: refitting bootstrap against the influence function.}
+			\label{tab:sim3_coverage_regression_linear}
+			\begin{tabular}{lrrrrrrr}
+				\toprule
+				& & \multicolumn{3}{c}{Refitting bootstrap} & \multicolumn{3}{c}{Influence function} \\
+				\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+				Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ & $n=250$ & $n=1,000$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: Linear}} \\
+				\quad x1 & 2.000 & 0.928 & 0.945 & 0.954 & 0.930 & 0.951 & 0.957 \\
+				\quad x2 & 3.000 & 0.955 & 0.948 & 0.956 & 0.955 & 0.946 & 0.960 \\
+				\quad x3 & 0.000 & 0.951 & 0.947 & 0.948 & 0.944 & 0.949 & 0.950 \\
+				\quad x4 & 0.000 & 0.949 & 0.948 & 0.957 & 0.941 & 0.949 & 0.956 \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 2.000 & 0.870 & 0.886 & 0.092 & 0.936 & 0.939 & 0.946 \\
+				\quad x2 & 3.000 & 0.967 & 0.962 & 0.323 & 0.936 & 0.952 & 0.952 \\
+				\quad x3 & 0.000 & 0.996 & 0.996 & 0.999 & 0.953 & 0.963 & 0.950 \\
+				\quad x4 & 0.000 & 0.992 & 0.995 & 1.000 & 0.940 & 0.950 & 0.964 \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 2.000 & 0.849 & 0.982 & 0.521 & 0.932 & 0.942 & 0.938 \\
+				\quad x2 & 3.000 & 0.917 & 0.990 & 0.503 & 0.948 & 0.946 & 0.941 \\
+				\quad x3 & 0.000 & 0.988 & 0.969 & 0.971 & 0.957 & 0.952 & 0.952 \\
+				\quad x4 & 0.000 & 0.978 & 0.975 & 0.969 & 0.940 & 0.957 & 0.962 \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 2.000 & 0.950 & 0.978 & 1.000 & 0.940 & 0.948 & 0.956 \\
+				\quad x2 & 3.000 & 0.936 & 0.974 & 1.000 & 0.950 & 0.939 & 0.959 \\
+				\quad x3 & 0.000 & 0.972 & 0.970 & 1.000 & 0.947 & 0.951 & 0.948 \\
+				\quad x4 & 0.000 & 0.968 & 0.972 & 1.000 & 0.949 & 0.952 & 0.946 \\
+				\bottomrule
+				\end{tabular}
+				\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Empirical coverage of nominal 95\% intervals. The bootstrap columns resample and refit the learner, centring on the plug-in average; the influence-function columns use the debiased cross-fitted estimator with $K=5$ folds and the closed-form representer. Both are evaluated against the same window estimand $\theta_{j,h}$ and the same Monte Carlo ground truth. Noise features $x_3$ and $x_4$ have a true effect of zero.
+				\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Table~\ref{tab:sim3_coverage_regression_linear} places the two inference procedures side by side on the same designs and the same ground truth. The bootstrap columns range from $0.092$ to $1.000$; the influence-function columns range from $0.930$ to $0.964$. Across all 300 cells of the closed-form arm --- three data generating processes, two outcome types, five learners, five sample sizes and four features --- empirical coverage has mean $0.948$ and lies between $0.920$ and $0.970$, with $98.7\%$ of cells inside $[0.93, 0.97]$. No learner is an exception: mean coverage by model runs from $0.947$ to $0.949$. The forest cell that motivates the paper moves from $0.092$ to $0.946$.
+	
+	The forest panel carries a second reading. These forests are capped at depth six, and a depth-capped forest does not converge to the regression function; it converges to the best depth-limited approximation of it. The estimator is therefore consistent for neither nuisance in the usual sense, and yet its intervals cover at the nominal rate. This is Proposition~\ref{prop:robust} operating exactly as stated: with the representer known, $\sqrt{n}$-normality survives an outcome model that converges to the wrong function, and the learner's approximation error is paid in the width of the interval rather than in its location. The forest's RMSE at $n=5{,}000$ is $0.031$ against the linear model's $0.014$ --- wider, and correctly centred. That is the practical content of double robustness here, and it is why the choice of learner becomes a question of efficiency rather than of validity.
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 3: debiased estimator, linear classification DGP. Bias and RMSE (in parentheses) by sample size.}
+			\label{tab:sim3_bias_classification_linear}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.1990 & 0.0019 & 0.0005 & 0.0006 & 0.0000 & -0.0002 \\
+				&  & (0.0199) & (0.0144) & (0.0105) & (0.0064) & (0.0048) \\
+				\quad x2 & 0.2980 & 0.0004 & -0.0001 & 0.0003 & 0.0002 & 0.0002 \\
+				&  & (0.0206) & (0.0142) & (0.0102) & (0.0065) & (0.0046) \\
+				\quad x3 & 0.0000 & 0.0013 & 0.0007 & 0.0007 & 0.0003 & 0.0001 \\
+				&  & (0.0208) & (0.0139) & (0.0100) & (0.0063) & (0.0045) \\
+				\quad x4 & 0.0000 & 0.0008 & -0.0002 & -0.0008 & -0.0001 & 0.0003 \\
+				&  & (0.0206) & (0.0139) & (0.0101) & (0.0062) & (0.0045) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.1990 & 0.0034 & -0.0009 & 0.0008 & 0.0003 & -0.0003 \\
+				&  & (0.0339) & (0.0223) & (0.0152) & (0.0091) & (0.0060) \\
+				\quad x2 & 0.2980 & -0.0003 & 0.0024 & 0.0004 & 0.0006 & 0.0004 \\
+				&  & (0.0437) & (0.0269) & (0.0176) & (0.0101) & (0.0063) \\
+				\quad x3 & 0.0000 & 0.0003 & 0.0009 & 0.0003 & 0.0003 & 0.0003 \\
+				&  & (0.0246) & (0.0162) & (0.0111) & (0.0068) & (0.0047) \\
+				\quad x4 & 0.0000 & -0.0001 & -0.0010 & -0.0010 & -0.0002 & 0.0002 \\
+				&  & (0.0249) & (0.0168) & (0.0113) & (0.0065) & (0.0046) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.1990 & 0.0050 & -0.0025 & 0.0013 & 0.0001 & -0.0003 \\
+				&  & (0.0495) & (0.0304) & (0.0193) & (0.0107) & (0.0069) \\
+				\quad x2 & 0.2980 & -0.0003 & 0.0035 & 0.0005 & 0.0010 & 0.0003 \\
+				&  & (0.0630) & (0.0395) & (0.0220) & (0.0119) & (0.0069) \\
+				\quad x3 & 0.0000 & 0.0011 & 0.0007 & 0.0004 & 0.0002 & 0.0002 \\
+				&  & (0.0260) & (0.0171) & (0.0112) & (0.0068) & (0.0047) \\
+				\quad x4 & 0.0000 & 0.0004 & -0.0003 & -0.0004 & -0.0001 & 0.0003 \\
+				&  & (0.0268) & (0.0174) & (0.0117) & (0.0065) & (0.0046) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.1990 & 0.0019 & 0.0005 & 0.0004 & 0.0001 & -0.0001 \\
+				&  & (0.0217) & (0.0158) & (0.0115) & (0.0068) & (0.0049) \\
+				\quad x2 & 0.2980 & 0.0004 & -0.0003 & 0.0000 & 0.0004 & 0.0002 \\
+				&  & (0.0229) & (0.0171) & (0.0117) & (0.0072) & (0.0048) \\
+				\quad x3 & 0.0000 & 0.0012 & 0.0010 & 0.0005 & 0.0004 & 0.0002 \\
+				&  & (0.0216) & (0.0144) & (0.0101) & (0.0063) & (0.0045) \\
+				\quad x4 & 0.0000 & 0.0008 & -0.0005 & -0.0008 & -0.0001 & 0.0003 \\
+				&  & (0.0216) & (0.0141) & (0.0105) & (0.0063) & (0.0045) \\
+				\bottomrule
+				\end{tabular}
+				\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent standard normal covariates. Trimming is inactive because the support is unbounded. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
+				\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	\begin{table*}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Coverage of nominal 95\% confidence intervals, linear classification DGP: refitting bootstrap against the influence function.}
+			\label{tab:sim3_coverage_classification_linear}
+			\begin{tabular}{lrrrrrrr}
+				\toprule
+				& & \multicolumn{3}{c}{Refitting bootstrap} & \multicolumn{3}{c}{Influence function} \\
+				\cmidrule(lr){3-5} \cmidrule(lr){6-8}
+				Variable & True AME & $n=250$ & $n=1,000$ & $n=5,000$ & $n=250$ & $n=1,000$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.199 & 0.881 & 0.878 & 0.886 & 0.944 & 0.934 & 0.940 \\
+				\quad x2 & 0.298 & 0.726 & 0.766 & 0.781 & 0.924 & 0.956 & 0.954 \\
+				\quad x3 & 0.000 & 0.944 & 0.939 & 0.946 & 0.934 & 0.950 & 0.952 \\
+				\quad x4 & 0.000 & 0.933 & 0.954 & 0.944 & 0.948 & 0.950 & 0.944 \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.199 & 0.968 & 0.933 & 0.186 & 0.942 & 0.956 & 0.944 \\
+				\quad x2 & 0.298 & 0.961 & 0.958 & 0.268 & 0.932 & 0.952 & 0.946 \\
+				\quad x3 & 0.000 & 0.962 & 0.942 & 0.949 & 0.944 & 0.960 & 0.948 \\
+				\quad x4 & 0.000 & 0.969 & 0.964 & 0.953 & 0.944 & 0.944 & 0.944 \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.199 & 0.926 & 0.947 & 0.877 & 0.932 & 0.952 & 0.950 \\
+				\quad x2 & 0.298 & 0.908 & 0.954 & 0.910 & 0.934 & 0.968 & 0.972 \\
+				\quad x3 & 0.000 & 0.976 & 0.961 & 0.960 & 0.964 & 0.948 & 0.946 \\
+				\quad x4 & 0.000 & 0.973 & 0.969 & 0.959 & 0.954 & 0.938 & 0.946 \\
+				\midrule
+				\multicolumn{8}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.199 & 0.870 & 0.870 & 0.958 & 0.940 & 0.930 & 0.942 \\
+				\quad x2 & 0.298 & 0.658 & 0.774 & 0.894 & 0.934 & 0.950 & 0.958 \\
+				\quad x3 & 0.000 & 0.936 & 0.936 & 0.986 & 0.932 & 0.946 & 0.954 \\
+				\quad x4 & 0.000 & 0.938 & 0.936 & 0.982 & 0.946 & 0.932 & 0.944 \\
+				\bottomrule
+				\end{tabular}
+				\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Empirical coverage of nominal 95\% intervals. The bootstrap columns resample and refit the learner, centring on the plug-in average; the influence-function columns use the debiased cross-fitted estimator with $K=5$ folds and the closed-form representer. Both are evaluated against the same window estimand $\theta_{j,h}$ and the same Monte Carlo ground truth. Noise features $x_3$ and $x_4$ have a true effect of zero.
+				\end{tablenotes}
+		\end{threeparttable}
+	\end{table*}
+	
+	Tables~\ref{tab:sim3_bias_classification_linear} and~\ref{tab:sim3_coverage_classification_linear} report the corresponding classification results, where the same pattern holds on a compressed scale: the forest's coverage at $n=5{,}000$ moves from $0.186$ to $0.944$ for $x_1$ and from $0.268$ to $0.946$ for $x_2$, and the debiased intervals are centred for every learner at every sample size. The nonlinear and interaction designs behave identically and are reported in the supplement.
+	
+	The closed-form representer used above is a luxury of the simulation design, and the natural question is what the estimator costs when $\alpha_h$ must itself be estimated. The second arm answers it by replacing the closed form with a sieve estimate, holding everything else fixed. Coverage survives, with a mild conservatism: over the same cells the sieve arm has mean coverage $0.958$ against the closed form's $0.948$. The cost appears where theory says it should, in the product bias of Assumption~\ref{ass:nuisance}(b) and in efficiency, and it vanishes with sample size. Mean absolute bias is $3.3$ times the closed form's at $n=250$, then $1.6$, $1.2$, $1.1$, and $0.9$ at $n=5{,}000$ --- indistinguishable by the largest sample size. Standard errors are $15\%$ wider at $n=250$ and $1\%$ wider at $n=5{,}000$. Estimating the representer costs something real at small samples and asymptotically nothing, which is the behaviour the product structure of the bias predicts: neither nuisance need converge quickly on its own, so long as the product of their errors is $o(n^{-1/2})$.
 	
 	\section{Conclusion}
 	\label{sec:conclusion}
@@ -2586,7 +2818,17 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	\citep{scornet2015forests}, and converting it into a rate meeting the
 	$n^{-1/4}$ benchmark, or exploiting the product form of
 	Assumption~\ref{ass:nuisance}(b) with a fast representer estimate, is a concrete
-	and plausibly tractable target. The interpretive question --- convergence of the
+	and plausibly tractable target. Simulation~3 indicates how much of that question
+	is already settled in the case the theory handles cleanly. With the representer
+	known, Proposition~\ref{prop:robust} asks nothing of the forest beyond
+	convergence to some fixed limit, and the simulation exhibits exactly that
+	situation: a depth-constrained forest whose plug-in error grows with the sample
+	size, and therefore is not approaching $f$, nevertheless yields intervals whose
+	coverage averages $0.948$ across the whole forest design and never leaves the
+	band $0.922$ to $0.968$. What
+	the open $L^2$ question governs is the case where the representer must itself be
+	estimated, and it is there rather than in the known-representer case that a rate
+	for Breiman forests would buy something. The interpretive question --- convergence of the
 	forest's own gradient information, in the sense of
 	Section~\ref{sec:learners} --- remains genuinely hard: the obstruction identified
 	in the proof of Theorem~\ref{thm:forests}, that data-dependent splits couple

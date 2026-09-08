@@ -47,8 +47,15 @@ import pandas as pd
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PAPER_DIR = SCRIPT_DIR
-TABLES_DIR = os.path.join(PAPER_DIR, 'tables')
-EMPIRICAL_DIR = os.path.join(PAPER_DIR, 'empirical')
+# Both are overridable so the ICDM camera-ready can be built from its own
+# pipeline (empirical-icdm/, the bootstrap estimator) without disturbing the
+# journal paper's tables, which come from the debiased estimator in empirical/.
+TABLES_DIR = os.environ.get(
+    'MARGINFX_TABLES_DIR', os.path.join(PAPER_DIR, 'tables')
+)
+EMPIRICAL_DIR = os.environ.get(
+    'MARGINFX_EMPIRICAL_DIR', os.path.join(PAPER_DIR, 'empirical')
+)
 
 # ---------------------------------------------------------------------------
 # Dataset configurations
@@ -247,6 +254,28 @@ def latex_begin(caption: str, label: str, col_spec: str) -> list:
     ]
 
 
+# Which estimator produced the empirical tables. The two papers use different
+# ones, and the table notes have to say which -- a debiased note on a bootstrap
+# table misdescribes the method entirely. Set MARGINFX_METHOD=bootstrap when
+# generating for the conference paper.
+METHOD = os.environ.get('MARGINFX_METHOD', 'debiased')
+
+_NOTE_STARS = {
+    'debiased': (
+        r'Estimates are the debiased cross-fitted window AME with $K=5$ folds; '
+        r'standard errors from the orthogonal score in parentheses. '
+        r'Step sizes $h_j$ and trimmed fractions are reported in '
+        r'Table~\ref{tab:window_settings}.'
+    ),
+    'bootstrap': (
+        r'Estimates are plug-in window AMEs with adaptive step sizes; '
+        r'standard errors in parentheses are the standard deviation across 200 '
+        r'nonparametric bootstrap replicates, each refit from a fresh '
+        r'initialization on the resample.'
+    ),
+}
+
+
 def latex_end_with_stars() -> list:
     return [
         r'\bottomrule',
@@ -254,10 +283,7 @@ def latex_end_with_stars() -> list:
         r'\begin{tablenotes}',
         r'\footnotesize',
         r'\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. '
-        r'Estimates are the debiased cross-fitted window AME with $K=5$ folds; '
-        r'standard errors from the orthogonal score in parentheses. '
-        r'Step sizes $h_j$ and trimmed fractions are reported in '
-        r'Table~\ref{tab:window_settings}.',
+        + _NOTE_STARS[METHOD],
         r'\end{tablenotes}',
         r'\end{threeparttable}',
         r'\end{table*}',
@@ -970,9 +996,11 @@ def _make_calibration_table(
         r'\end{tabular}',
         r'\begin{tablenotes}',
         r'\footnotesize',
-        r'\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses) '
-        r'computed over 500 Monte Carlo iterations. '
-        r'Bootstrap SEs from nonparametric bootstrap with 200 replicates. '
+        r'\item \textit{Notes:} Coverage rate and mean 95\% CI width (in parentheses). '
+        r'Intervals are bootstrap percentile intervals. Logistic, random forest '
+        r'and XGBoost use 1{,}000 Monte Carlo iterations and 1{,}000 resamples; '
+        r'the neural network uses 500 and 200, since every one of its resamples '
+        r'is a fresh training run. '
         r'True AMEs computed via Monte Carlo integration with $n=1{,}000{,}000$ observations. '
         r'Noise features x3 and x4 have true AME of zero.',
         r'\end{tablenotes}',
@@ -988,12 +1016,27 @@ def _make_calibration_table(
 # ---------------------------------------------------------------------------
 
 def load_sim2_results(dgp: str) -> pd.DataFrame:
-    """Load classification calibration results."""
+    """
+    Load classification calibration results.
+
+    The two papers ran this simulation under different bootstrap semantics --
+    the conference paper recomputes the adaptive step size on each resample,
+    the journal paper holds it fixed -- so they have separate result sets and
+    separate replication counts. METHOD selects between them.
+    """
+    if METHOD == 'bootstrap':
+        results_dir = os.path.join(
+            os.path.dirname(SIM2_RESULTS_DIR), 'results_icdm'
+        )
+        prefix = 'calibration_icdm_'
+    else:
+        results_dir, prefix = SIM2_RESULTS_DIR, 'calibration_'
+
     dfs = []
     for model in CALIBRATION_MODELS:
         for n in CALIBRATION_SAMPLE_SIZES:
-            fname = f'calibration_{dgp}_n{n}_{model}.parquet'
-            fpath = os.path.join(SIM2_RESULTS_DIR, fname)
+            fname = f'{prefix}{dgp}_n{n}_{model}.parquet'
+            fpath = os.path.join(results_dir, fname)
             if os.path.exists(fpath):
                 df = pd.read_parquet(fpath)
                 dfs.append(df)
@@ -1013,11 +1056,21 @@ def make_sim2_table(dgp: str = 'linear') -> tuple:
     available_models = [m for m in CALIBRATION_MODELS if m in stats['model'].unique()]
     true_ame_map = df.groupby('feature')['true_ame'].first().to_dict()
 
-    caption = (
-        f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP (Classification). "
-        f"Nominal coverage target: 95\\%. "
-        f"Coverage rate and mean 95\\% CI width (in parentheses) across 500 Monte Carlo iterations."
-    )
+    if METHOD == 'bootstrap':
+        caption = (
+            f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP "
+            f"(Classification). Nominal coverage target: 95\\%. Coverage rate "
+            f"and mean 95\\% CI width (in parentheses) across 500 Monte Carlo "
+            f"iterations with 200 bootstrap resamples each."
+        )
+    else:
+        caption = (
+            f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP (Classification). "
+            f"Nominal coverage target: 95\\%. "
+            f"Coverage rate and mean 95\\% CI width (in parentheses). Monte Carlo "
+            f"iterations and bootstrap resamples are 1{{,}}000 each for logistic, "
+            f"random forest and XGBoost, and 500 and 200 for the neural network."
+        )
     label = f"tab:sim2_calibration_{dgp}"
 
     return _make_calibration_table(stats, available_models, true_ame_map, caption, label)
@@ -1056,7 +1109,9 @@ def make_sim2_regression_table(dgp: str = 'linear') -> tuple:
     caption = (
         f"Simulation 2: Bootstrap SE Calibration --- {DGP_LABELS[dgp]} DGP (Regression). "
         f"Nominal coverage target: 95\\%. "
-        f"Coverage rate and mean 95\\% CI width (in parentheses) across 500 Monte Carlo iterations."
+        f"Coverage rate and mean 95\\% CI width (in parentheses). Monte Carlo "
+        f"iterations and bootstrap resamples are 1{{,}}000 each for logistic, "
+        f"random forest and XGBoost, and 500 and 200 for the neural network."
     )
     label = f"tab:sim2_calibration_regression_{dgp}"
 
@@ -1066,6 +1121,247 @@ def make_sim2_regression_table(dgp: str = 'linear') -> tuple:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Simulation 3: debiased estimator with a closed-form representer
+# ---------------------------------------------------------------------------
+
+SIM3_RESULTS_DIR = os.path.join(PAPER_DIR, 'simulations', 'sim3_debiased', 'results')
+
+
+def load_sim3_results(outcome_type: str, dgp: str) -> pd.DataFrame:
+    """
+    Load every Simulation 3 result file for one outcome type and DGP.
+
+    Simulation 3 writes one file per model and sample size, each carrying
+    both the point-estimate columns and the interval columns, so bias, RMSE
+    and coverage all come from the same frame.
+    """
+    models = (SIM_MODELS_REGRESSION if outcome_type == 'regression'
+              else SIM_MODELS_CLASSIFICATION)
+    dfs = []
+    for model in models:
+        for n in SAMPLE_SIZES:
+            fname = f'{outcome_type}_{dgp}_n{n}_{model}.parquet'
+            fpath = os.path.join(SIM3_RESULTS_DIR, fname)
+            if os.path.exists(fpath):
+                dfs.append(pd.read_parquet(fpath))
+    if not dfs:
+        return pd.DataFrame()
+    return pd.concat(dfs, ignore_index=True)
+
+
+def make_sim3_bias_rmse_table(outcome_type: str, dgp: str) -> tuple:
+    """
+    Bias and RMSE of the debiased estimator, laid out like the Simulation 1
+    table so the two can be read side by side.
+
+    Returns
+    -------
+    tuple
+        (latex string, tidy DataFrame). Both empty if no results exist yet.
+    """
+    df = load_sim3_results(outcome_type, dgp)
+    if df.empty:
+        return '', pd.DataFrame()
+
+    stats = compute_bias_rmse(df)
+    models = [m for m in (SIM_MODELS_REGRESSION if outcome_type == 'regression'
+                          else SIM_MODELS_CLASSIFICATION)
+              if m in set(stats['model'])]
+    true_map = TRUE_AMES[outcome_type][dgp]
+    decimals = 4 if outcome_type == 'classification' else 3
+
+    n_cols = len(SAMPLE_SIZES)
+    lines = latex_begin(
+        caption=(
+            f'Simulation 3: debiased estimator, '
+            f'{DGP_LABELS[dgp].lower()} '
+            f'{OUTCOME_TYPE_LABELS[outcome_type].lower()} DGP. '
+            f'Bias and RMSE (in parentheses) by sample size.'
+        ),
+        label=f'tab:sim3_bias_{outcome_type}_{dgp}',
+        col_spec='lr' + 'r' * n_cols,
+    )
+    lines.append(f' & & \\multicolumn{{{n_cols}}}{{c}}{{Bias (RMSE)}} \\\\')
+    lines.append(f'\\cmidrule(lr){{3-{2 + n_cols}}}')
+
+    header = 'Variable & True AME'
+    for n in SAMPLE_SIZES:
+        header += f' & $n={n:,}$'
+    header += r' \\'
+    lines.append(header)
+    lines.append(r'\midrule')
+
+    rows = []
+    first = True
+    for model in models:
+        if not first:
+            lines.append(r'\midrule')
+        first = False
+        lines.append(
+            f"\\multicolumn{{{n_cols + 2}}}{{l}}"
+            f"{{\\textit{{Panel: {SIM_MODEL_LABELS[model]}}}}} \\\\"
+        )
+        for feature in FEATURES:
+            true_ame = true_map.get(feature, 0.0)
+            bias_cells, rmse_cells = [], []
+            for n in SAMPLE_SIZES:
+                sub = stats[(stats['model'] == model) &
+                            (stats['n'] == n) &
+                            (stats['feature'] == feature)]
+                if sub.empty:
+                    bias_cells.append('--')
+                    rmse_cells.append('')
+                else:
+                    b = float(sub['bias'].values[0])
+                    r = float(sub['rmse'].values[0])
+                    bias_cells.append(f'{b:.{decimals}f}')
+                    rmse_cells.append(f'({r:.{decimals}f})')
+                    rows.append({
+                        'outcome_type': outcome_type, 'dgp': dgp,
+                        'model': model, 'n': n, 'feature': feature,
+                        'true_ame': true_ame, 'bias': b, 'rmse': r,
+                    })
+            lines.append(
+                f'\\quad {escape_feature(feature)} & '
+                f'{true_ame:.{decimals}f} & ' + ' & '.join(bias_cells) + r' \\'
+            )
+            lines.append(' &  & ' + ' & '.join(rmse_cells) + r' \\')
+
+    lines += [
+        r'\bottomrule',
+        r'\end{tabular}',
+        r'\begin{tablenotes}',
+        r'\footnotesize',
+        r'\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ '
+        r'folds and the closed-form Riesz representer '
+        r'$\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent '
+        r'standard normal covariates. Trimming is inactive because the '
+        r'support is unbounded. Bias is the mean of '
+        r'$\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, '
+        r'over the Monte Carlo iterations. True values computed by Monte '
+        r'Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and '
+        r'$x_4$ have a true effect of zero.',
+        r'\end{tablenotes}',
+        r'\end{threeparttable}',
+        r'\end{table*}',
+    ]
+    return '\n'.join(lines), pd.DataFrame(rows)
+
+
+def make_sim3_coverage_comparison(outcome_type: str, dgp: str = 'linear') -> tuple:
+    """
+    The comparison the correction is for: coverage of the refitting-bootstrap
+    intervals against coverage of the influence-function intervals, over the
+    same DGP, learners and sample sizes.
+
+    Simulation 2 supplies the bootstrap column and Simulation 3 the
+    influence-function column. Only the sample sizes Simulation 2 was run at
+    can appear, since the bootstrap side does not exist elsewhere.
+
+    Returns
+    -------
+    tuple
+        (latex string, tidy DataFrame). Both empty if either side is missing.
+    """
+    boot = (load_sim2_regression_results(dgp) if outcome_type == 'regression'
+            else load_sim2_results(dgp))
+    deb = load_sim3_results(outcome_type, dgp)
+    if boot.empty or deb.empty:
+        return '', pd.DataFrame()
+
+    boot_stats = compute_coverage_stats(boot)
+    deb_stats = compute_coverage_stats(deb)
+
+    sizes = [n for n in CALIBRATION_SAMPLE_SIZES
+             if n in set(boot_stats['n']) and n in set(deb_stats['n'])]
+    if not sizes:
+        return '', pd.DataFrame()
+
+    models = (CALIBRATION_MODELS_REGRESSION if outcome_type == 'regression'
+              else CALIBRATION_MODELS)
+    models = [m for m in models
+              if m in set(boot_stats['model']) and m in set(deb_stats['model'])]
+    true_map = TRUE_AMES[outcome_type][dgp]
+
+    k = len(sizes)
+    lines = latex_begin(
+        caption=(
+            f'Coverage of nominal 95\\% confidence intervals, '
+            f'{DGP_LABELS[dgp].lower()} '
+            f'{OUTCOME_TYPE_LABELS[outcome_type].lower()} DGP: '
+            f'refitting bootstrap against the influence function.'
+        ),
+        label=f'tab:sim3_coverage_{outcome_type}_{dgp}',
+        col_spec='lr' + 'r' * (2 * k),
+    )
+    lines.append(
+        f' & & \\multicolumn{{{k}}}{{c}}{{Refitting bootstrap}} '
+        f'& \\multicolumn{{{k}}}{{c}}{{Influence function}} \\\\'
+    )
+    lines.append(
+        f'\\cmidrule(lr){{3-{2 + k}}} \\cmidrule(lr){{{3 + k}-{2 + 2 * k}}}'
+    )
+
+    header = 'Variable & True AME'
+    for _ in range(2):
+        for n in sizes:
+            header += f' & $n={n:,}$'
+    header += r' \\'
+    lines.append(header)
+    lines.append(r'\midrule')
+
+    rows = []
+    first = True
+    for model in models:
+        if not first:
+            lines.append(r'\midrule')
+        first = False
+        lines.append(
+            f"\\multicolumn{{{2 * k + 2}}}{{l}}"
+            f"{{\\textit{{Panel: {SIM_MODEL_LABELS[model]}}}}} \\\\"
+        )
+        for feature in FEATURES:
+            true_ame = true_map.get(feature, 0.0)
+            cells = []
+            for stats in (boot_stats, deb_stats):
+                for n in sizes:
+                    sub = stats[(stats['model'] == model) &
+                                (stats['n'] == n) &
+                                (stats['feature'] == feature)]
+                    cells.append('--' if sub.empty
+                                 else f"{float(sub['coverage'].values[0]):.3f}")
+            for i, n in enumerate(sizes):
+                rows.append({
+                    'outcome_type': outcome_type, 'dgp': dgp, 'model': model,
+                    'n': n, 'feature': feature, 'true_ame': true_ame,
+                    'coverage_bootstrap': cells[i],
+                    'coverage_influence': cells[k + i],
+                })
+            lines.append(
+                f'\\quad {escape_feature(feature)} & {true_ame:.3f} & '
+                + ' & '.join(cells) + r' \\'
+            )
+
+    lines += [
+        r'\bottomrule',
+        r'\end{tabular}',
+        r'\begin{tablenotes}',
+        r'\footnotesize',
+        r'\item \textit{Notes:} Empirical coverage of nominal 95\% intervals. '
+        r'The bootstrap columns resample and refit the learner, centring on '
+        r'the plug-in average; the influence-function columns use the '
+        r'debiased cross-fitted estimator with $K=5$ folds and the '
+        r'closed-form representer. Both are evaluated against the same '
+        r'window estimand $\theta_{j,h}$ and the same Monte Carlo ground '
+        r'truth. Noise features $x_3$ and $x_4$ have a true effect of zero.',
+        r'\end{tablenotes}',
+        r'\end{threeparttable}',
+        r'\end{table*}',
+    ]
+    return '\n'.join(lines), pd.DataFrame(rows)
+
 
 def main():
     os.makedirs(TABLES_DIR, exist_ok=True)
@@ -1163,6 +1459,42 @@ def main():
             if not df.empty:
                 df.to_parquet(pq_path, index=False)
             print(f"    Saved: {tex_path}")
+
+    # --- Simulation 3 tables (debiased estimator) ---
+    print("\nGenerating simulation 3 tables...")
+
+    for outcome_type in ['regression', 'classification']:
+        for dgp in ['linear', 'nonlinear', 'interaction']:
+            label = f'{outcome_type}_{dgp}'
+            tex, df = make_sim3_bias_rmse_table(outcome_type, dgp)
+            if tex:
+                tex_path = os.path.join(TABLES_DIR, f'sim3_bias_{label}.tex')
+                with open(tex_path, 'w') as f:
+                    f.write(tex)
+                if not df.empty:
+                    df.to_parquet(
+                        os.path.join(TABLES_DIR, f'sim3_bias_{label}.parquet'),
+                        index=False,
+                    )
+                print(f"    Saved: {tex_path}")
+            else:
+                print(f"  Skipping sim3_bias_{label} (no results yet)")
+
+    for outcome_type in ['regression', 'classification']:
+        tex, df = make_sim3_coverage_comparison(outcome_type, 'linear')
+        if tex:
+            name = f'sim3_coverage_{outcome_type}_linear'
+            tex_path = os.path.join(TABLES_DIR, f'{name}.tex')
+            with open(tex_path, 'w') as f:
+                f.write(tex)
+            if not df.empty:
+                df.to_parquet(
+                    os.path.join(TABLES_DIR, f'{name}.parquet'), index=False
+                )
+            print(f"    Saved: {tex_path}")
+        else:
+            print(f"  Skipping sim3 coverage comparison for {outcome_type} "
+                  f"(needs both sim2 and sim3 results)")
 
     print(f"\nAll tables generated. Output in: {TABLES_DIR}")
 
