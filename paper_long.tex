@@ -286,7 +286,17 @@
 	nearly unbiased and fall short of it, usually toward zero, wherever regularization
 	flattens the fitted surface --- the regularization bias made directly visible.
 	Because AMEs come with standard errors and SHAP values and PDP slopes do not, the AME
-	framework supports conclusions that the alternatives cannot. An additional finding concerns
+	framework supports conclusions that the alternatives cannot. An additional finding
+	concerns The credit default application is the sharpest case, and it is worth stating at
+	the outset. Under the plug-in the four learners put the effect of the payment ratio at
+	$-$0.431 and $-$0.440 for the two tree ensembles, $-$0.045 for logistic regression, and
+	0.0009 --- effectively nothing --- for the neural network: a set of estimates that
+	cannot all be describing the same world, and among which a reader had no principled way
+	to adjudicate. Under the correction they become $-$0.265, $-$0.489, $-$0.584 and
+	$-$0.194, every one of them negative and substantial. The disagreement was not four
+	models detecting different structure. It was the regularization bias
+	$\E[\alpha_h(\hat{f} - f)]$, which differs across learners because their regularization
+	differs, and which the orthogonal score removes.
 	Breiman random forests, which are the learner the framework is most often asked
 	to carry and the one for which the interpretation theory is least complete. Under
 	the uncorrected plug-in they behave worst of the four classes: the simulation
@@ -651,6 +661,39 @@
 	covariates, where the regression function is not identified; $w$ excises a boundary
 	shell of probability mass $O(h)$ and confines every evaluation to the region where
 	$f$ means something.
+
+	\begin{remark}[Data-dependent step sizes]
+		\label{rem:randomh}
+		Definition~\ref{def:window} fixes $h$, and every result below is a
+		statement about the estimand at that fixed value. The default of
+		Section~2 sets $h_j = \max(10^{-4},\, 0.05\,\hat{\sigma}_j)$, which is a
+		function of the data. The two are reconciled by reading all results
+		conditional on the realized $\hat{h}$: the reported quantity is the
+		window effect at the step actually used, which is why $h_j$ is reported
+		alongside every estimate in Table~\ref{tab:window_settings} rather than
+		being treated as a tuning parameter. Nothing in the argument requires
+		$h$ to be non-random --- the representation of
+		Lemma~\ref{lem:riesz}, the orthogonality of Lemma~\ref{lem:orth} and the
+		expansion of Theorem~\ref{thm:main} all hold pointwise in $h$ --- and
+		the conditional reading is the natural one, because the estimand is
+		genuinely indexed by the perturbation scale the analyst chose.
+
+		It is worth being explicit about what the conditional reading buys,
+		since the alternative is not free. If one insists instead that the
+		target is $\theta_{h_0}$ at the deterministic limit
+		$h_0 = 0.05\,\sigma_j$, then whenever $h \mapsto \theta_h(f)$ is
+		differentiable at $h_0$ the delta method gives
+		$\theta_{\hat{h}} - \theta_{h_0} = \theta_{h_0}'\,(\hat{h} - h_0) +
+		o_p(n^{-1/2})$, and since $\hat{\sigma}_j$ is root-$n$ consistent this
+		is $O_p(n^{-1/2})$ --- the same order as the sampling error itself. The
+		substitution is therefore \emph{not} asymptotically negligible: it
+		contributes a term to the limiting variance, and an unconditional
+		treatment would have to add that term to $V_h$. We do not pursue this,
+		because the conditional statement is the one that matches how the
+		estimand is used and reported. An analyst who wants the unconditional
+		reading can fix $h$ from prior information or from a pilot sample, at
+		which point the two coincide.
+	\end{remark}
 	
 	The estimand admits an exact dual representation, which is the engine of everything
 	that follows. Extend $q = wp$ by zero outside $\Omega$.
@@ -1321,7 +1364,7 @@
 		$D\fn \xrightarrow{w*} Df$. Full proof in Appendix~\ref{app:boosting}.
 	\end{proof}
 	
-	\begin{theorem}[Gradient Consistency for Random Forests]
+	\begin{theorem}[Gradient Consistency for Mondrian Forests]
 		\label{thm:forests}
 		Let $\fn$ be a Mondrian random forest estimator with budget $\lambda_n \asymp
 		n^{1/(d+2)}$, $B \gg n^{2(d-\alpha)/(d+2)}$ trees where $\alpha = 1 - d/p$, $f$
@@ -2719,21 +2762,22 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	\label{sec:conclusion}
 	
 	This paper has proposed a framework for interpreting any supervised machine learning
-	model through the lens of average marginal effects. The central claim is that the
-	traditional accuracy-interpretability tradeoff is not fundamental. By defining the
-	average marginal effect as the expectation of the partial derivative of the prediction
-	function with respect to each feature, averaged over the empirical distribution of
-	the covariates, we obtain an estimand that is well-defined for any supervised learner
-	and reduces to the classical econometric AME when the model is a generalized linear
-	model. The estimator replaces analytical derivatives with adaptive centered finite
-	differences, applies uniformly across model classes and outcome types, and produces a
-	coefficient table --- estimate, standard error, and significance level --- directly
-	analogous to the output of a parametric regression. Standard errors come from the estimated
-	influence function of a debiased, cross-fitted estimator in a single pass, with a
-	model-refitting bootstrap retained as a diagnostic for specification uncertainty.
-	These are capabilities that existing interpretability methods, including SHAP
-	\citep{lundberg2017shap}, LIME \citep{ribeiro2016lime}, and partial dependence plots
-	\citep{friedman2001pdp}, do not provide.
+	model through average marginal effects. The central claim is that the traditional
+	accuracy-interpretability tradeoff is not fundamental. The move that carries the
+	argument is to make the window the estimand rather than a numerical approximation to
+	something else: the window average marginal effect is the average centered difference of
+	the regression function at a fixed, analyst-chosen step, and it is well defined for a
+	learner that is differentiable nowhere. A single estimand therefore covers trees,
+	ensembles and networks without differentiability assumptions of any kind, and the
+	classical average derivative is recovered in the small-window limit whenever one weak
+	derivative exists. The estimator applies uniformly across model classes and outcome
+	types and produces a coefficient table --- estimate, standard error, and significance
+	level --- directly analogous to the output of a parametric regression. Standard errors
+	come from the estimated influence function of a debiased, cross-fitted estimator in a
+	single pass, with a model-refitting bootstrap retained as a diagnostic for specification
+	uncertainty. These are capabilities that existing interpretability methods, including
+	SHAP \citep{lundberg2017shap}, LIME \citep{ribeiro2016lime}, and partial dependence
+	plots \citep{friedman2001pdp}, do not provide.
 	
 	The theoretical contribution proceeds in three parts. The first is the estimand
 	and its dual: the window average marginal effect is linear in the regression
@@ -4275,7 +4319,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	\end{remark}
 	
 	% ============================================================
-	\section{Proof of Theorem~\ref{thm:forests} (Random Forests)}
+	\section{Proof of Theorem~\ref{thm:forests} (Mondrian Forests)}
 	\label{app:forests}
 	% ============================================================
 	
