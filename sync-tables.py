@@ -49,6 +49,9 @@ TABLE_FILES = {
     'tab:sim3_bias_classification_linear':    'sim3_bias_classification_linear.tex',
     'tab:sim3_coverage_regression_linear':    'sim3_coverage_regression_linear.tex',
     'tab:sim3_coverage_classification_linear': 'sim3_coverage_classification_linear.tex',
+
+    'tab:sim3_bias_regression_linear_uniform':  'sim3_bias_regression_linear_uniform.tex',
+    'tab:sim3_bias_classification_linear_uniform': 'sim3_bias_classification_linear_uniform.tex',
 }
 
 BODY = re.compile(

@@ -181,6 +181,9 @@ DGP_LABELS = {
     'linear':      'Linear',
     'nonlinear':   'Nonlinear',
     'interaction': 'Interaction',
+    # Same predictor as 'linear', drawn on bounded support. Unit variance per
+    # coordinate, so the two are directly comparable.
+    'linear_uniform': 'Bounded-Support Linear',
 }
 
 OUTCOME_TYPE_LABELS = {
@@ -1139,11 +1142,19 @@ def load_sim3_results(outcome_type: str, dgp: str) -> pd.DataFrame:
     """
     models = (SIM_MODELS_REGRESSION if outcome_type == 'regression'
               else SIM_MODELS_CLASSIFICATION)
+    # Each arm writes to its own directory so they can coexist. The bounded
+    # design lives in the uniform arm; everything else in the closed-form one.
+    results_dir = SIM3_RESULTS_DIR
+    if dgp.endswith('_uniform'):
+        results_dir = os.path.join(
+            os.path.dirname(SIM3_RESULTS_DIR), 'results_uniform'
+        )
+
     dfs = []
     for model in models:
         for n in SAMPLE_SIZES:
             fname = f'{outcome_type}_{dgp}_n{n}_{model}.parquet'
-            fpath = os.path.join(SIM3_RESULTS_DIR, fname)
+            fpath = os.path.join(results_dir, fname)
             if os.path.exists(fpath):
                 dfs.append(pd.read_parquet(fpath))
     if not dfs:
@@ -1169,7 +1180,15 @@ def make_sim3_bias_rmse_table(outcome_type: str, dgp: str) -> tuple:
     models = [m for m in (SIM_MODELS_REGRESSION if outcome_type == 'regression'
                           else SIM_MODELS_CLASSIFICATION)
               if m in set(stats['model'])]
-    true_map = TRUE_AMES[outcome_type][dgp]
+    # Prefer the true values carried in the results themselves. The hardcoded
+    # map holds only for designs where trimming is inactive; under an active
+    # trimming weight the target depends on h and the support, so a constant
+    # would drift away from what the run actually targeted. On the bounded
+    # design the true effect of x1 is 1.943 rather than 2, for instance.
+    if 'true_ame' in df.columns:
+        true_map = (df.groupby('feature')['true_ame'].first().to_dict())
+    else:
+        true_map = TRUE_AMES[outcome_type][dgp]
     decimals = 4 if outcome_type == 'classification' else 3
 
     n_cols = len(SAMPLE_SIZES)
@@ -1283,7 +1302,15 @@ def make_sim3_coverage_comparison(outcome_type: str, dgp: str = 'linear') -> tup
               else CALIBRATION_MODELS)
     models = [m for m in models
               if m in set(boot_stats['model']) and m in set(deb_stats['model'])]
-    true_map = TRUE_AMES[outcome_type][dgp]
+    # Prefer the true values carried in the results themselves. The hardcoded
+    # map holds only for designs where trimming is inactive; under an active
+    # trimming weight the target depends on h and the support, so a constant
+    # would drift away from what the run actually targeted. On the bounded
+    # design the true effect of x1 is 1.943 rather than 2, for instance.
+    if 'true_ame' in deb.columns:
+        true_map = (deb.groupby('feature')['true_ame'].first().to_dict())
+    else:
+        true_map = TRUE_AMES[outcome_type][dgp]
 
     k = len(sizes)
     lines = latex_begin(
@@ -1464,7 +1491,8 @@ def main():
     print("\nGenerating simulation 3 tables...")
 
     for outcome_type in ['regression', 'classification']:
-        for dgp in ['linear', 'nonlinear', 'interaction']:
+        for dgp in ['linear', 'nonlinear', 'interaction',
+                    'linear_uniform']:
             label = f'{outcome_type}_{dgp}'
             tex, df = make_sim3_bias_rmse_table(outcome_type, dgp)
             if tex:
