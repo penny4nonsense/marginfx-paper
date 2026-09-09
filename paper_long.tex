@@ -232,8 +232,7 @@
 	
 	The theoretical contribution proceeds in three parts, which answer in turn the
 	questions of inference, optimality, and interpretation. First, because the window
-	functional is linear in the regression function, a change of variables yields an
-	exact Riesz representation with a bounded, explicitly computable representer ---
+	functional is linear in the regression function, a change of variables yields an exact Riesz representation with an explicitly computable representer, bounded whenever the covariate density is ---
 	no integration by parts, no boundary terms, and no derivatives of the covariate
 	density --- and the bias of the resulting orthogonal moment is exactly a product
 	of two $L^2$ estimation errors. A cross-fitted estimator built on this score is
@@ -383,9 +382,7 @@
 	Inference is based on a debiased, cross-fitted estimator whose formal analysis is
 	the subject of Section~3; here we describe the procedure. Partition the sample
 	into $K$ folds ($K = 5$ by default). For each fold $k$, using only the
-	observations outside the fold: (1) fit the learner $\hat{f}^{(-k)}$ exactly as it
-	would be fit in any application, including hyperparameter selection by
-	cross-validation; (2) fit an estimate $\hat{\alpha}^{(-k)}$ of the Riesz
+	observations outside the fold: (1) fit the learner $\hat{f}^{(-k)}$ exactly as it would be fit in any application, tuning included if the learner is tuned, using only that fold's training portion; (2) fit an estimate $\hat{\alpha}^{(-k)}$ of the Riesz
 	representer of the window effect --- an explicit weight function characterized in
 	Section~3 --- by minimizing an empirical quadratic loss that requires only
 	evaluating candidate functions at the shifted points $\mathbf{x}_i \pm h_j e_j$,
@@ -423,16 +420,10 @@
 	additional model fits.
 	
 	The package additionally retains a nonparametric model-refitting bootstrap
-	\citep{efron1979, efrontibshirani1993} as a \emph{diagnostic} for specification
-	and hyperparameter-selection uncertainty, which the asymptotic theory conditions
-	away. Let $\hat{\lambda}$ denote the hyperparameters selected by cross-validation
-	on the observed sample $\mathcal{D}$. For $b = 1, \dots, B$: draw
+	\citep{efron1979, efrontibshirani1993} as a \emph{diagnostic} for how far the fitted function moves when the sample is perturbed --- variability that the asymptotic theory conditions away. The learner's settings are held fixed across replicates; if the learner is tuned, the tuning is part of what each replicate refits. For $b = 1, \dots, B$: draw
 	$\mathcal{D}^{(b)}$ by resampling $(\mathbf{x}_i, y_i)$ pairs jointly with
-	replacement; refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ with hyperparameter
-	search warm-started at $\hat{\lambda}$; and recompute the plug-in average
-	marginal effect. The dispersion of the replicates measures how sensitive the
-	reported effects are to the joint variability of resampling, refitting, and
-	hyperparameter selection, and large dispersion is a useful warning that the
+	replacement; refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ from a fresh initialization at the same settings; and recompute the plug-in average
+	marginal effect. The dispersion of the replicates measures how sensitive the reported effects are to the joint variability of resampling and refitting, and large dispersion is a useful warning that the
 	fitted model is unstable. It is not, however, a substitute for the influence
 	function standard errors above, for reasons Section~3 makes precise: the
 	refitting bootstrap recenters at the fitted model and is therefore blind to the
@@ -1124,9 +1115,7 @@
 		forest coverage documented in Section~5. Second, evaluating each refitted model
 		at the original sample holds the empirical covariate distribution fixed and
 		thereby omits the first variance component of \eqref{eq:effbound} from the
-		bootstrap distribution. The refitting bootstrap retains a legitimate role as a
-		diagnostic for specification and hyperparameter-selection variability, which
-		the asymptotic theory conditions away; it should be read as that diagnostic,
+		bootstrap distribution. The refitting bootstrap retains a legitimate role as a diagnostic for how far the fitted function moves under resampling, variability which the asymptotic theory conditions away; it should be read as that diagnostic,
 		not as the inferential procedure.
 	\end{remark}
 	
@@ -2379,7 +2368,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:sim1_regression_linear} turns to the regression setting with the linear DGP, $y = 2x_1 + 3x_2 + \varepsilon$. Linear regression recovers the true AMEs of 2.0 and 3.0 with negligible bias across all sample sizes, and RMSE declines from around 0.066 at $n=250$ to 0.014 at $n=5{,}000$, consistent with $O(n^{-1/2})$ convergence. The regression setting reveals the regularization bias of random forests more starkly than the classification setting: bias reaches $-0.091$ for $x_1$ and $-0.095$ for $x_2$ at $n=5{,}000$, and RMSE is not declining at the largest sample sizes, indicating that the bias is not vanishing with $n$ at default tuning. This is a known property of random forests in the regression case --- the ensemble averaging and subsampling impose shrinkage toward zero that is not corrected by the hyperparameter search at these sample sizes. XGBoost shows large positive bias at small samples --- 0.41 for $x_1$ at $n=250$ --- but converges quickly, with bias falling below 0.05 by $n=2{,}500$. The neural network shows moderate negative bias at small samples that falls toward zero by $n=2{,}500$, though RMSE does not decline monotonically at the largest sample sizes, suggesting residual variance from the optimization landscape. The noise features have RMSE near zero for linear regression and declining rapidly for the black-box models, confirming that the estimator correctly attributes near-zero effects to irrelevant features in the regression setting.
+	Table~\ref{tab:sim1_regression_linear} turns to the regression setting with the linear DGP, $y = 2x_1 + 3x_2 + \varepsilon$. Linear regression recovers the true AMEs of 2.0 and 3.0 with negligible bias across all sample sizes, and RMSE declines from around 0.066 at $n=250$ to 0.014 at $n=5{,}000$, consistent with $O(n^{-1/2})$ convergence. The regression setting reveals the regularization bias of random forests more starkly than the classification setting: bias reaches $-0.091$ for $x_1$ and $-0.095$ for $x_2$ at $n=5{,}000$, and RMSE is not declining at the largest sample sizes, indicating that the bias is not vanishing with $n$ at default tuning. This is a known property of random forests in the regression case --- the ensemble averaging and subsampling impose shrinkage toward zero that does not vanish at these sample sizes. XGBoost shows large positive bias at small samples --- 0.41 for $x_1$ at $n=250$ --- but converges quickly, with bias falling below 0.05 by $n=2{,}500$. The neural network shows moderate negative bias at small samples that falls toward zero by $n=2{,}500$, though RMSE does not decline monotonically at the largest sample sizes, suggesting residual variance from the optimization landscape. The noise features have RMSE near zero for linear regression and declining rapidly for the black-box models, confirming that the estimator correctly attributes near-zero effects to irrelevant features in the regression setting.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -2567,7 +2556,11 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:sim2_calibration_linear} reports bootstrap standard error calibration for the linear classification DGP, evaluating empirical coverage of nominal 95\% confidence intervals at $n \in \{250, 1{\,}000, 5{\,}000\}$ using 200 bootstrap replicates. Logistic regression achieves coverage between 0.896 and 0.950 across all variables and sample sizes, with the slight undercoverage at $n=250$ for $x_2$ reflecting finite-sample bias rather than bootstrap miscalibration --- the bootstrap interval is correctly sized but the point estimate is slightly off-center. Coverage improves toward the nominal level as sample size increases and is well-calibrated by $n=5{,}000$. XGBoost shows modest overcoverage for the noise features at all sample sizes --- around 0.978 to 0.986 --- reflecting the wide bootstrap intervals produced by the model's high variance at small samples; the intervals are conservative rather than anti-conservative, which is the safer failure mode for inference. The neural network shows undercoverage for the noise features at $n=250$ (0.866 and 0.854) that recovers toward and above the nominal level by $n=5{,}000$, with the overcoverage at large samples (0.990 and 0.994) consistent with the smooth differentiable surface producing stable finite differences across bootstrap replicates. Random forests show a more concerning pattern: coverage collapses dramatically at $n=5{,}000$, falling to 0.130 for $x_1$, 0.274 for $x_2$, and 0.392 for the noise features. This is a direct consequence of the regularization bias documented in Simulation 1 --- the bootstrap intervals shrink at the expected rate but they shrink around a biased point estimate, so as the intervals narrow they fail to cover the true AME. The intervals at $n=5{,}000$ have mean width 0.0165 for $x_1$ but the bias is around $-0.016$, so the interval is roughly the width of the bias itself and coverage of the true value becomes nearly impossible. This is the first failure mode identified in Remark~\ref{rem:refit}: the refitting bootstrap is consistent for the variability of the plug-in average around its own expectation, but that expectation is displaced from the true AME by the regularization bias $\mathbb{E}[\alpha_h(\hat{f} - f)]$, which resampling cannot see because every replicate recenters at a similarly regularized fit. It is exactly the first-order term that the orthogonal correction of Section~2.4 is constructed to remove.
+	Table~\ref{tab:sim2_calibration_linear} reports coverage of nominal 95\% intervals for the linear classification design. Two distinct failures are visible, and Section~\ref{sec:inference} predicts both.
+	
+	The first is the one the paper is built around. Under the random forest, coverage at $n=5{,}000$ falls to $0.186$ for $x_1$ and $0.268$ for $x_2$ while remaining near nominal for the noise features, whose true effect is zero and whose regularization bias is therefore also zero. This is the mechanism of Remark~\ref{rem:refit}: the refitting bootstrap is consistent for the dispersion of the plug-in average around its own expectation, but that expectation is displaced from $\theta_{j,h}$ by $\E[\alpha_h(\hat f - f)]$, and resampling cannot see the displacement because every replicate recentres at a similarly regularized fit. The interval shrinks at the usual rate; the bias does not shrink at all; coverage follows the ratio down. XGBoost, whose bias does vanish with $n$, keeps coverage between $0.877$ and $0.976$ throughout, so the failure is specific to learners whose regularization bias persists rather than general to flexible learners.
+	
+	The second failure is milder, and it affects even a correctly specified model. Logistic regression covers at $0.881$, $0.878$ and $0.886$ for $x_1$ and at $0.726$, $0.766$ and $0.781$ for $x_2$, with no tendency to improve as the sample grows, while covering at roughly the nominal rate for the two noise features. The pattern orders the features by coefficient size --- $\beta_2 = 3$, $\beta_1 = 2$, and zero for $x_3$ and $x_4$ --- and that ordering identifies the cause. As Section~\ref{sec:inference} notes, each replicate is evaluated at the observed sample rather than at the resample, so the bootstrap distribution omits the sampling variability of the average of the derivative over the covariates. That omitted component is identically zero when the fitted derivative does not vary with $x$ and grows with how much it does, and under a logistic link the derivative varies most for the feature with the largest coefficient. The estimated standard errors are correspondingly too small: averaged over cells the ratio of the bootstrap standard error to the Monte Carlo standard deviation is $0.86$ for logistic regression, $0.89$ for the network and $0.90$ for the forest. Neither failure is detectable from the bootstrap output alone, which is the practical point: both produce intervals that look unremarkable.
 	
 	\begin{table*}[htbp]
 		\centering
@@ -2629,8 +2622,9 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		\end{threeparttable}
 	\end{table*}
 	
-	Table~\ref{tab:sim2_calibration_regression_linear} reports the corresponding calibration results for the linear regression DGP, where the magnitudes of the AMEs are larger and the bias-coverage interaction becomes even more visible. Linear regression achieves coverage between 0.918 and 0.952 across all variables and sample sizes, well-calibrated throughout. The neural network performs well at small and moderate samples, with coverage approaching the nominal level by $n=1{,}000$, before drifting upward to exactly 1.000 at $n=5{,}000$ for all four variables --- the same conservatism observed in the classification case, amplified in the regression setting where the smooth prediction surface produces highly stable finite differences. XGBoost shows pronounced undercoverage for the signal features at $n=250$ --- 0.526 for $x_1$ and 0.752 for $x_2$ --- driven by the large positive bias documented in Simulation 1 at small samples, but coverage recovers toward and above the nominal level by $n=1{,}000$ and is well-calibrated at $n=5{,}000$. The most striking result is again random forests: coverage at $n=5{,}000$ falls to 0.104 for $x_1$ and 0.204 for $x_2$, the worst calibration in either table. The mechanism is identical to the classification case --- the bootstrap intervals narrow at the expected rate but the bias does not vanish, so the intervals fail to cover the true AME at large samples. The noise features under random forests show coverage of around 0.6 across all sample sizes, indicating that even where the bias is small, the bootstrap intervals are systematically too narrow to achieve nominal coverage. Taken together, the two calibration tables show that the refitting bootstrap applied to the uncorrected plug-in tracks sampling variability adequately when the learner's regularization bias is negligible at the sample sizes considered --- logistic and linear regression, the neural network, and XGBoost beyond small samples --- and fails without warning when the bias term dominates, as it does for random forests at large $n$. The tables should therefore be read as a controlled demonstration of the mechanism analyzed in Remark~\ref{rem:refit}, not as a validation of the plug-in bootstrap as an inferential procedure: the failure is not specific to forests but to any learner whose $L^2$ bias shrinks more slowly than its intervals, and forests at default tuning are simply the class for which this occurs within the sample sizes examined. In the designs of this section the covariate density is known, so the representer $\alpha_h$ is available in closed form and the debiased estimator of Section~2.4 requires no representer estimation at all. The forests here are moreover depth-capped, and a depth-capped forest converges to a depth-limited approximation of the regression function rather than to the regression function itself; Proposition~\ref{prop:robust} applies verbatim to this case, and asserts that coverage of the true window effect requires no consistency from the forest --- only the known representer --- with the forest's approximation error paid in interval width rather than in location.
-	\subsection{Simulation 3: The Debiased Estimator}
+	Table~\ref{tab:sim2_calibration_regression_linear} reports the corresponding regression results, where the two mechanisms separate cleanly. Linear regression covers between $0.928$ and $0.957$ at every sample size and every feature, and its bootstrap standard error matches the Monte Carlo standard deviation to within one percent. That is the second mechanism switching off exactly where the theory says it must: the fitted derivative of a linear model is constant in $x$, so the variance component that the evaluation point omits is identically zero, and the understatement that afflicted every classification panel disappears. Comparing the two tables therefore isolates the cause more sharply than either does alone.
+	
+	The first mechanism is correspondingly starker. The forest covers at $0.092$ for $x_1$ and $0.323$ for $x_2$ at $n=5{,}000$, and XGBoost --- which was well behaved in classification --- falls to $0.521$ and $0.503$. Here the forest's bootstrap standard error is if anything conservative, averaging $1.24$ times the Monte Carlo standard deviation, so the coverage failure cannot be attributed to an understated standard error. It is bias alone. The neural network sits at the opposite extreme, covering at $1.000$ for every feature at $n=5{,}000$: its estimate is dominated by optimization noise rather than sampling noise at that sample size, and because each replicate re-draws the initialization independently of the point fit, the replicate distribution centres near the truth rather than near the estimate. Its intervals are therefore wide enough to be useless rather than wrong, which the bootstrap output again does not reveal.
 	
 	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one. For the same reason the design satisfies Assumption~ef{ass:unbounded} rather than the density bounds of Assumption~ef{ass:sampling}: a Gaussian density is not bounded below on $\R^d$, and the representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$ is unbounded. It is square integrable, with second moment \eqref{eq:gaussalpha}, and the shift ratio $\exp(h u_j - h^2/2)$ has moments of every order, so both conditions of Assumption~ef{ass:unbounded} hold for every $r$ and $q$. The theorems demonstrated here are therefore the ones proved under that assumption set, and the closed-form representer used below is the exact one for this design rather than a bounded approximation to it.
 	
@@ -2949,8 +2943,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	
 	The theoretical contribution proceeds in three parts. The first is the estimand
 	and its dual: the window average marginal effect is linear in the regression
-	function and admits an exact Riesz representation by a change of variables, with a
-	bounded representer, no boundary terms, and no density derivatives --- and the
+	function and admits an exact Riesz representation by a change of variables, with no boundary terms and no density derivatives, and a representer that is bounded whenever the covariate density is bounded away from zero --- and the
 	classical average derivative is recovered in the small-window limit under one weak
 	derivative. The second is inference and optimality: the orthogonal score built
 	from the representer has estimation bias exactly equal to a product of two $L^2$
@@ -3091,8 +3084,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	
 	Finally, several practical questions about the debiased procedure itself deserve
 	systematic study. The influence-function standard errors of
-	Section~2.4 already remove the computational objection to inference --- $K$ model
-	fits in place of $B$ refits with hyperparameter selection --- but the finite-sample
+	Section~2.4 already remove the computational objection to inference --- $K$ model fits in place of $B$ refits --- but the finite-sample
 	behavior of the procedure depends on choices the asymptotic theory does not
 	pin down: the number of folds, the truncation level for the estimated
 	representer, the trimming weight near the boundary, and above all the window

@@ -306,6 +306,14 @@ def run_calibration(n: int, model_name: str, true_ames: dict) -> pd.DataFrame:
                 n_bootstrap=n_boot,
                 n_jobs=n_jobs,
                 trim=False,
+                # Evaluate each replicate at the observed sample, not at the
+                # resample. This is what marginfx's bootstrap does, and what
+                # Section 2.3 of the paper analyses: it omits the sampling
+                # variability of the average over covariates, which is zero
+                # only when the fitted derivative is constant in x. Simulation 2
+                # exists partly to measure that omission, so the choice is the
+                # object of study rather than an implementation detail.
+                eval_at='original',
             )]
         else:
             batch_rows = Parallel(
