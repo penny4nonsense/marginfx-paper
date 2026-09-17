@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: apalike.bst
+Database file #1: references.bib
+Warning--empty publisher in molnar2025
+You've used 41 entries,
+            1935 wiz_defined-function locations,
+            708 strings with 9748 characters,
+and the built_in function-call counts, 16279 in all, are:
+= -- 1641
+> -- 585
+< -- 37
++ -- 201
+- -- 190
+* -- 1353
+:= -- 2767
+add.period$ -- 125
+call.type$ -- 41
+change.case$ -- 296
+chr.to.int$ -- 40
+cite$ -- 42
+duplicate$ -- 646
+empty$ -- 1170
+format.name$ -- 255
+if$ -- 3232
+int.to.chr$ -- 2
+int.to.str$ -- 0
+missing$ -- 45
+newline$ -- 206
+num.names$ -- 123
+pop$ -- 262
+preamble$ -- 1
+purify$ -- 300
+quote$ -- 0
+skip$ -- 500
+stack$ -- 0
+substring$ -- 1197
+swap$ -- 107
+text.length$ -- 12
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 228
+warning$ -- 1
+while$ -- 136
+width$ -- 0
+write$ -- 538
+(There was 1 warning)

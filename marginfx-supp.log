@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  24 AUG 2026 10:39
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  16 SEP 2026 15:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -442,48 +442,50 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 \c@theorem=\count328
 \c@lemma=\count329
 \c@corollary=\count330
-\c@conjecture=\count331
-\c@definition=\count332
-\c@remark=\count333
+\c@proposition=\count331
+\c@conjecture=\count332
+\c@definition=\count333
+\c@assumption=\count334
+\c@remark=\count335
 
 (c:/texlive/2026/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count334
+\l__color_backend_stack_int=\count336
 )
 (./marginfx-supp.aux)
 \openout1 = `marginfx-supp.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 62.
-LaTeX Font Info:    ... okay on input line 62.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 138.
+LaTeX Font Info:    ... okay on input line 138.
 
 (c:/texlive/2026/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count335
+\scratchcounter=\count337
 \scratchdimen=\dimen257
 \scratchbox=\box63
-\nofMPsegments=\count336
-\nofMParguments=\count337
+\nofMPsegments=\count338
+\nofMParguments=\count339
 \everyMPshowfont=\toks37
-\MPscratchCnt=\count338
+\MPscratchCnt=\count340
 \MPscratchDim=\dimen258
-\MPnumerator=\count339
-\makeMPintoPDFobject=\count340
+\MPnumerator=\count341
+\makeMPintoPDFobject=\count342
 \everyMPtoPDFconversion=\toks38
 ) (c:/texlive/2026/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -503,497 +505,145 @@ File: color.cfg 2016/01/02 v1.6 sample color configuration
 Package color Info: Driver file: pdftex.def on input line 149.
 
 (c:/texlive/2026/texmf-dist/tex/latex/graphics/mathcolor.ltx))
-Package hyperref Info: Link coloring ON on input line 62.
+Package hyperref Info: Link coloring ON on input line 138.
 
 (./marginfx-supp.out) (./marginfx-supp.out)
 \@outlinefile=\write3
 \openout3 = `marginfx-supp.out'.
 
-LaTeX Font Info:    Calculating math sizes for size <11> on input line 65.
+LaTeX Font Info:    Calculating math sizes for size <11> on input line 142.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <5.5> not available
-(Font)              size <5> substituted on input line 65.
+(Font)              size <5> substituted on input line 142.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <5.5> not available
-(Font)              size <5> substituted on input line 65.
+(Font)              size <5> substituted on input line 142.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <5.5> not available
-(Font)              size <5> substituted on input line 65.
+(Font)              size <5> substituted on input line 142.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 65.
-
+LaTeX Font Info:    Trying to load font information for U+msa on input line 142
+.
 (c:/texlive/2026/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 65.
-
+LaTeX Font Info:    Trying to load font information for U+msb on input line 142
+.
 
 (c:/texlive/2026/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/it' instead on input line 70.
+(Font)              using `T1/ptm/m/it' instead on input line 148.
 
-(./marginfx-supp.toc
-
-Package hyperref Warning: Suppressing link with empty target on input line 1.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 6.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 13.
+LaTeX Font Info:    Trying to load font information for T1+phv on input line 16
+6.
+(c:/texlive/2026/texmf-dist/tex/latex/psnfss/t1phv.fd
+File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
+)
+LaTeX Font Info:    Font shape `T1/phv/m/n' will be
+(Font)              scaled to size 9.89993pt on input line 166.
 
 
-Package hyperref Warning: Suppressing link with empty target on input line 17.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 22.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 28.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 32.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 33.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 37.
+LaTeX Font Warning: Font shape `OT1/cmr/bx/n' in size <5.5> not available
+(Font)              size <5> substituted on input line 241.
 
 [1{c:/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/202
 6/texmf-dist/fonts/enc/dvips/base/8r.enc}
 
 ]
 
-Package hyperref Warning: Suppressing link with empty target on input line 44.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 46.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 49.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 52.
-
-)
-\tf@toc=\write4
-\openout4 = `marginfx-supp.toc'.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 87.
-
-
-LaTeX Font Warning: Font shape `OT1/cmr/bx/n' in size <5.5> not available
-(Font)              size <5> substituted on input line 111.
-
-
-LaTeX Font Warning: Font shape `OML/cmm/b/it' in size <5.5> not available
-(Font)              size <5> substituted on input line 111.
-
-
-LaTeX Font Warning: Font shape `OMS/cmsy/b/n' in size <5.5> not available
-(Font)              size <5> substituted on input line 111.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 286.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 111.
+(hyperref)                removing `superscript' on input line 286.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 111.
+(hyperref)                removing `math shift' on input line 286.
 
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 111.
-
-[2]
-
-Package hyperref Warning: Suppressing link with empty target on input line 196.
-
-
-[3]
-
-Package hyperref Warning: Suppressing link with empty target on input line 297.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 306.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 314.
-
-
-[4]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 326.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 326.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 326.
-
-[5]
-
-Package hyperref Warning: Suppressing link with empty target on input line 460.
-
-
-[6]
-
-Package hyperref Warning: Suppressing link with empty target on input line 473.
-
-
-[7]
-Overfull \hbox (21.82442pt too wide) in paragraph at lines 610--615
-\T1/ptm/m/n/11 semi-con-ti-nu-ity of to-tal vari-a-tion un-der weak-* con-ver-g
-ence. Step 2 gives $[][] \OMS/cmsy/m/n/10.95 j\OML/cmm/m/it/10.95 D[]\OMS/cmsy/
-m/n/10.95 j\OT1/cmr/m/n/10.95 (
-) \OMS/cmsy/m/n/10.95 ^^T
+[2] [3]
+Underfull \hbox (badness 1052) in paragraph at lines 444--454
+\OML/cmm/m/it/10.95 X$\T1/ptm/m/n/11 . Con-di-tion-ing like-wise gives $\U/msb/
+m/n/11 E\OT1/cmr/m/n/10.95 [\OML/cmm/m/it/10.95  [] \OMS/cmsy/m/n/10.95 j \OML/
+cmm/m/it/10.95 X\OT1/cmr/m/n/10.95 ] = \OML/cmm/m/it/10.95 m[]\OT1/cmr/m/n/10.9
+5 (\OML/cmm/m/it/10.95 X\OT1/cmr/m/n/10.95 ) \OMS/cmsy/m/n/10.95 ^^@ \OML/cmm/m
+/it/10.95 ^^R[]\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 f\OT1/cmr/m/n/10.95 )$ \
+T1/ptm/m/n/11 and $[]\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95  [] \OMS/cmsy/m/n/
+10.95 j \OML/cmm/m/it/10.95 X\OT1/cmr/m/n/10.95 ) =
  []
 
+[4] [5]
 
-Package hyperref Warning: Suppressing link with empty target on input line 627.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 628.
-
-
-[8]
-Overfull \hbox (28.93939pt too wide) in paragraph at lines 640--650
-[][][]\T1/ptm/m/sc/11 Remark \T1/ptm/m/n/11 4\T1/ptm/m/sc/11 . []\T1/ptm/m/n/11
- The strict con-ver-gence up-grade re-quires the ad-di-tional as-sump-tion $\U/
-msb/m/n/11 E\OT1/cmr/m/n/10.95 [\OMS/cmsy/m/n/10.95 j\OML/cmm/m/it/10.95 D[]\OM
-S/cmsy/m/n/10.95 j\OT1/cmr/m/n/10.95 (
-)] \OMS/cmsy/m/n/10.95 !
- []
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 654.
-
-
-
-Underfull \hbox (badness 949) in paragraph at lines 660--663
- \T1/ptm/b/n/11 E.1.What Needs to Be Shown.[][] \T1/ptm/m/n/11 That the func-ti
-onal $\OML/cmm/m/it/10.95 T\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 f\OT1/cmr/m/
-n/10.95 ) = [][] \OMS/cmsy/m/n/10.95 r\OML/cmm/m/it/10.95 f\OT1/cmr/m/n/10.95 (
-\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/10.95 ) \OML/cmm/m/it/10.95 dP\OT1/cmr/m/n/10
-.95 (\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/10.95 )$ \T1/ptm/m/n/11 is
- []
-
-
-Overfull \hbox (5.02948pt too wide) in paragraph at lines 660--663
-\T1/ptm/m/n/11 Hadamard dif-fer-en-tiable at $\OML/cmm/m/it/10.95 f$ \T1/ptm/m/
-n/11 tan-gen-tially to $\OML/cmm/m/it/10.95 C\OT1/cmr/m/n/10.95 (
-)[]$\T1/ptm/m/n/11 , with deriva-tive $\OML/cmm/m/it/10.95 T[]\OT1/cmr/m/n/10.9
-5 (\OML/cmm/m/it/10.95 h\OT1/cmr/m/n/10.95 ) = [][] \OMS/cmsy/m/n/10.95 r\OML/c
-mm/m/it/10.95 h\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/10.95 ) \O
-ML/cmm/m/it/10.95 dP\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 x\OT1/cmr/m/n/10.95
- )$\T1/ptm/m/n/11 . 
- []
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 673.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 673.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 674.
-
-
-[9]
-
-Package hyperref Warning: Suppressing link with empty target on input line 746.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 746.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 747.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 751.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 757.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 757.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 759.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 775.
-
-
-[10]
-
-Package hyperref Warning: Suppressing link with empty target on input line 810.
-
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 607.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 814.
+(hyperref)                removing `superscript' on input line 607.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 814.
+(hyperref)                removing `math shift' on input line 607.
+
+[6] [7]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 822.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 814.
-
-[11]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 931.
+(hyperref)                removing `subscript' on input line 822.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 931.
+(hyperref)                removing `math shift' on input line 822.
+
+[8] [9] [10] [11] [12] [13]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1257.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 931.
-
-[12]
-
-Package hyperref Warning: Suppressing link with empty target on input line 940.
+(hyperref)                removing `superscript' on input line 1257.
 
 
-
-Package hyperref Warning: Suppressing link with empty target on input line 942.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 945.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 945.
-
-
-
-Underfull \hbox (badness 1226) in paragraph at lines 942--947
- \T1/ptm/b/n/11 F.4.Step 3: Ap-ply-ing Lemma 2.[][] \T1/ptm/m/n/11 By Step 1, $
-[][] [][] \OML/cmm/m/it/10.95 < \OMS/cmsy/m/n/10.95 1$\T1/ptm/m/n/11 . By Step 
-2,
- []
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 950.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 967.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 974.
-
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 981.
-
-
-[13]
-
-Package hyperref Warning: Suppressing link with empty target on input line 1054
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1056
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1057
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1076
-.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1257.
 
 [14]
 
-Package hyperref Warning: Suppressing link with empty target on input line 1126
-.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1374.
 
 
-Package hyperref Warning: Suppressing link with empty target on input line 1128
-.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `superscript' on input line 1374.
 
 
-Package hyperref Warning: Suppressing link with empty target on input line 1129
-.
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 1374.
 
 
-Package hyperref Warning: Suppressing link with empty target on input line 1154
-.
+Underfull \hbox (badness 1009) in paragraph at lines 1385--1390
+ \T1/ptm/m/n/11 S12.4.\T1/ptm/m/it/11 Step 3: Ap-ply-ing Lemma [][]4[][].[][] \
+T1/ptm/m/n/11 By Step 1, $[][] [][] \OML/cmm/m/it/10.95 < \OMS/cmsy/m/n/10.95 1
+$\T1/ptm/m/n/11 . By Step 2,
+ []
 
-
-Package hyperref Warning: Suppressing link with empty target on input line 1171
-.
-
-[15]
-
-Package hyperref Warning: Suppressing link with empty target on input line 1217
-.
-
-[16]
+[15] [16] [17] [18] [19]
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 1274.
+(hyperref)                than one, level fixed on input line 1717.
 
-[17]
-
-Package hyperref Warning: Suppressing link with empty target on input line 1354
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1356
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1365
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1369
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1400
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1409
-.
-
-[18]
-
-Package hyperref Warning: Suppressing link with empty target on input line 1450
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1467
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1481
-.
-
-[19]
-
-Package hyperref Warning: Suppressing link with empty target on input line 1494
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1502
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1537
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1542
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1557
-.
-
-[20]
-
-Package hyperref Warning: Suppressing link with empty target on input line 1571
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1576
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1588
-.
-
-[21]
-
-Package hyperref Warning: Suppressing link with empty target on input line 1647
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1656
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1672
-.
-
-
-Package hyperref Warning: Suppressing link with empty target on input line 1690
-.
-
-[22]
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1756.
-
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1818.
-
-[23]
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1880.
-
-[24] [25] [26]
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1942.
-
-[27]
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2004.
-
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2066.
-
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2128.
-
-[28] [29] [30] [31]
-
-LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2190.
-
-(./marginfx-supp.bbl [32] [33]) [34] (./marginfx-supp.aux)
+[20] (./marginfx-supp.bbl) [21] (./marginfx-supp.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -1004,41 +654,118 @@ LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 0.5pt have occurred.
 
 Package rerunfilecheck Info: File `marginfx-supp.out' has not changed.
-(rerunfilecheck)             Checksum: 936EC5D1B3174B9853DAF9DEABA88634;13173.
- )
-(\end occurred when \ifnum on line 79 was incomplete) 
+(rerunfilecheck)             Checksum: 7FDF18E84913794295A5E18A956250B5;12602.
+ ) 
 Here is how much of TeX's memory you used:
- 13143 strings out of 469472
- 197344 string characters out of 5469219
- 648624 words of memory out of 5000000
- 41297 multiletter control sequences out of 15000+600000
- 695957 words of font info for 124 fonts, out of 8000000 for 9000
+ 13198 strings out of 469472
+ 198364 string characters out of 5469219
+ 627293 words of memory out of 5000000
+ 41373 multiletter control sequences out of 15000+600000
+ 693448 words of font info for 115 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 75i,12n,79p,2439b,622s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/texlive/2026/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2026/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmbx8.pfb><c:/texlive/2026/texmf-dist/fonts/type1/publi
-c/amsfonts/cm/cmex10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmmi10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi
-5.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/
-texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb><c:/texlive/20
-26/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb><c:/texlive/2026/texmf
--dist/fonts/type1/public/amsfonts/cmextra/cmmib8.pfb><c:/texlive/2026/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2026/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmr5.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/
-amsfonts/cm/cmr8.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmr9.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
-><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb><c:/texli
-ve/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/texlive/2026/te
-xmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb><c:/texlive/2026/texmf-dist/f
-onts/type1/public/amsfonts/symbols/msam10.pfb><c:/texlive/2026/texmf-dist/fonts
-/type1/public/amsfonts/symbols/msbm10.pfb><c:/texlive/2026/texmf-dist/fonts/typ
-e1/urw/times/utmb8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/times/utmr8
-a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on marginfx-supp.pdf (34 pages, 393311 bytes).
+ 75i,18n,79p,550b,589s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+pdfTeX warning (dest): name{theorem.6} has been referenced but does not exist, 
+replaced by a fixed one
+
+
+pdfTeX warning (dest): name{theorem.5} has been referenced but does not exist, 
+replaced by a fixed one
+
+
+pdfTeX warning (dest): name{definition.1} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{theorem.4} has been referenced but does not exist, 
+replaced by a fixed one
+
+
+pdfTeX warning (dest): name{theorem.3} has been referenced but does not exist, 
+replaced by a fixed one
+
+
+pdfTeX warning (dest): name{lemma.6} has been referenced but does not exist, re
+placed by a fixed one
+
+
+pdfTeX warning (dest): name{lemma.5} has been referenced but does not exist, re
+placed by a fixed one
+
+
+pdfTeX warning (dest): name{lemma.4} has been referenced but does not exist, re
+placed by a fixed one
+
+
+pdfTeX warning (dest): name{lemma.3} has been referenced but does not exist, re
+placed by a fixed one
+
+
+pdfTeX warning (dest): name{equation.3.22} has been referenced but does not exi
+st, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{theorem.2} has been referenced but does not exist, 
+replaced by a fixed one
+
+
+pdfTeX warning (dest): name{proposition.2} has been referenced but does not exi
+st, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{assumption.2} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{assumption.1} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{assumption.3} has been referenced but does not exis
+t, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{equation.3.19} has been referenced but does not exi
+st, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{theorem.1} has been referenced but does not exist, 
+replaced by a fixed one
+
+
+pdfTeX warning (dest): name{lemma.2} has been referenced but does not exist, re
+placed by a fixed one
+
+
+pdfTeX warning (dest): name{proposition.1} has been referenced but does not exi
+st, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{lemma.1} has been referenced but does not exist, re
+placed by a fixed one
+
+<c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texli
+ve/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb><c:/texlive/2026/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/texlive/2026/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmmi5.pfb><c:/texlive/2026/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmmi8.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmmi9.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmr10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb
+><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/texliv
+e/2026/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb><c:/texlive/2026/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/texlive/2026/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmsy5.pfb><c:/texlive/2026/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmsy8.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/ams
+fonts/cm/cmsy9.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/symb
+ols/msbm10.pfb><c:/texlive/2026/texmf-dist/fonts/type1/public/amsfonts/symbols/
+msbm7.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/t
+exlive/2026/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2026/texmf-
+dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/u
+rw/times/utmri8a.pfb>
+Output written on marginfx-supp.pdf (21 pages, 337515 bytes).
 PDF statistics:
- 949 PDF objects out of 1000 (max. 8388607)
- 860 compressed objects within 9 object streams
- 291 named destinations out of 1000 (max. 500000)
- 449 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 863 PDF objects out of 1000 (max. 8388607)
+ 774 compressed objects within 8 object streams
+ 275 named destinations out of 1000 (max. 500000)
+ 441 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -278,27 +278,32 @@
 	SHAP values \citep{lundberg2017shap} and partial dependence plot slopes
 	\citep{friedman2001pdp}. The debiased AMEs agree closely across the four model classes,
 	which is what one expects once every learner is used to estimate the same window
-	effect rather than to report its own slope, while SHAP values are on a different
-	scale and in several cases have the wrong sign --- a systematic divergence that is
+	effect rather than to report its own slope, while SHAP values answer a different
+	question --- additive attribution relative to a baseline rather than a rate of
+	change --- and are correspondingly on a different scale and sometimes of opposite
+	sign --- a divergence that is
 	most visible in the regression setting where units are dollars and the magnitudes are
 	large enough to make the discrepancy concrete. PDP slopes, being themselves plug-in
 	averages over a single full-sample fit, track the debiased AME where the plug-in is
 	nearly unbiased and fall short of it, usually toward zero, wherever regularization
 	flattens the fitted surface --- the regularization bias made directly visible.
 	Because AMEs come with standard errors and SHAP values and PDP slopes do not, the AME
-	framework supports conclusions that the alternatives cannot. An additional finding
-	concerns The credit default application is the sharpest case, and it is worth stating at
-	the outset. Under the plug-in the four learners put the effect of the payment ratio at
+	framework supports conclusions that the alternatives cannot. The credit default
+	application is the sharpest case, and it is worth stating at the outset. Under the
+	plug-in the four learners put the effect of the payment ratio at
 	$-$0.431 and $-$0.440 for the two tree ensembles, $-$0.045 for logistic regression, and
 	0.0009 --- effectively nothing --- for the neural network: a set of estimates that
 	cannot all be describing the same world, and among which a reader had no principled way
-	to adjudicate. Under the correction they become $-$0.265, $-$0.489, $-$0.584 and
-	$-$0.194, every one of them negative and substantial. The disagreement was not four
+	to adjudicate. Under the correction those same four become $-$0.489, $-$0.584,
+	$-$0.265 and $-$0.194 respectively, every one of them negative and substantial. The
+	disagreement was not four
 	models detecting different structure. It was the regularization bias
 	$\E[\alpha_h(\hat{f} - f)]$, which differs across learners because their regularization
 	differs, and which the orthogonal score removes.
-	Breiman random forests, which are the learner the framework is most often asked
-	to carry and the one for which the interpretation theory is least complete. Under
+
+	An additional finding concerns Breiman random forests, which are the learner the
+	framework is most often asked to carry and the one for which the interpretation
+	theory is least complete. Under
 	the uncorrected plug-in they behave worst of the four classes: the simulation
 	study shows a bias that does not vanish with the sample size but grows with it,
 	from $-0.097$ at $n=250$ to $-0.091$ at $n=5{,}000$ in the linear regression
@@ -1812,7 +1817,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		\end{threeparttable}
 	\end{sidewaystable}
 	
-	Table~\ref{tab:adult_method_comparison} compares AMEs against SHAP values and partial dependence plot slopes across all four models. The SHAP column is the more straightforward contrast, and it is stark. Mean signed SHAP values are on a different scale entirely and in several cases carry the wrong sign: for logistic regression the SHAP value for education is $-$0.119 against an AME of 0.028, and for marital status it is $-$0.077 against an AME of 0.279 --- opposite in sign on the two largest effects in the application. The SHAP value for age is negative for three of the four models while every AME is positive. The most striking entry is capital gains, whose SHAP value of $-$0.263 for logistic regression is the largest SHAP magnitude anywhere in the table, attached to a variable whose AME is zero to four decimals and 92\% of whose observations are trimmed. None of this is a defect of the SHAP implementation; it is a consequence of mean signed SHAP values not being marginal effects and not admitting that interpretation.
+	Table~\ref{tab:adult_method_comparison} compares AMEs against SHAP values and partial dependence plot slopes across all four models. The SHAP column measures something else and is reported here to make the difference concrete rather than to adjudicate between the two. Mean signed SHAP values are on a different scale entirely and in several cases carry the opposite sign: for logistic regression the SHAP value for education is $-$0.119 against an AME of 0.028, and for marital status it is $-$0.077 against an AME of 0.279 --- opposite in sign on the two largest effects in the application. The SHAP value for age is negative for three of the four models while every AME is positive. The most striking entry is capital gains, whose SHAP value of $-$0.263 for logistic regression is the largest SHAP magnitude anywhere in the table, attached to a variable whose AME is zero to four decimals and 92\% of whose observations are trimmed. None of this indicates an error in SHAP or in its implementation. A Shapley value is an additive attribution of a prediction relative to a reference distribution, and its average over the sample is not an estimate of the average rate of change of the prediction in a feature. The two quantities answer different questions and there is no reason to expect them to agree in magnitude or in sign. The point of the comparison is interpretive rather than evaluative: SHAP summaries are frequently read as though larger values meant larger effects on the outcome, and that reading is not supported by what the quantity measures.
 
 	The partial dependence column behaves as it did in the other two applications: it agrees with the debiased AME where the underlying plug-in is nearly unbiased and falls short of it elsewhere. For logistic regression, the best-specified model here, agreement is close on the large effects --- marital status 0.279 against 0.275, the white collar indicator 0.056 against 0.054, service $-$0.046 against $-$0.043, education 0.028 against 0.027. For the two tree ensembles the same features separate substantially: the random forest education AME of 0.034 sits against a PDP slope of 0.014, and its hours-per-week AME of 0.008 against a slope of 0.002. A piecewise constant fit has little local slope to report between splits, and the partial dependence average inherits that flatness while the orthogonal correction does not. Partial dependence slopes for capital losses are unavailable for every model, a limitation of the grid construction when almost all mass sits at a single value. As with SHAP, no standard errors accompany either column, so a researcher working from them has point estimates of unknown precision and no way to test whether any variable has a statistically distinguishable effect.
 	
@@ -1953,7 +1958,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		\end{threeparttable}
 	\end{sidewaystable}
 	
-	Table~\ref{tab:credit_default_method_comparison} again reveals a systematic disconnect between SHAP values and AMEs. For the payment history variables the disagreement is stark: the AME for months delayed is 0.030 for logistic regression while the mean signed SHAP value is $-$0.015, opposite in sign. The payment ratio illustrates the most consequential divergence: the random forest and XGBoost AMEs are $-$0.489 and $-$0.584, indicating that a higher payment ratio is associated with a large reduction in default probability, while the corresponding SHAP values are 0.0012 and 0.0005 --- near zero and in the wrong direction. A researcher relying on SHAP alone would conclude that payment ratio is essentially irrelevant to default risk. With no standard errors attached to the SHAP estimates there is no statistical basis on which to adjudicate.
+	Table~\ref{tab:credit_default_method_comparison} again shows the two quantities parting company. For the payment history variables the separation is large: the AME for months delayed is 0.030 for logistic regression while the mean signed SHAP value is $-$0.015, opposite in sign. The payment ratio illustrates the most consequential divergence: the random forest and XGBoost AMEs are $-$0.489 and $-$0.584, indicating that a higher payment ratio is associated with a large reduction in default probability, while the corresponding SHAP values are 0.0012 and 0.0005, near zero and of the opposite sign. This is again a difference of estimand rather than a defect: a feature can carry a large average derivative while contributing little on average to the displacement of predictions from their baseline. The practical concern is that a researcher reading the SHAP column as a marginal effect would conclude that the payment ratio is essentially irrelevant to default risk, and, with no standard errors attached to either the SHAP or the PDP column, would have no statistical basis on which to check that conclusion.
 
 	The partial dependence column separates from the AME column here in the same pattern as in the Ames application, and for the same reason: a partial dependence slope is a plug-in average over a single full-sample fit, so it carries the regularization bias that the correction removes. The separation tracks the quality of the underlying fit. On the female indicator, where the logistic model is close to correctly specified, the AME of $-$0.0198 and the PDP slope of $-$0.0198 agree exactly; for the random forest on the same variable they are $-$0.0161 and $-$0.0062. On the payment ratio, the hardest nuisance problem in the design, the gap is largest and always toward zero: $-$0.265 against $-$0.044 for logistic regression, $-$0.489 against $-$0.100 for the random forest, $-$0.584 against $-$0.095 for XGBoost, $-$0.194 against $-$0.017 for the neural network. Months delayed runs the other way, with PDP slopes of 0.111, 0.046, 0.040 and 0.065 against debiased AMEs of 0.030, 0.013, 0.019 and 0.025, which is what one expects when an uncorrected estimator distributes a shared effect between two correlated features differently than the corrected one does. Taken across all three applications, the attenuation is the dominant pattern rather than a universal one: restricting attention to the effects the debiased estimator resolves away from zero, the partial dependence slope is smaller in absolute value than the AME in 62 of 84 cases, with a median ratio of 0.47 on Ames Housing, 0.60 here and 0.95 on Adult Income. It is most pronounced for the random forest, the learner whose regularization bias the simulations isolate.
 	
@@ -2109,7 +2114,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		\end{threeparttable}
 	\end{sidewaystable}
 	
-	Table~\ref{tab:ames_housing_method_comparison} brings the SHAP comparison into sharpest relief in the regression setting, where the units are dollars and the magnitudes are large enough to make the divergences concrete. SHAP values are unavailable for the neural network in this table, reflecting a limitation of the GradientExplainer implementation for this architecture. For the other three models the divergence between SHAP and AME is stark. The SHAP value for GrLivArea is \$3,423 for the linear model, which attributes to that variable an effect fifty times larger than the AME of \$68 --- a number that is not interpretable as a marginal effect in any standard sense. The SHAP values for garage area ($-$\$884), lot area ($-$\$183), and the high neighborhood indicator ($-$\$506) are negative for the random forest while the AME estimates are positive for all three. And as before, no standard errors attach to the SHAP column, so there is no basis on which to adjudicate any of these conflicts.
+	Table~\ref{tab:ames_housing_method_comparison} makes the difference between the two quantities easiest to see, since the units are dollars and the magnitudes are large enough to be concrete. SHAP values are unavailable for the neural network in this table, reflecting a limitation of the GradientExplainer implementation for this architecture. For the other three models the two columns are far apart. The SHAP value for GrLivArea is \$3,423 for the linear model against an AME of \$68, roughly fifty times larger --- which is what one should expect, since the SHAP figure is the average absolute displacement a typical house's living area contributes to its predicted price, not the price change associated with one additional square foot. The SHAP values for garage area ($-$\$884), lot area ($-$\$183), and the high neighborhood indicator ($-$\$506) are negative for the random forest while the AME estimates are positive for all three. And as before, no standard errors attach to the SHAP column, so a reader who did want to treat those figures as effects would have no way to gauge their precision.
 
 	The partial dependence column requires a different reading than it did under the plug-in, and the change is itself informative. A partial dependence slope is computed by perturbing a single full-sample fit and averaging, which makes it a plug-in average of exactly the kind the orthogonal correction is designed to repair; it carries no correction term and no standard error. Where the plug-in is nearly unbiased the two therefore continue to agree closely: on above-ground living area, the best supported and smoothest feature in the data, the AME is \$68 and the PDP slope \$66 for linear regression, \$66 and \$59 for the neural network. Where the regularization bias bites, they separate, and they separate in the direction the theory predicts --- toward zero for the uncorrected quantity. The bedroom AME of $-$\$26,455 for linear regression sits against a PDP slope of $-$\$6,189; the high-neighborhood AME of \$43,512 for the random forest sits against a PDP slope of \$5,059, and the mid-neighborhood AME of \$33,767 against \$5,950. These are the count and binary contrasts, where the fitted surface is flattest between levels and where the plug-in has the most to lose. The pattern that once read as mutual corroboration between two estimators now reads as a measurement of the bias separating them, which is the same quantity Simulation~2 isolates in the coverage of the refitting bootstrap. The Ames Housing results complete the sweep across outcome types: the framework produces dollar-denominated marginal effects with valid standard errors for a continuous regression outcome, using exactly the same estimation procedure as the binary classification examples, with no modification required.
 	
@@ -2626,6 +2631,8 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	
 	The first mechanism is correspondingly starker. The forest covers at $0.092$ for $x_1$ and $0.323$ for $x_2$ at $n=5{,}000$, and XGBoost --- which was well behaved in classification --- falls to $0.521$ and $0.503$. Here the forest's bootstrap standard error is if anything conservative, averaging $1.24$ times the Monte Carlo standard deviation, so the coverage failure cannot be attributed to an understated standard error. It is bias alone. The neural network sits at the opposite extreme, covering at $1.000$ for every feature at $n=5{,}000$: its estimate is dominated by optimization noise rather than sampling noise at that sample size, and because each replicate re-draws the initialization independently of the point fit, the replicate distribution centres near the truth rather than near the estimate. Its intervals are therefore wide enough to be useless rather than wrong, which the bootstrap output again does not reveal.
 	
+	\subsection{Simulation 3: The Debiased Estimator}
+	
 	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one. For the same reason the design satisfies Assumption~ef{ass:unbounded} rather than the density bounds of Assumption~ef{ass:sampling}: a Gaussian density is not bounded below on $\R^d$, and the representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$ is unbounded. It is square integrable, with second moment \eqref{eq:gaussalpha}, and the shift ratio $\exp(h u_j - h^2/2)$ has moments of every order, so both conditions of Assumption~ef{ass:unbounded} hold for every $r$ and $q$. The theorems demonstrated here are therefore the ones proved under that assumption set, and the closed-form representer used below is the exact one for this design rather than a bounded approximation to it.
 	
 	\begin{table*}[htbp]
@@ -2994,13 +3001,14 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	that the plug-in reported as precisely determined are no longer distinguishable
 	from zero, and the estimator reports that rather than concealing it.
 
-	The comparison with SHAP values reveals a systematic divergence: SHAP values are on
-	a different scale, in several cases have the wrong sign relative to the AME, and
+	The comparison with SHAP values shows how far a different estimand can sit from this
+	one: SHAP values are on a different scale, sometimes of opposite sign, and
 	carry no inferential apparatus. The Ames Housing application is particularly
-	informative because the dollar-denominated units make the divergence concrete ---
-	SHAP attributes to above-ground living area an effect fifty times larger than the
-	AME for the linear model, a number that is not interpretable as a marginal effect
-	in any standard sense. Partial dependence slopes require a subtler reading than the
+	informative because the dollar-denominated units make the separation concrete ---
+	the SHAP figure for above-ground living area is roughly fifty times the AME for
+	the linear model, which is what a baseline-relative attribution should look like
+	next to a per-square-foot rate of change, and is not a competing estimate of the
+	same quantity. Partial dependence slopes require a subtler reading than the
 	earlier draft gave them. A partial dependence slope is itself a plug-in average
 	over a single full-sample fit, so it agrees with the debiased AME where the
 	plug-in is nearly unbiased --- on smooth, well-supported, continuous features ---
@@ -3343,10 +3351,12 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	$\hat{\theta}_h - \theta = o_p(1)$ and
 	$n^{-1}\sum_i \hat{\psi}_i = O_p(n^{-1/2})$ by Steps~1--3. For the first term:
 	\begin{equation}
-		\abs{\frac{1}{n}\sum_i \hat{\psi}_i^2 - \frac{1}{n}\sum_i \psi_i^2}
-		\leq \frac{1}{n}\sum_i (\hat{\psi}_i - \psi_i)^2
-		+ 2\left(\frac{1}{n}\sum_i (\hat{\psi}_i - \psi_i)^2\right)^{1/2}
-		\left(\frac{1}{n}\sum_i \psi_i^2\right)^{1/2}
+		\begin{split}
+			\abs{\frac{1}{n}\sum_i \hat{\psi}_i^2 - \frac{1}{n}\sum_i \psi_i^2}
+			&\leq \frac{1}{n}\sum_i (\hat{\psi}_i - \psi_i)^2 \\
+			&\quad + 2\left(\frac{1}{n}\sum_i (\hat{\psi}_i - \psi_i)^2\right)^{1/2}
+			\left(\frac{1}{n}\sum_i \psi_i^2\right)^{1/2}
+		\end{split}
 	\end{equation}
 	by Cauchy--Schwarz; $n^{-1}\sum_i (\hat{\psi}_i - \psi_i)^2 = o_p(1)$ by the
 	fold-wise conditional Markov inequality and the Step~3 bound, and
@@ -3386,10 +3396,12 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	With $A_k = \E_k[\hat{\psi} - \psi_g] = \E_k[\hat{\psi}]$, Lemma~\ref{lem:orth}
 	gives $A_k = \E[(\alpha_h - \hat{\alpha}^{(-k)})(\hat{f}^{(-k)} - f)]$, so:
 	\begin{equation}
-		\abs{\sqrt{n_k}\, A_k}
-		\leq \sqrt{n_k}\, \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}
-		\left( \Ptwo{\hat{f}^{(-k)} - g} + \Ptwo{g - f} \right)
-		= \sqrt{n_k}\, o_p(n^{-1/2}) \cdot O_p(1) = o_p(1)
+		\begin{split}
+			\abs{\sqrt{n_k}\, A_k}
+			&\leq \sqrt{n_k}\, \Ptwo{\hat{\alpha}^{(-k)} - \alpha_h}
+			\left( \Ptwo{\hat{f}^{(-k)} - g} + \Ptwo{g - f} \right) \\
+			&= \sqrt{n_k}\, o_p(n^{-1/2}) \cdot O_p(1) = o_p(1)
+		\end{split}
 	\end{equation}
 	by conditions (a) and (b); the second factor is $O_p(1)$ rather than $o_p(1)$
 	because $g$ need not equal $f$, and it is exactly here that condition (b) must be
@@ -4030,11 +4042,10 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	
 	\subsubsection*{Step 3: Pin the Total Variation}
 	
-	Step~1 gives $|Df|(\Omega) \leq \liminf_{n \to \infty} |D\fn|(\Omega)$ by
-	lower semicontinuity of total variation under weak-* convergence. Step~2
-	gives $\limsup_{n \to \infty} |D\fn|(\Omega) \leq |Df|(\Omega)$ from the
-	additional assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$. Since
-	$\liminf \leq \limsup$ always, combining gives:
+	Step~1 gives the $\liminf$ inequality by lower semicontinuity of total
+	variation under weak-* convergence, and Step~2 gives the $\limsup$
+	inequality from the additional assumption. Since $\liminf \leq \limsup$
+	always, combining gives:
 	\begin{equation}
 		|Df|(\Omega)
 		\leq \liminf_{n \to \infty} |D\fn|(\Omega)
@@ -4060,9 +4071,9 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	\end{remark}
 	
 	\begin{remark}
-		The strict convergence upgrade requires the additional assumption
-		$\E[|D\fn|(\Omega)] \to |Df|(\Omega)$, which is not implied by weak-*
-		convergence alone. This is because weak-* convergence of measures does not
+		The strict convergence upgrade requires the additional assumption that
+		$\E[|D\fn|(\Omega)]$ converge to $|Df|(\Omega)$. This is not implied by
+		weak-* convergence alone. This is because weak-* convergence of measures does not
 		in general imply convergence of total masses --- mass can escape to the
 		boundary or concentrate in ways invisible to continuous test functions. The
 		lower semicontinuity of total variation \citep[Theorem~5.2]{evans2015measure}
@@ -4110,7 +4121,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 		Tonelli on each section (justified since
 		$\abs{D g^{x_{-j}}}$ is finite for a.e.\ section and $q$ is bounded):
 		\begin{align}
-			\E\left[w(X)\, \Dh g(X)\right]
+			\E\left[w(X)\, \Dh g(X)\right] \notag \\
 			&= \int d\mathcal{H}^{d-1}(x_{-j}) \int dx_j\;
 			\frac{q(x_{-j}, x_j)}{2h}
 			\int \mathbf{1}\{\tau \in (x_j - h, x_j + h]\}\;
@@ -4119,8 +4130,8 @@ The window estimand requires two settings to be fixed before estimation, and bec
 			\frac{1}{2h} \int \mathbf{1}\{x_j \in [\tau - h, \tau + h)\}\,
 			q(x_{-j}, x_j)\; dx_j \notag \\
 			&= \int d\mathcal{H}^{d-1}(x_{-j}) \int (K_h \star q)(x_{-j}, \tau)\;
-			d D g^{x_{-j}}(\tau)
-			= \int_\Omega (K_h \star q)\; d D_j g
+			d D g^{x_{-j}}(\tau) \notag \\
+			&= \int_\Omega (K_h \star q)\; d D_j g
 		\end{align}
 		using $\tau \in (x_j - h, x_j + h] \Leftrightarrow
 		x_j \in [\tau - h, \tau + h)$ in the second line, the definition of
