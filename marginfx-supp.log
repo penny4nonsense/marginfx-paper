@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  16 SEP 2026 15:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  23 SEP 2026 16:10
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -455,24 +455,24 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 (./marginfx-supp.aux)
 \openout1 = `marginfx-supp.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 138.
-LaTeX Font Info:    ... okay on input line 138.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 139.
+LaTeX Font Info:    ... okay on input line 139.
 
 (c:/texlive/2026/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -505,32 +505,32 @@ File: color.cfg 2016/01/02 v1.6 sample color configuration
 Package color Info: Driver file: pdftex.def on input line 149.
 
 (c:/texlive/2026/texmf-dist/tex/latex/graphics/mathcolor.ltx))
-Package hyperref Info: Link coloring ON on input line 138.
+Package hyperref Info: Link coloring ON on input line 139.
 
 (./marginfx-supp.out) (./marginfx-supp.out)
 \@outlinefile=\write3
 \openout3 = `marginfx-supp.out'.
 
-LaTeX Font Info:    Calculating math sizes for size <11> on input line 142.
+LaTeX Font Info:    Calculating math sizes for size <11> on input line 143.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/m/n' in size <5.5> not available
-(Font)              size <5> substituted on input line 142.
+(Font)              size <5> substituted on input line 143.
 
 
 LaTeX Font Warning: Font shape `OML/cmm/m/it' in size <5.5> not available
-(Font)              size <5> substituted on input line 142.
+(Font)              size <5> substituted on input line 143.
 
 
 LaTeX Font Warning: Font shape `OMS/cmsy/m/n' in size <5.5> not available
-(Font)              size <5> substituted on input line 142.
+(Font)              size <5> substituted on input line 143.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 142
+LaTeX Font Info:    Trying to load font information for U+msa on input line 143
 .
 (c:/texlive/2026/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 142
+LaTeX Font Info:    Trying to load font information for U+msb on input line 143
 .
 
 (c:/texlive/2026/texmf-dist/tex/latex/amsfonts/umsb.fd
@@ -538,19 +538,19 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/it' instead on input line 148.
+(Font)              using `T1/ptm/m/it' instead on input line 149.
 
 LaTeX Font Info:    Trying to load font information for T1+phv on input line 16
-6.
+7.
 (c:/texlive/2026/texmf-dist/tex/latex/psnfss/t1phv.fd
 File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
 )
 LaTeX Font Info:    Font shape `T1/phv/m/n' will be
-(Font)              scaled to size 9.89993pt on input line 166.
+(Font)              scaled to size 9.89993pt on input line 167.
 
 
 LaTeX Font Warning: Font shape `OT1/cmr/bx/n' in size <5.5> not available
-(Font)              size <5> substituted on input line 241.
+(Font)              size <5> substituted on input line 242.
 
 [1{c:/texlive/2026/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{c:/texlive/202
 6/texmf-dist/fonts/enc/dvips/base/8r.enc}
@@ -558,18 +558,18 @@ LaTeX Font Warning: Font shape `OT1/cmr/bx/n' in size <5.5> not available
 ]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 286.
+(hyperref)                removing `math shift' on input line 287.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 286.
+(hyperref)                removing `superscript' on input line 287.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 286.
+(hyperref)                removing `math shift' on input line 287.
 
 [2] [3]
-Underfull \hbox (badness 1052) in paragraph at lines 444--454
+Underfull \hbox (badness 1052) in paragraph at lines 445--455
 \OML/cmm/m/it/10.95 X$\T1/ptm/m/n/11 . Con-di-tion-ing like-wise gives $\U/msb/
 m/n/11 E\OT1/cmr/m/n/10.95 [\OML/cmm/m/it/10.95  [] \OMS/cmsy/m/n/10.95 j \OML/
 cmm/m/it/10.95 X\OT1/cmr/m/n/10.95 ] = \OML/cmm/m/it/10.95 m[]\OT1/cmr/m/n/10.9
@@ -582,68 +582,63 @@ T1/ptm/m/n/11 and $[]\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95  [] \OMS/cmsy/m/n/
 [4] [5]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 607.
+(hyperref)                removing `math shift' on input line 608.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 607.
+(hyperref)                removing `superscript' on input line 608.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 607.
+(hyperref)                removing `math shift' on input line 608.
 
 [6] [7]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 822.
+(hyperref)                removing `math shift' on input line 823.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 822.
+(hyperref)                removing `subscript' on input line 823.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 822.
+(hyperref)                removing `math shift' on input line 823.
 
 [8] [9] [10] [11] [12] [13]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1257.
+(hyperref)                removing `math shift' on input line 1258.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 1257.
+(hyperref)                removing `superscript' on input line 1258.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1257.
+(hyperref)                removing `math shift' on input line 1258.
 
 [14]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1374.
+(hyperref)                removing `math shift' on input line 1375.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 1374.
+(hyperref)                removing `superscript' on input line 1375.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 1374.
+(hyperref)                removing `math shift' on input line 1375.
 
 
-Underfull \hbox (badness 1009) in paragraph at lines 1385--1390
+Underfull \hbox (badness 1009) in paragraph at lines 1386--1391
  \T1/ptm/m/n/11 S12.4.\T1/ptm/m/it/11 Step 3: Ap-ply-ing Lemma [][]4[][].[][] \
 T1/ptm/m/n/11 By Step 1, $[][] [][] \OML/cmm/m/it/10.95 < \OMS/cmsy/m/n/10.95 1
 $\T1/ptm/m/n/11 . By Step 2,
  []
 
-[15] [16] [17] [18] [19]
-
-Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 1717.
-
-[20] (./marginfx-supp.bbl) [21] (./marginfx-supp.aux)
+[15] [16] [17] [18] [19] [20] (./marginfx-supp.bbl) [21] (./marginfx-supp.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -654,16 +649,16 @@ LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 0.5pt have occurred.
 
 Package rerunfilecheck Info: File `marginfx-supp.out' has not changed.
-(rerunfilecheck)             Checksum: 7FDF18E84913794295A5E18A956250B5;12602.
+(rerunfilecheck)             Checksum: 9228BEB02FA3BB0C8D1F5ECCFDB4DD76;12171.
  ) 
 Here is how much of TeX's memory you used:
- 13198 strings out of 469472
- 198364 string characters out of 5469219
- 627293 words of memory out of 5000000
- 41373 multiletter control sequences out of 15000+600000
+ 13195 strings out of 469472
+ 198281 string characters out of 5469219
+ 627325 words of memory out of 5000000
+ 41370 multiletter control sequences out of 15000+600000
  693448 words of font info for 115 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 75i,18n,79p,550b,589s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,18n,79p,550b,587s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 pdfTeX warning (dest): name{theorem.6} has been referenced but does not exist, 
 replaced by a fixed one
@@ -762,10 +757,10 @@ msbm7.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb><c:/t
 exlive/2026/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2026/texmf-
 dist/fonts/type1/urw/times/utmr8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/u
 rw/times/utmri8a.pfb>
-Output written on marginfx-supp.pdf (21 pages, 337515 bytes).
+Output written on marginfx-supp.pdf (21 pages, 337288 bytes).
 PDF statistics:
- 863 PDF objects out of 1000 (max. 8388607)
- 774 compressed objects within 8 object streams
+ 854 PDF objects out of 1000 (max. 8388607)
+ 765 compressed objects within 8 object streams
  275 named destinations out of 1000 (max. 500000)
- 441 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 417 words of extra memory for PDF output out of 10000 (max. 10000000)
 

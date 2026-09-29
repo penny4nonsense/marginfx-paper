@@ -22,6 +22,7 @@
 \newlabel{M-def:window}{{3}{12}{Window Average Marginal Effect}{definition.3}{}}
 \newlabel{M-eq:dml}{{3.15}{14}{Orthogonal Score, Cross-Fitting, and Efficient Inference}{equation.3.15}{}}
 \newlabel{M-eq:effbound}{{3.22}{16}{Semiparametric Efficiency}{equation.3.22}{}}
+\newlabel{M-eq:findiff}{{2.4}{6}{Estimation}{equation.2.4}{}}
 \newlabel{M-eq:gaussalpha}{{3.3}{10}{Notation and Preliminaries}{equation.3.3}{}}
 \newlabel{M-eq:interp}{{3.16}{15}{Orthogonal Score, Cross-Fitting, and Efficient Inference}{equation.3.16}{}}
 \newlabel{M-eq:opbound}{{3.19}{15}{Orthogonal Score, Cross-Fitting, and Efficient Inference}{equation.3.19}{}}
@@ -1470,7 +1471,7 @@ supplement.
 	\subsubsection*{Step 1: $W^{2,p}$ Bound for a Single Base Learner}
 	
 	Each $\hat{f}_m = Su_m \in \Wtwop$ by assumption on the base learner class. For
-	shallow neural net base learners this follows from Appendix~\ref{app:neural_nets}.
+	shallow neural net base learners this follows from Section~\ref{app:neural_nets}.
 	For spline base learners it follows from standard spline approximation theory
 	\citep{wahba1990splines}. We require a uniform bound:
 	\begin{equation}
@@ -1713,7 +1714,7 @@ supplement.
 	where $K_{\lambda_n}$ is the number of adjacent pairs, which equals the
 	number of splits.
 	
-	\paragraph{Geometric factor.}
+	\subsubsection*{Geometric Factor}
 	The Mondrian process generates cuts according to a recursive tree structure.
 	By the conditional independence of subtrees \citep{roy2009mondrian}, the
 	number of splits satisfies the distributional recursion:
@@ -1736,7 +1737,7 @@ supplement.
 	where the first equality uses the Poisson-like variance structure of the
 	Mondrian process implied by the conditional independence recursion.
 	
-	\paragraph{Response factor.}
+	\subsubsection*{Response Factor}
 	For adjacent leaves $j$ and $k$, by Cauchy--Schwarz on the sample means:
 	\begin{equation}
 		\mathbb{E}_{\mathrm{data}}\!\left[|\bar{y}_k^b - \bar{y}_j^b|^2\right]
@@ -1757,7 +1758,7 @@ supplement.
 		= O(n^{-2\alpha/(d+2)})
 	\end{equation}
 	
-	\paragraph{Combining.}
+	\subsubsection*{Combining the Two Factors}
 	\begin{equation}
 		\E\!\left[|DT_b|(\Omega)^2\right]
 		\leq O(n^{2d/(d+2)}) \cdot O(n^{-2\alpha/(d+2)})
@@ -1786,7 +1787,7 @@ supplement.
 	\begin{remark}
 		The condition $B \gg n^{2(d-\alpha)/(d+2)}$ requires the number of trees
 		to grow with $n$ at a rate depending on dimension $d$ and Hölder exponent
-		$\alpha = 1 - d/p$. For $\alpha$ close to $d$ --- achieved when $p \gg d$,
+		$\alpha = 1 - d/p$. For $\alpha$ close to $1$ --- achieved when $p \gg d$,
 		meaning $f$ is highly smooth --- the condition is mild and a slowly growing
 		number of trees suffices. For $\alpha$ small --- meaning $f$ has limited
 		smoothness or $d$ is large --- more trees are required. In practice random

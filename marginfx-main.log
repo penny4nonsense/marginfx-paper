@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  16 SEP 2026 15:17
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.3.25)  23 SEP 2026 16:10
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -563,7 +563,7 @@ LaTeX Font Warning: Font shape `OMS/cmsy/b/n' in size <5.5> not available
 (Font)              size <5> substituted on input line 209.
 
 [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] [12]
-Underfull \hbox (badness 892) in paragraph at lines 796--802
+Underfull \hbox (badness 892) in paragraph at lines 797--803
 \T1/ptm/m/it/11 Moreover $\U/msb/m/n/11 E\OT1/cmr/m/n/10.95 [\OML/cmm/m/it/10.9
 5 []\OT1/cmr/m/n/10.95 (\OML/cmm/m/it/10.95 X\OT1/cmr/m/n/10.95 )] = 0$\T1/ptm
 /m/it/11 , and un-der the den-sity bounds of As-sump-tion [][]1[][], $[][] \OMS
@@ -571,7 +571,7 @@ Underfull \hbox (badness 892) in paragraph at lines 796--802
  []
 
 [13] [14] [15] [16] [17] [18] [19] [20]
-Overfull \hbox (8.08405pt too wide) in paragraph at lines 1436--1438
+Overfull \hbox (8.08405pt too wide) in paragraph at lines 1437--1439
 []\T1/ptm/m/it/11 If base learn-ers are smooth, $[]$ is well-behaved in the Sob
 olev sense and $[][] []
  []
@@ -579,128 +579,128 @@ olev sense and $[][] []
 [21] [22] [23] [24]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1698.
+(Font)              using `T1/ptm/m/sc' instead on input line 1700.
 
 [25]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1771.
+(Font)              using `T1/ptm/m/sc' instead on input line 1773.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1837.
+(Font)              using `T1/ptm/m/sc' instead on input line 1839.
 
 [26] [27]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1886.
+(Font)              using `T1/ptm/m/sc' instead on input line 1888.
 
 [28] [29]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1925.
+(Font)              using `T1/ptm/m/sc' instead on input line 1927.
 
 [30] [31]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 1987.
+(Font)              using `T1/ptm/m/sc' instead on input line 1989.
 
 [32]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2028.
+(Font)              using `T1/ptm/m/sc' instead on input line 2030.
 
 [33]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2066.
+(Font)              using `T1/ptm/m/sc' instead on input line 2068.
 
 [34] [35]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2134.
+(Font)              using `T1/ptm/m/sc' instead on input line 2136.
 
 [36]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2181.
+(Font)              using `T1/ptm/m/sc' instead on input line 2183.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2222.
+(Font)              using `T1/ptm/m/sc' instead on input line 2224.
 
 
-Overfull \hbox (5.87946pt too wide) in paragraph at lines 2199--2228
+Overfull \hbox (5.87946pt too wide) in paragraph at lines 2201--2230
  [] 
  []
 
 [37] [38] [39] [40]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2295.
+(Font)              using `T1/ptm/m/sc' instead on input line 2297.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2357.
+(Font)              using `T1/ptm/m/sc' instead on input line 2359.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2419.
+(Font)              using `T1/ptm/m/sc' instead on input line 2421.
 
 [41] [42]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2481.
+(Font)              using `T1/ptm/m/sc' instead on input line 2483.
 
 [43] [44] [45]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2543.
+(Font)              using `T1/ptm/m/sc' instead on input line 2545.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2605.
+(Font)              using `T1/ptm/m/sc' instead on input line 2607.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2669.
+(Font)              using `T1/ptm/m/sc' instead on input line 2671.
 
 [46] [47] [48] [49]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2735.
+(Font)              using `T1/ptm/m/sc' instead on input line 2737.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2803.
+(Font)              using `T1/ptm/m/sc' instead on input line 2805.
 
 [50] [51] [52]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2849.
+(Font)              using `T1/ptm/m/sc' instead on input line 2851.
 
 
-Overfull \hbox (0.9166pt too wide) in paragraph at lines 2817--2855
+Overfull \hbox (0.9166pt too wide) in paragraph at lines 2819--2857
  [] 
  []
 
 [53]
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2913.
+(Font)              using `T1/ptm/m/sc' instead on input line 2915.
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 2957.
+(Font)              using `T1/ptm/m/sc' instead on input line 2959.
 
 
-Overfull \hbox (0.9166pt too wide) in paragraph at lines 2925--2963
+Overfull \hbox (0.9166pt too wide) in paragraph at lines 2927--2965
  [] 
  []
 
 
 LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
-(Font)              using `T1/ptm/m/sc' instead on input line 3031.
+(Font)              using `T1/ptm/m/sc' instead on input line 3033.
 
 [54] [55] [56] [57] [58] [59] (./marginfx-main.bbl [60]
 Underfull \hbox (badness 968) in paragraph at lines 104--119
@@ -724,10 +724,10 @@ Package rerunfilecheck Info: File `marginfx-main.out' has not changed.
 (rerunfilecheck)             Checksum: E6C8E3DFC4939E0ADD478557FE9FC939;4678.
  ) 
 Here is how much of TeX's memory you used:
- 13281 strings out of 469472
- 200521 string characters out of 5469219
- 656892 words of memory out of 5000000
- 41479 multiletter control sequences out of 15000+600000
+ 13282 strings out of 469472
+ 200533 string characters out of 5469219
+ 656930 words of memory out of 5000000
+ 41480 multiletter control sequences out of 15000+600000
  701646 words of font info for 129 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  75i,13n,79p,2249b,663s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -763,10 +763,10 @@ ive/2026/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb><c:/texlive/2026/texmf-d
 ist/fonts/type1/urw/times/utmb8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/ur
 w/times/utmr8a.pfb><c:/texlive/2026/texmf-dist/fonts/type1/urw/times/utmri8a.pf
 b>
-Output written on marginfx-main.pdf (62 pages, 511141 bytes).
+Output written on marginfx-main.pdf (62 pages, 511256 bytes).
 PDF statistics:
- 1130 PDF objects out of 1200 (max. 8388607)
- 1011 compressed objects within 11 object streams
+ 1131 PDF objects out of 1200 (max. 8388607)
+ 1012 compressed objects within 11 object streams
  245 named destinations out of 1000 (max. 500000)
  217 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -19,7 +19,7 @@
 \newlabel{S-app:lem_orth}{{S3}{2}{Proof of Lemma~\ref {M-lem:orth} (Exact Product Bias)}{section.3}{}}
 \newlabel{S-app:lem_riesz}{{S1}{1}{Proof of Lemma~\ref {M-lem:riesz} (Riesz Representation)}{section.1}{}}
 \newlabel{S-app:lem_sobolev_consistency}{{S8}{7}{Proof of Lemma~\ref {M-lem:sobolev_consistency} (Derivative Consistency, Sobolev)}{section.8}{}}
-\newlabel{S-app:lem_sobolev_existence}{{S7}{5}{Proof of Lemma~\ref {M-lem:sobolev_existence} (Derivative Existence, Sobolev)}{section.7}{}}
+\newlabel{S-app:lem_sobolev_existence}{{S7}{6}{Proof of Lemma~\ref {M-lem:sobolev_existence} (Derivative Existence, Sobolev)}{section.7}{}}
 \newlabel{S-app:neural_nets}{{S12}{13}{Proof of Theorem~\ref {M-thm:neural_nets} (Neural Networks)}{section.12}{}}
 \newlabel{S-app:prop_hlimit}{{S2}{1}{Proof of Proposition~\ref {M-prop:hlimit} (Recovery of the Average Derivative)}{section.2}{}}
 \newlabel{S-app:prop_robust}{{S5}{4}{Proof of Proposition~\ref {M-prop:robust} (Double Robustness)}{section.5}{}}
@@ -393,8 +393,9 @@
 	For most supervised learners the partial derivative $\partial \hat{f} / \partial x_j$ is not available in closed form, and for tree-based models it does not exist everywhere in the classical sense. We therefore estimate it via a centered finite difference:
 	\begin{equation}
 		\frac{\partial \hat{f}}{\partial x_j}\bigg|_{\mathbf{x}_i} \approx \frac{\hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} + h_j)}\right) - \hat{f}\!\left(\mathbf{x}_i^{(j,\, x_{ij} - h_j)}\right)}{2h_j}
+		\label{eq:findiff}
 	\end{equation}
-	where $\mathbf{x}_i^{(j,v)}$ denotes the vector $\mathbf{x}_i$ with the $j$-th component replaced by $v$. We write $\Dh g(\mathbf{x})$ for the right-hand side of (3) applied to a generic function $g$, so that the sample analog above is $n^{-1}\sum_i \Dh \hat{f}(\mathbf{x}_i)$; the same notation is used throughout Section~3. The centered finite difference is preferred over a one-sided difference because its approximation error relative to the pointwise derivative is $O(h_j^2)$ rather than $O(h_j)$, which becomes material when $h_j$ is not negligibly small. Relative to the window estimand $\theta_{j,h}$ the centered difference involves no approximation at all: it is the defining operation of the estimand, computed exactly, and $h_j$ is a reported feature of the target --- the perturbation scale at which effects are measured --- rather than a numerical tolerance.
+	where $\mathbf{x}_i^{(j,v)}$ denotes the vector $\mathbf{x}_i$ with the $j$-th component replaced by $v$. We write $\Dh g(\mathbf{x})$ for the right-hand side of \eqref{eq:findiff} applied to a generic function $g$, so that the sample analog above is $n^{-1}\sum_i \Dh \hat{f}(\mathbf{x}_i)$; the same notation is used throughout Section~3. The centered finite difference is preferred over a one-sided difference because its approximation error relative to the pointwise derivative is $O(h_j^2)$ rather than $O(h_j)$, which becomes material when $h_j$ is not negligibly small. Relative to the window estimand $\theta_{j,h}$ the centered difference involves no approximation at all: it is the defining operation of the estimand, computed exactly, and $h_j$ is a reported feature of the target --- the perturbation scale at which effects are measured --- rather than a numerical tolerance.
 	
 	The step size $h_j$ is chosen adaptively as:
 	\begin{equation}
@@ -591,7 +592,7 @@
 	The density bounds are the same condition previously used to define the average
 	marginal effect functional and are standard in the average derivative literature
 	\citep{powell1989, newey1993}. They enter the theory only through the ratio
-	$p_{\max}/p_{\min}$, which bounds the Riesz representer below.
+	$p_{\max}/p_{\min}$, which bounds the Riesz representer above.
 
 	The bounds are genuinely restrictive, and one design of interest violates them.
 	Independent Gaussian covariates have a density that is not bounded below on
@@ -1175,7 +1176,7 @@
 	exactly as its jump measure integrated against a locally averaged covariate
 	density, which is, to our knowledge, the first characterization of the population
 	quantity that the marginal effect of a tree-based model measures. All proofs are in
-	the Appendix.
+	the supplement.
 	
 	The parallel structure of Lemmas~\ref{lem:sobolev_existence}
 	through~\ref{lem:bv_consistency} reflects the parallel structure of the Sobolev
@@ -1416,7 +1417,7 @@
 		\end{equation}
 		which is uniformly bounded by the weight norm assumption. The $L^p$ consistency
 		condition and Lemma~\ref{lem:sobolev_consistency} then give the result. Full proof
-		in Appendix~\ref{S-app:neural_nets}.
+		in Section~\ref{S-app:neural_nets} of the supplement.
 	\end{proof}
 	
 	\begin{remark}
@@ -1484,7 +1485,8 @@
 		\end{equation}
 		The geometric series converges because $\rho < 1$, giving uniform BV boundedness
 		without any step size condition. Lemma~\ref{lem:bv_consistency} then gives
-		$D\fn \xrightarrow{w*} Df$. Full proof in Appendix~\ref{S-app:boosting}.
+		$D\fn \xrightarrow{w*} Df$. Full proof in
+		Section~\ref{S-app:boosting} of the supplement.
 	\end{proof}
 	
 	\begin{theorem}[Gradient Consistency for Mondrian Forests]
@@ -1541,7 +1543,7 @@
 		\end{equation}
 		Under the condition $B \gg n^{2(d-\alpha)/(d+2)}$ this is uniformly bounded.
 		Lemma~\ref{lem:bv_consistency} then gives $D\fn \xrightarrow{w*} Df$ in $\cM$.
-		Full proof in Appendix~\ref{S-app:forests}.
+		Full proof in Section~\ref{S-app:forests} of the supplement.
 	\end{proof}
 	
 	\begin{remark}
