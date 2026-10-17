@@ -1014,16 +1014,49 @@ representation; semiparametric efficiency.
 	the empirical results below should be read.
 
 	For estimators of bounded variation --- which includes every tree-based
-	method, however its splits are chosen --- a pairing identity
-	(Theorem~\ref{S-thm:pairing}) characterizes the window effect exactly: it
-	equals the jump measure of the fitted surface integrated against a locally
-	averaged covariate density. A piecewise constant fit has no pointwise
-	derivative anywhere, so this is the sense --- and so far as we are aware the
-	first explicit one --- in which a tree ensemble's marginal effect is a
-	well-defined population quantity rather than an artefact of the differencing
-	step. In the small-window limit the identity reduces to the usual average
-	derivative whenever the fitted surface has one
-	(Corollary~\ref{S-cor:pairing_limit}).
+	method, however its splits are chosen --- a pairing identity characterizes
+	the window effect exactly. Write $q = wp$ for the trimmed covariate density
+	and let $K_h \star q$ denote its one-dimensional moving average along
+	coordinate $j$, the smoothing the window itself induces:
+	\begin{equation}
+		(K_h \star q)(u) = \frac{1}{2h} \int_{-h}^{h} q(u + s\, e_j)\, ds .
+		\label{eq:movingaverage}
+	\end{equation}
+
+	\begin{theorem}[Pairing Identity]
+		\label{thm:pairing}
+		Let Assumption~\ref{ass:sampling} hold, let $w$ be a trimming weight with
+		$\operatorname{supp}(w) \subseteq \Omega_{j,h}$, and let $g \in \BV$
+		(identified with its precise representative). Then:
+		\begin{equation}
+			\E\left[w(X)\, \Dh g(X)\right]
+			= \int_\Omega (K_h \star q)(u)\; dD_j g(u)
+			\label{eq:pairing}
+		\end{equation}
+		where $D_j g$ is the $j$-th component of the distributional gradient of $g$.
+		In particular, for a piecewise constant $g$ with leaf partition $\{R_l\}$ and
+		leaf values $\{\bar{y}_l\}$, by Lemma~\ref{S-lem:bv_existence}:
+		\begin{equation}
+			\E\left[w(X)\, \Dh g(X)\right]
+			= \sum_{l \sim m} (\bar{y}_m - \bar{y}_l)\, (\nu_{lm})_j
+			\int_{\partial R_l \cap \partial R_m} (K_h \star q)\;
+			d\mathcal{H}^{d-1}
+			\label{eq:pairing_tree}
+		\end{equation}
+	\end{theorem}
+
+	A piecewise constant fit has no pointwise derivative anywhere, so
+	\eqref{eq:pairing_tree} is the sense --- and so far as we are aware the first
+	explicit one --- in which a tree ensemble's marginal effect is a well-defined
+	population quantity rather than an artefact of the differencing step. It is
+	the total jump of the fitted surface across leaf boundaries in direction $j$,
+	each boundary weighted by its share of the covariate mass in an $h$-window:
+	the places where the model changes its prediction, weighted by how many
+	observations live near those places. In the small-window limit the identity
+	reduces to the usual average derivative whenever the fitted surface has one
+	(Corollary~\ref{S-cor:pairing_limit}); the proof and a fuller discussion are in
+	Section~\ref{S-sec:interpretation} of the supplement.
+
 
 	Whether the plug-in is consistent for that quantity is a function-space
 	question, and the answer depends on where the learner lives. Neural networks
@@ -1198,8 +1231,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	intermediate sample sizes, the nonlinear and interaction designs, and the
 	sieve-representer and bounded-support arms are reported in
 	Section~\ref{S-app:sim_detail} of the supplement, together with the
-	discussion of each individual table. The pattern in the supplementary
-	designs is the one the summary shows.
+	discussion of each individual table. The pattern in those designs is the one the summary shows.
 
 \begin{table}[htbp]
 \centering
@@ -1244,10 +1276,7 @@ nominal $0.95$, so that over-coverage is reported as well as
 under-coverage. The plug-in and bootstrap columns are the uncorrected
 estimator of Simulations 1 and 2; the debiased and influence-function
 columns are the cross-fitted estimator of Simulation 3 with $K=5$ folds
-and the closed-form representer. The remaining sample sizes, the
-nonlinear and interaction data generating processes, the per-feature
-detail, and the sieve-representer and bounded-support arms are reported
-in the supplement.
+and the closed-form representer. Full per-feature results are in the supplement.
 \end{tablenotes}
 \end{threeparttable}
 \end{table}
@@ -1295,9 +1324,8 @@ in the supplement.
 	are independent standard normals, so the representer of
 	Lemma~\ref{lem:riesz} is available in closed form,
 	$\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and no representer estimation is
-	required; the supplement reports a second arm that replaces it with a sieve
-	estimate, and a third on bounded support where the trimming weight is
-	active rather than vacuous. The correction removes both failures at once.
+	required; a second arm replaces it with a sieve estimate, and a third uses
+	bounded support, where the trimming weight is active rather than vacuous. The correction removes both failures at once.
 	Absolute bias is at most $0.003$ at $n=250$ and at most $0.0005$ at
 	$n=5{,}000$ for every learner on both outcome types, and for the forest it
 	falls from $0.093$ to $0.000$ at the largest sample --- the correction does

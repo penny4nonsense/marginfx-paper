@@ -181,7 +181,7 @@ supplement.
 	both questions in the function spaces the learners naturally inhabit. Four lemmas
 	establish that gradients exist and converge in the Sobolev space of smooth
 	estimators and the BV space of piecewise constant ones; a pairing identity
-	(Theorem~\ref{thm:pairing}) then expresses the window effect of any BV estimator
+	(Theorem~\ref{M-thm:pairing}) then expresses the window effect of any BV estimator
 	exactly as its jump measure integrated against a locally averaged covariate
 	density, which is, to our knowledge, the first characterization of the population
 	quantity that the marginal effect of a tree-based model measures. All proofs are in
@@ -316,38 +316,13 @@ supplement.
 	information in a stronger sense than piecewise constant estimators, which is itself a
 	reflection of the different inductive biases of the estimator classes.
 	
-	The pairing identity is the capstone of the interpretation theory. Recall from
-	Lemma~\ref{lem:bv_existence} that the distributional gradient of a piecewise
-	constant estimator is a measure concentrated on leaf boundaries. The window effect
-	of such an estimator integrates that measure against a smoothed density: let
-	$K_h \star q$ denote the one-dimensional moving average of $q = wp$ (extended by
-	zero) along coordinate $j$:
-	\begin{equation}
-		(K_h \star q)(u) = \frac{1}{2h} \int_{-h}^{h} q(u + s\, e_j)\, ds
-	\end{equation}
-	
-	\begin{theorem}[Pairing Identity]
-		\label{thm:pairing}
-		Let Assumption~\ref{M-ass:sampling} hold, let $w$ be a trimming weight with
-		$\operatorname{supp}(w) \subseteq \Omega_{j,h}$, and let $g \in \BV$
-		(identified with its precise representative). Then:
-		\begin{equation}
-			\E\left[w(X)\, \Dh g(X)\right]
-			= \int_\Omega (K_h \star q)(u)\; dD_j g(u)
-			\label{eq:pairing}
-		\end{equation}
-		where $D_j g$ is the $j$-th component of the distributional gradient of $g$.
-		In particular, for a piecewise constant $g$ with leaf partition $\{R_l\}$ and
-		leaf values $\{\bar{y}_l\}$, by Lemma~\ref{lem:bv_existence}:
-		\begin{equation}
-			\E\left[w(X)\, \Dh g(X)\right]
-			= \sum_{l \sim m} (\bar{y}_m - \bar{y}_l)\, (\nu_{lm})_j
-			\int_{\partial R_l \cap \partial R_m} (K_h \star q)\;
-			d\mathcal{H}^{d-1}
-			\label{eq:pairing_tree}
-		\end{equation}
-	\end{theorem}
-	
+	The pairing identity, Theorem~\ref{M-thm:pairing} of the main paper, is the
+	capstone of the interpretation theory: by Lemma~\ref{lem:bv_existence} the
+	distributional gradient of a piecewise constant estimator is a measure
+	concentrated on leaf boundaries, and the identity integrates that measure
+	against the smoothed density $K_h \star q$ of \eqref{M-eq:movingaverage}. One
+	consequence of it is worth recording separately.
+
 	\begin{corollary}
 		\label{cor:pairing_limit}
 		If in addition $q$ extends to a continuous function of compact support (for
@@ -362,15 +337,15 @@ supplement.
 		Proposition~\ref{M-prop:hlimit}.
 	\end{corollary}
 	
-	Theorem~\ref{thm:pairing} settles a question that the interpretability literature
+	Theorem~\ref{M-thm:pairing} settles a question that the interpretability literature
 	has left informal: what does the average marginal effect of a random forest
-	\emph{measure}? The answer given by \eqref{eq:pairing_tree} is exact and
+	\emph{measure}? The answer given by \eqref{M-eq:pairing_tree} is exact and
 	geometric: it is the total jump of the fitted surface across leaf boundaries in
 	direction $j$, with each boundary segment weighted by its share of the covariate
 	mass in an $h$-window --- the places where the model changes its prediction,
 	weighted by how many observations live near those places. The identity reconciles
 	the two readings of a marginal effect that Section~2 could only juxtapose. Read
-	with $g = \hat{f}$, \eqref{eq:pairing} is a descriptive statement about the fitted
+	with $g = \hat{f}$, \eqref{M-eq:pairing} is a descriptive statement about the fitted
 	model, available in finite samples with no assumptions at all. Read through
 	Theorem~\ref{M-thm:main}, the same plug-in quantity, corrected by the orthogonal
 	score, estimates the population functional $\theta_h(f)$ at the parametric rate.
@@ -690,7 +665,7 @@ supplement.
 	rather than a frequentist risk bound is the natural object and the translation
 	requires care. Any learner of bounded variation --- which includes every
 	tree-based method, however its splits are chosen --- falls under the pairing
-	identity of Theorem~\ref{thm:pairing} without further argument, so what its
+	identity of Theorem~\ref{M-thm:pairing} without further argument, so what its
 	window effect measures is characterized even when its rate is unknown.
 	
 	Two cases in the table deserve separate mention because they are where the
@@ -2966,7 +2941,7 @@ supplement.
 	\end{remark}
 	
 	% ============================================================
-	\section{Proof of Theorem~\ref{thm:pairing} (Pairing Identity)}
+	\section{Proof of Theorem~\ref{M-thm:pairing} (Pairing Identity)}
 	\label{app:thm_pairing}
 	% ============================================================
 	
