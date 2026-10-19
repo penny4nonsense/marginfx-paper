@@ -3,11 +3,14 @@
 Status, by section:
 
 - **§2 is a finding about Theorem S2.** I am confident in it.
-- **§4 is a draft lemma with a full proof.** Derived 2026-10-19, **not yet
-  checked by anyone**. If it survives, it closes the hard half of the problem.
-- **§5–§7 are open.** §6 lists what is still missing; one item there
-  (assumption A2 versus the settings actually run) is a practical problem, not
-  just a technical one.
+- **§4 is a draft lemma whose conclusion now appears to be false.** Its Step 2
+  is verified, but assumption (A3) does not hold and, more seriously, the
+  quantity it bounds **grows with the number of rounds** rather than staying
+  uniformly bounded. See §4.4, added after running XGBoost. Do not build on §4.
+- **§6.1–6.2 are verified** — geometry in `d ≤ 4` and the ensemble bound with
+  face overlap deliberately induced. §6.5's two obstacles stand.
+- **§8 is now the recommended position**, for regression as well as
+  classification, which is not where this started.
 
 Companion to `notes-mondrian-bv-bound.md`, and independent of it.
 
@@ -149,13 +152,75 @@ limit, and the proof above is a safe but crude route to it. Sharpening it is
 cosmetic — uniform boundedness, which is all condition 1 needs, follows either
 way — but it would improve the explicit constant if the lemma is ever stated.
 
-**Two features worth noting.**
+**Two features that looked attractive — the first of which turned out to be the
+problem.**
 
-1. *The bound is uniform in M.* So condition 1 places **no constraint on the
-   stopping rule**, and early stopping can be chosen purely to deliver condition
-   2. The two halves decouple completely.
+1. *The bound is uniform in M*, so condition 1 would place no constraint on the
+   stopping rule and the two halves of §1 would decouple. **This is the claim
+   §4.4 refutes.** It holds only because (A3) is assumed with a `γ` that does
+   not vary with `m`; once the realised edge ratio is allowed to decay, as it
+   does, the uniformity goes with it.
 2. *The constant is explicit and interpretable*: depth enters as `2^D`, the
-   minimum leaf fraction as `κ^{-1/2}`, the edge as `γ^{-2}`.
+   minimum leaf fraction as `κ^{-1/2}`, the edge as `γ^{-2}`. That remains true
+   and is what makes the failure diagnosable — the `γ^{-2}` is where the
+   three-orders-of-magnitude slack in §4.4 comes from.
+
+### 4.4 Empirical check — and why the lemma fails
+
+Run 2026-10-19 with `check-xgboost-assumptions.py` and
+`check-xgboost-growth.py`, on the paper's own linear
+regression DGP (`y = 2x₁ + 3x₂ + ε`, `x ∼ N(0,I₄)`) and settings
+(`max_depth 4`, `eta 0.05`, `reg_lambda 1`), at `n = 250, 1000, 5000`.
+
+**Step 2 holds.** `‖h_m‖_∞ ≤ κ^{-1/2}‖u_m‖_{2,n}` is satisfied at every round
+in every configuration, worst ratio 0.35. Reconstructing the leaf values as
+shrunk means `G_l/(n_l+λ)` matches XGBoost's output to `1e-6`, so the model of
+the algorithm underlying Step 2 is right.
+
+**(A2) fails as configured, but is repairable.** With the default
+`min_child_weight = 1` the smallest leaf holds exactly one observation at every
+sample size, so `κ̂ = 1/n`: `4.0e-3`, `1.0e-3`, `2.0e-4`. Not bounded below —
+it vanishes at rate `1/n`. Setting `min_child_weight = n/32` gives
+`κ̂ = 0.028, 0.031, 0.031`, stable in `n`, so the assumption is available at
+the cost of a configuration change.
+
+**(A3) fails and is not repairable by configuration.** The realised edge ratio
+`‖h_m‖_{2,n}/‖u_m‖_{2,n}` decays in both arguments: its minimum over rounds is
+`0.104, 0.058, 0.031` at `n = 250, 1000, 5000` — roughly `n^{-0.4}` — and
+within a run it falls from `0.91` at round 1 to `0.066` at round 200. There is
+no uniform `γ > 0`. The resulting bound `2γ^{-2}‖Y‖` is correspondingly
+useless: `694`, `2187`, `7833` against a realised quantity of about `10`.
+
+**The conclusion itself is false.** This is the part that matters. Taking the
+run out to `M = 4000` rounds, the quantity the whole lemma turns on grows:
+
+| M | 50 | 200 | 1000 | 4000 | implied |
+|---|---|---|---|---|---|
+| `Σ ν‖h_m‖_∞`, `n=1000`, `mcw = n/32` | 8.3 | 11.4 | 18.4 | 32.0 | `M^0.34` |
+| `Σ ν‖h_m‖_∞`, `n=5000`, `mcw = n/32` | 8.0 | 10.3 | 14.7 | 25.6 | `M^0.30` |
+| `Σ ν‖h_m‖_∞`, `n=1000`, default | 10.2 | 17.1 | 38.3 | 58.3 | `M^0.41` |
+
+Bounded would be `M^0`; the energy/Cauchy–Schwarz route gives `M^0.5`. The
+truth sits between, so **`Σ ν‖h_m‖_∞` is not uniformly bounded in `M`** and
+neither, therefore, is the bound on `|Df̂_M|(Ω)` that §4 derives from it. The
+mechanism is visible in the gap between `‖h_m‖_∞` and `‖h_m‖_{2,n}`: the
+telescoping energy budget `Σ ν(2−ν)‖h_m‖²_{2,n} ≤ ‖Y − base‖²_{2,n}` is
+essentially saturated (13.98 against 14.40), so late rounds carry almost no
+energy, but they spend it on increasingly spiky trees — large on one small
+leaf, negligible elsewhere. Those contribute nothing in RMS and a great deal
+in sup norm, which is the norm the BV bound needs.
+
+**What this means.** Gradient consistency needs `M → ∞` for `L¹` consistency,
+and the BV bound diverges in exactly that limit. The two conditions of §1 are
+in direct conflict for XGBoost, not merely hard to establish together. That is
+a stronger obstruction than §7 item 2 anticipated, and it applies to the
+**regression** case — the one §6 had left standing.
+
+A caveat on reading the table: `M = 4000` at `ν = 0.05` is `νM = 200`, far past
+any sensible stopping point. Over the realistic range `M = 50 → 200` the growth
+is only a factor of 1.4. The divergence is a statement about the limit the
+theorem would need, not about the estimator as it is actually run — which is
+precisely why §8 is the position that survives.
 
 ## 5. XGBoost's regularisers in the light of §4
 
@@ -310,29 +375,24 @@ logistic case, and the reason §6.2 and §8 matter more here than for regression
 
 ## 7. What is still missing
 
-1. **(A2) versus the runs actually performed.** This is the practical problem.
-   XGBoost's default `min_child_weight` is 1, so leaves may hold a handful of
-   observations and (A2) fails as configured. Either set
-   `min_child_weight = κn` and re-run, or weaken (A2). Some condition of this
-   kind looks genuinely necessary: a *thin* cell has large face area and few
-   points, so both factors in Step 2 move the wrong way at once. A geometric
-   variant — minimum cell width in the split coordinate — would also serve, and
-   under the density bounds of Assumption 1 the two are related, but that
-   equivalence needs proving.
-2. **(A3) cannot hold indefinitely under (A2).** With leaves forced to hold
-   `κn` points the tree class has bounded complexity, so `u_m` converges to the
-   residual of a projection onto a fixed closed span and the edge must fail
-   eventually. The honest statement assumes (A3) only for the `M` rounds
-   actually run — which is fine, since the bound is uniform in `M` — but the
-   interaction should be stated rather than left implicit. It is also a further
-   reason the relevant regime is the early-stopped one.
-3. **Newton boosting / logistic loss.** Worked out in §6. Step 2 survives in
+1. **(A2)** — settled empirically in §4.4. It fails at XGBoost's defaults
+   (`κ̂ = 1/n`) and is restored by `min_child_weight = n/32`, giving a stable
+   `κ̂ ≈ 0.03`. A configuration change, not a mathematical obstacle.
+2. **(A3)** — refuted empirically in §4.4. The edge ratio decays like `n^{-0.4}`
+   and falls by an order of magnitude within a run, so no uniform `γ` exists,
+   and the `γ^{-2}` bound it yields is three orders of magnitude loose. This
+   hypothesis should be abandoned rather than repaired.
+3. **The conclusion of §4** — also refuted in §4.4. `Σ ν‖h_m‖_∞` grows like
+   `M^{0.3}`, so no route, edge-based or otherwise, will deliver a bound on
+   `|Df̂_M|(Ω)` uniform in `M`. Anyone revisiting this should start by deciding
+   whether a `M → ∞` statement is wanted at all.
+4. **Newton boosting / logistic loss.** Worked out in §6. Step 2 survives in
    Hessian-weighted form; Step 3 does not, and the minimum-Hessian parameter is
    in tension with what logistic boosting does. For the fixed round counts
    actually run, §6.2 makes condition 1 trivial and the issue disappears.
-4. **Subsampling**, if enabled, as additional randomness to condition on.
-5. **The consistency half** still has to be imported and matched to the same
-   assumption set — in particular, Zhang & Yu's step-size conditions must be
+5. **Subsampling**, if enabled, as additional randomness to condition on.
+6. **The consistency half**, if it is ever needed, has to be imported and
+   matched to the same assumption set — in particular, Zhang & Yu's step-size conditions must be
    compatible with (A3) and (A4).
 
 ## 8. The alternative worth weighing
@@ -347,31 +407,47 @@ So there is a defensible position in which the correct statement about
 XGBoost-as-run is a double-robustness one, and gradient consistency belongs to
 the `M → ∞` idealisation. Worth deciding deliberately rather than by default.
 
-**§6 strengthens this considerably for classification.** There the fixed-`M`
-bound is not merely tractable but unconditional — `|D f̂ₙ|(Ω) ≤ M(2^D−1)A`
-follows from `0 ≤ σ ≤ 1` alone, with no edge condition, no minimum-Hessian
-assumption, and no appeal to §4 — while the `M → ∞` route runs into an
-obstruction (§6.5, item 2) that looks structural rather than technical. If the
-fixed-`M`, double-robustness framing is adopted anywhere, classification is
-where it is most clearly the right call.
+**This is now the recommended position, and for regression too.** §4.4 shows
+`Σ ν‖h_m‖_∞` growing like `M^{0.3}`, so the BV bound diverges in precisely the
+limit that `L¹` consistency requires: the two conditions of §1 are in conflict
+for XGBoost rather than merely hard to establish together. And §6.5 item 2
+gives an independent structural obstruction for logistic loss. Both routes to
+an `M → ∞` theorem are blocked, by different mechanisms.
 
-## 9. Effort
+For classification the fixed-`M` bound is additionally *unconditional* —
+`|D f̂ₙ|(Ω) ≤ M(2^D−1)A` follows from `0 ≤ σ ≤ 1` alone, needing no edge
+condition, no leaf condition and nothing from §4 — and that bound is verified
+(§6.1.1). For regression the fixed-`M` bound is equally easy: a finite sum of
+bounded-depth trees has bounded total variation.
 
-If §4 survives checking, the remaining work is items 1–5 of §7. Item 1 (the
-minimum leaf fraction versus the settings actually run) is the substantive one
-for regression; §6 now supplies the answer for classification, and that answer
-is that the `M → ∞` logistic theorem is the hardest object here and probably
-not worth chasing. Weeks rather than months for the regression case, and
-materially more tractable than the Mondrian repair, whose nearly-empty-cells
-obstacle has no comparable workaround. §4 and §6 each took an afternoon, which
-is a reason to be suspicious of both until they have been read carefully.
+What the position costs is that `f̂ₙ` is then not consistent for `f`, so the
+object being estimated is a pseudo-true limit. The paper already has the
+machinery for exactly that case.
 
-Nothing in the main inference theory waits on any of this: Theorem 1 consumes an
-`L²` rate and nothing else, and the pairing identity (Theorem 3) already
+## 9. Effort, and the revised recommendation
+
+The honest summary after the checks: **do not chase the `M → ∞` theorem.**
+
+§4's route is refuted, not merely unproved — its hypothesis (A3) is false and
+its conclusion is false. §6.5's obstruction for logistic loss is independent
+and also structural. The remaining work to rescue a limit theorem would be to
+find some other functional of the ensemble that is both uniformly bounded and
+strong enough to drive BV convergence, and nothing in the checks suggests one
+exists; the energy budget is saturated while the sup norms keep growing.
+
+Against that, the fixed-`M` position (§8) costs nothing to state, is already
+verified for classification and trivial for regression, and lands in a regime
+the paper already covers. That is a far better use of the remaining time
+before submission than a limit theorem that currently has two independent
+obstructions.
+
+Nothing in the main inference theory waits on any of this: Theorem 1 consumes
+an `L²` rate and nothing else, and the pairing identity (Theorem 3) already
 characterises what XGBoost's window effect measures, a finite sum of
-piecewise-constant trees being BV. What is unproved is only that the
-**uncorrected plug-in** is gradient-consistent — the quantity the paper argues
-throughout should not be relied on.
+piecewise-constant trees being BV. What is unproved — and now looks unlikely
+to be provable in the form originally wanted — is only that XGBoost's
+**uncorrected plug-in** is gradient-consistent, which is the quantity the paper
+argues throughout should not be relied on.
 
 ## 10. If it is not proved before submission
 
