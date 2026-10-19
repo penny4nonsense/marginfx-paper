@@ -222,16 +222,31 @@ add, possibly to something large; but the final step caps the *probability*
 jump at 1 regardless of the margin, so the addition is absorbed. The cap is
 exactly what makes the bound indifferent to overlap.
 
-**Numerical check (2026-10-19).** `check-tree-faces.py` builds random
-axis-aligned tree partitions of `[0,1]²`, where `H¹` is length and everything
-is computable exactly, and checks all four claims at depths `D = 2,3,4,5,6`
-over 1500–4000 trials each. All pass. In particular **step 2 — the
-lowest-common-ancestor claim — holds in every trial**, which was the step I was
-least sure of. Step 3's inequality is attained (worst ratio exactly 1.0000 at
-every depth), so it is the right bound and not merely a safe one; the
-`2‖h‖_∞` factor in §4 Step 1 is where the looseness lives, with the realised
-ratio falling from 0.87 at `D=2` to 0.14 at `D=6` as random leaf values become
-less likely to differ maximally.
+**Numerical check (2026-10-19).** `check-tree-faces.py` runs two checks, both
+computing `H^{d-1}` exactly on axis-aligned partitions of the unit cube.
+
+*Single tree*, `d = 2,3,4` and `D = 2…5`, 1200 trials per cell, ≈190,000
+adjacent leaf pairs: all four claims pass with zero failures. In particular
+**step 2 — the lowest-common-ancestor containment — holds in every trial,
+including in `d = 3` and `d = 4`**, which was the step I was least sure of and
+where faces are rectangles rather than segments. Step 3's inequality is
+attained exactly (worst ratio 1.0000 at every `(d,D)`), so it is the right
+bound rather than a safe one; the looseness sits in the `2‖h‖_∞` factor of §4
+Step 1, whose realised ratio falls from 0.88 at `D=2` to 0.16 at `D=5`.
+
+*Ensemble*, which is the claim as actually stated: `F = ν Σ_{m≤M} h_m` for
+`M = 2, 5, 10`, with `|D σ(F)|(Ω)` computed exactly on the common refinement.
+Thresholds are drawn from a coarse shared grid **so that faces from different
+trees coincide on purpose** — 10 to 683 coincidences per configuration, so the
+overlap case is exercised rather than avoided by continuous randomness. Both
+the cap bound and the `¼`-Lipschitz bound hold in every trial.
+
+Two things the ensemble run shows. The cap `M(2^D−1)A` is very loose and gets
+looser as `M` grows (realised ratio 0.32 down to 0.06), because it grows
+linearly in `M` while the total variation of a *probability* saturates. The
+`¼` in the Lipschitz bound, by contrast, is nearly attained at `M = 2`
+(ratio 0.99), as it should be: with small margins `σ` is locally `¼`-Lipschitz,
+so that constant cannot be improved.
 
 The bound is of course very loose overall — `200 · 15 = 3000` against a truth
 whose `|Df|(Ω) = ∫|∇f|` is typically `O(1)`. That does not matter here:
