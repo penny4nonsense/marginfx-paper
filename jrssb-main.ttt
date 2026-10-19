@@ -1,0 +1,118 @@
+\begin{table}[htbp]
+\centering
+\caption{What must be verified to apply the framework to a learner. The
+inference column is what Theorem~\ref{thm:main} consumes; the interpretation
+column is what Section~\ref{S-sec:learners} requires in order to read the
+uncorrected plug-in as a gradient.}
+\label{tab:learner_checklist}
+\begin{tabular}{lll}
+\toprule
+Learner & Inference: $L^2$ rate & Interpretation: function space \\
+\midrule
+Linear and GLM        & parametric        & $W^{1,p}$, exact \\
+Lasso, ridge          & established       & $W^{1,p}$ \\
+Splines, series       & established       & $W^{1,p}$ \\
+Kernel ridge          & established       & $W^{1,p}$ via smooth kernel \\
+GAM                   & componentwise     & $W^{1,p}$ \\
+Neural networks       & established       & $W^{1,p}$, proved here \\
+$L_2$Boost, fixed smoother & established  & $W^{1,p}$/BV, proved here \\
+Tree boosting (XGBoost) & established     & BV; gradient \emph{open} \\
+Mondrian forests      & minimax optimal   & BV, proved here \\
+Breiman forests       & \emph{open}       & BV; gradient \emph{conjectured} \\
+SVM (smooth kernel)   & available         & $W^{1,p}$ via kernel; not treated \\
+BART                  & contraction rate  & BV; not treated \\
+\bottomrule
+\end{tabular}
+\end{table}
+\efloatseparator
+ 
+\begin{table}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{UCI Credit Card Default: Model Comparison. Average marginal effects on P(Default), full specification (A+B+C).}
+\label{tab:credit_default_model_comparison}
+\begin{tabular}{lrrrr}
+\toprule
+Feature & Logistic & Random Forest & XGBoost & Neural Net \\
+\midrule
+age & 0.0001 & -0.0002 & -0.0005 & -0.0000 \\
+& (0.0003) & (0.0003) & (0.0003) & (0.0003) \\
+female & -0.0198$^{***}$ & -0.0161$^{***}$ & -0.0175$^{***}$ & -0.0176$^{***}$ \\
+& (0.0046) & (0.0045) & (0.0045) & (0.0045) \\
+education & -0.0040$^{*}$ & -0.0018 & 0.0034 & -0.0040$^{*}$ \\
+& (0.0022) & (0.0022) & (0.0022) & (0.0022) \\
+married & 0.0206$^{***}$ & 0.0222$^{***}$ & 0.0205$^{***}$ & 0.0186$^{***}$ \\
+& (0.0063) & (0.0062) & (0.0062) & (0.0063) \\
+\midrule
+avg\_pay\_status & -0.0218$^{***}$ & 0.0061 & 0.0907$^{***}$ & 0.0040 \\
+& (0.0075) & (0.0074) & (0.0075) & (0.0072) \\
+months\_delayed & 0.0301$^{***}$ & 0.0134$^{***}$ & 0.0191$^{***}$ & 0.0254$^{***}$ \\
+& (0.0012) & (0.0011) & (0.0011) & (0.0012) \\
+\midrule
+avg\_bill\_amt & -0.0000$^{**}$ & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{*}$ \\
+& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+avg\_pay\_amt & 0.0000 & -0.0000$^{***}$ & -0.0000$^{***}$ & -0.0000$^{***}$ \\
+& (0.0000) & (0.0000) & (0.0000) & (0.0000) \\
+pay\_ratio & -0.2651$^{***}$ & -0.4890$^{***}$ & -0.5836$^{***}$ & -0.1943$^{**}$ \\
+& (0.0730) & (0.0670) & (0.0685) & (0.0773) \\
+\midrule
+McFadden $R^2$ & 0.137 & 0.210 & 0.194 & 0.166 \\
+Accuracy & 0.803 & 0.821 & 0.815 & 0.808 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} $^{***}$p$<$0.01, $^{**}$p$<$0.05, $^{*}$p$<$0.10. Estimates are the debiased cross-fitted window AME with $K=5$ folds; standard errors from the orthogonal score in parentheses. Step sizes $h_j$ and trimmed fractions are reported in Table~\ref{S-tab:window_settings}.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+\efloatseparator
+ 
+\begin{table}[htbp]
+\centering
+\small
+\begin{threeparttable}
+\caption{Summary of the three simulation studies on the linear data
+generating process. Simulation 1 reports the bias of the uncorrected
+plug-in average, Simulation 3 the bias of the debiased cross-fitted
+estimator, and the final two columns the empirical coverage of nominal
+95\% intervals at $n=5{,}000$ under the refitting bootstrap of
+Simulation 2 and under the influence function of Simulation 3.}
+\label{tab:sim_summary}
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{2}{c}{Plug-in $|$bias$|$}
+& \multicolumn{2}{c}{Debiased $|$bias$|$}
+& \multicolumn{2}{c}{Coverage at $n=5{,}000$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Learner & $n=250$ & $n=5{,}000$ & $n=250$ & $n=5{,}000$ & Bootstrap & Influence fn. \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel A: continuous outcome, true AMEs 2.000 and 3.000}} \\
+\quad Linear         & 0.003 & 0.000 & 0.003 & 0.000 & 0.956 & 0.960 \\
+\quad Random forest  & 0.059 & 0.093 & 0.002 & 0.000 & 0.092 & 0.946 \\
+\quad XGBoost        & 0.362 & 0.053 & 0.002 & 0.001 & 0.503 & 0.938 \\
+\quad Neural net     & 0.095 & 0.001 & 0.003 & 0.000 & 1.000 & 0.959 \\
+\midrule
+\multicolumn{7}{l}{\textit{Panel B: binary outcome, true AMEs 0.199 and 0.298}} \\
+\quad Logistic       & 0.0083 & 0.0005 & 0.0011 & 0.0002 & 0.781 & 0.940 \\
+\quad Random forest  & 0.0163 & 0.0158 & 0.0018 & 0.0003 & 0.186 & 0.944 \\
+\quad XGBoost        & 0.0616 & 0.0047 & 0.0027 & 0.0003 & 0.877 & 0.972 \\
+\quad Neural net     & 0.0120 & 0.0002 & 0.0011 & 0.0002 & 0.894 & 0.942 \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\footnotesize
+\item \textit{Notes:} Bias entries are the mean of $|$bias$|$ over the two
+signal features $x_1$ and $x_2$, in the units of the outcome; the noise
+features $x_3$ and $x_4$ have a true effect of zero and are within Monte
+Carlo error of it under every learner and both estimators. Coverage
+entries are whichever signal feature's coverage lies furthest from the
+nominal $0.95$, so that over-coverage is reported as well as
+under-coverage. The plug-in and bootstrap columns are the uncorrected
+estimator of Simulations 1 and 2; the debiased and influence-function
+columns are the cross-fitted estimator of Simulation 3 with $K=5$ folds
+and the closed-form representer. Full per-feature results are in the supplement.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
