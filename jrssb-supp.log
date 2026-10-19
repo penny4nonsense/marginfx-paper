@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  19 OCT 2026 12:51
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  19 OCT 2026 12:55
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -682,10 +682,10 @@ Package rerunfilecheck Info: File `jrssb-supp.out' has not changed.
 (rerunfilecheck)             Checksum: 434626487CA0758A0CEC7402D7BFB879;15622.
  ) 
 Here is how much of TeX's memory you used:
- 12817 strings out of 474934
- 196252 string characters out of 5757826
+ 12819 strings out of 474934
+ 196285 string characters out of 5757826
  1955785 words of memory out of 5000000
- 33754 multiletter control sequences out of 15000+600000
+ 33756 multiletter control sequences out of 15000+600000
  584708 words of font info for 104 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,18n,79p,2110b,587s stack positions out of 10000i,1000n,20000p,200000b,200000s

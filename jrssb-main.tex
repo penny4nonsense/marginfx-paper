@@ -586,6 +586,37 @@ representation; semiparametric efficiency.
 	shell of probability mass $O(h)$ and confines every evaluation to the region where
 	$f$ means something.
 
+	The weighting in Definition~\ref{def:window} is unconditional, and it is
+	worth being explicit about what that means, because the trimming is not
+	always the negligible boundary adjustment it is for most features. The
+	definition integrates $\Dh f$ against $w$ without renormalizing, so
+	$\theta_h(f)$ is the \emph{weighted} average effect over the whole
+	population and not the average effect among the retained observations. When
+	$w$ is an indicator the two are related by
+	\begin{equation}
+		\theta_h(f) = \E[w(X)] \cdot
+		\E\!\left[\Dh f(X) \,\big|\, w(X) = 1\right] ,
+		\label{eq:trimscale}
+	\end{equation}
+	so the conditional effect among retained observations is
+	$\theta_h(f)/\E[w(X)]$, and the two coincide only when $w \equiv 1$. The
+	unconditional form is the one the theory treats, and deliberately so: it is
+	linear in $f$, which is what delivers the exact Riesz representation of
+	Section~\ref{sec:window} and the exact product bias of
+	Section~\ref{sec:inference}. The ratio is not linear, and an estimator for
+	it would carry a second influence-function term for the denominator.
+
+	The practical consequence is that effects on heavily trimmed features are
+	not comparable in magnitude with effects on untrimmed ones. A feature
+	retained for only eight percent of the sample reports a number roughly a
+	twelfth the size of its conditional counterpart, and reporting the two side
+	by side without the retained share invites exactly the wrong comparison.
+	Both $\E[w(X)]$ and the implied scale factor are recoverable from the
+	trimmed fractions reported for every feature in
+	Table~\ref{S-tab:window_settings} of the supplement, and
+	Section~\ref{sec:empirical} flags the cases where the distinction changes
+	the reading.
+
 	\begin{remark}[Data-dependent step sizes]
 		\label{rem:randomh}
 		Definition~\ref{def:window} fixes $h$, and every result below is a
@@ -1119,6 +1150,7 @@ representation; semiparametric efficiency.
 	\end{table}
 	
 	\section{Empirical Examples}
+	\label{sec:empirical}
 
 	Of the three applications introduced in Section~1, the credit default data
 	are reported in full here, being the sharpest of the three for the purpose
@@ -1139,7 +1171,7 @@ representation; semiparametric efficiency.
 	handling of predicted probabilities are common to the three applications and
 	are recorded in Section~\ref{S-app:empirical_details} of the supplement.
 
-The window estimand requires two settings to be fixed before estimation, and because $\theta_{j,h}$ is defined by them they are reported rather than treated as tuning. The step size is the default $h_j = \max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features. The floor matters for count variables such as bedrooms, bathrooms, years of education and months delayed: a count has no mass strictly between its levels, so a window narrower than one unit has an empty interior, and for a piecewise constant learner the difference across it vanishes except where the window happens to straddle a split. At $h_j = 0.5$ the window is exactly the one-unit contrast, which is also the quantity of substantive interest for a count. The second setting is the trimming weight, which gives weight zero to observations lying within $h_j$ of the boundary of the observed support of $x_j$, where $x \pm h_j e_j$ would require the learner to extrapolate. For most features this removes a negligible share of the sample, but for variables with mass sitting exactly on a boundary it does not: capital gains and capital losses are zero for over ninety percent of the Adult sample, and zero is the minimum of their observed support, so those AMEs are effects on the subpopulation with nonzero gains or losses rather than on the full sample. Table~\ref{S-tab:window_settings} of the supplement reports $h_j$ and the trimmed fraction for every feature in all three applications, and the discussion below flags the cases where the trimming is large enough to change the interpretation.
+The window estimand requires two settings to be fixed before estimation, and because $\theta_{j,h}$ is defined by them they are reported rather than treated as tuning. The step size is the default $h_j = \max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features. The floor matters for count variables such as bedrooms, bathrooms, years of education and months delayed: a count has no mass strictly between its levels, so a window narrower than one unit has an empty interior, and for a piecewise constant learner the difference across it vanishes except where the window happens to straddle a split. At $h_j = 0.5$ the window is exactly the one-unit contrast, which is also the quantity of substantive interest for a count. The second setting is the trimming weight, which gives weight zero to observations lying within $h_j$ of the boundary of the observed support of $x_j$, where $x \pm h_j e_j$ would require the learner to extrapolate. For most features this removes a negligible share of the sample, but for variables with mass sitting exactly on a boundary it does not: capital gains and capital losses are zero for over ninety percent of the Adult sample, and zero is the minimum of their observed support, so those features are retained for $7.7\%$ and $4.7\%$ of observations respectively. By \eqref{eq:trimscale} the reported effects are the effects among that small minority scaled by its population share, not the effects on the full sample and not the conditional effects among the retained; dividing by the retained share recovers the latter. They should not be read against the untrimmed features in the same column without that adjustment. Table~\ref{S-tab:window_settings} of the supplement reports $h_j$ and the trimmed fraction for every feature in all three applications, and the discussion below flags the cases where the trimming is large enough to change the interpretation.
 	
 		\subsection{UCI Credit Default}
 	
@@ -1336,6 +1368,18 @@ and the closed-form representer. Full per-feature results are in the supplement.
 	ground truth. The learners that were already nearly unbiased are essentially
 	unchanged, as they should be: the orthogonal score corrects a first-order
 	term that is near zero for them.
+
+	The closed-form representer is a luxury of the design, so the arm that
+	estimates it is the one that bears on practice. Replacing the closed form
+	with a sieve estimate and holding everything else fixed, coverage survives
+	with a mild conservatism --- mean $0.958$ over the same cells, against the
+	closed form's $0.948$ --- and the cost appears where the theory says it
+	should, in the product bias of Assumption~\ref{ass:nuisance}(b). Mean
+	absolute bias is $3.3$ times the closed form's at $n=250$, then $1.6$,
+	$1.2$ and $1.1$, and $0.9$ at $n=5{,}000$: indistinguishable by the largest
+	sample. Nothing in the procedure requires the representer to be known, and
+	the price of not knowing it is a finite-sample one that the rate conditions
+	of Section~\ref{sec:inference} already anticipate.
 
 	\section{Conclusion}
 	\label{sec:conclusion}
