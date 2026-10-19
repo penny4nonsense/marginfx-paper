@@ -97,6 +97,63 @@ noise contributions to the total variation are both `O(1)`. That is the same
 bias–variance balance that produces the minimax `L²` rate, read in the BV norm —
 which is why the result should be true, and true per tree.
 
+## 3a. Empirical check of the per-tree claim — it holds
+
+Run 2026-10-19, `check-mondrian-bv.py`. The Mondrian process is implemented
+directly (Roy & Teh: in a cell with side lengths `s`, draw `E ~ Exp(Σs)`; if the
+budget is spent, stop; else split dimension `j` with probability `∝ s_j` at a
+uniform point). `d = 4`, budget `λ_n = n^{1/6}`, target `2x₁+3x₂` on `[0,1]⁴`,
+so `|D₁f|(Ω) = 2` exactly. `|D₁·|(Ω)` is measured by the same one-dimensional
+section method used in the XGBoost notes. The signal and noise parts are
+separated by fitting the **same partition** three times — to `y`, to `f(X)`, and
+to the noise `y − f(X)`.
+
+| `n` | leaves | TV, one tree | signal | noise | TV, forest `B=50` |
+|---|---|---|---|---|---|
+| 500 | 180 | 3.68 | 2.86 | 1.45 | 3.54 |
+| 2,000 | 553 | 4.48 | 3.71 | 1.72 | 3.56 |
+| 8,000 | 768 | 3.50 | 2.91 | 1.31 | 3.70 |
+| 32,000 | 1,666 | 3.57 | 2.90 | 1.64 | 3.58 |
+
+Growth exponents over that 64-fold range of `n`, from two independent runs:
+
+| quantity | run A | run B |
+|---|---|---|
+| single tree TV | `n^{-0.02}` | `n^{-0.01}` |
+| signal part | `n^{+0.00}` | `n^{+0.00}` |
+| noise part | `n^{+0.01}` | `n^{+0.03}` |
+| forest TV (`B=50`) | — | `n^{+0.00}` |
+
+**The claim of §3 holds, and both of its predicted components hold
+separately.** A single Mondrian tree's expected total variation is flat in `n`,
+and so is the forest's, which is what Step 1's convexity bound requires and all
+it requires.
+
+The informative column is `leaves`: the partition refines by a factor of ten
+across this range (`n^{+0.54}`, against the predicted `λ^d = n^{2/3}`), so the
+number of interfaces grows by an order of magnitude while the total variation
+does not move. That is precisely the balance §3 argues for — more faces, each
+carrying a smaller jump over a smaller area — and it is the content of the
+claim, not an artefact of a short range.
+
+**Consequence for the proof.** Substeps 2a–2c of §S25 are not merely wrong but
+unnecessary. Step 1 already gives
+`|Df̂_n|(Ω) ≤ B^{-1} Σ_b |DT_b|(Ω)` by convexity, and the per-tree quantity is
+bounded. The second moment, the independence factorisation and the cross-term
+argument can all be deleted, along with the condition `B ≫ n^{2(d−α)/(d+2)}`
+they forced — the measured forest is flat at `B = 50` fixed.
+
+**Caveats, stated plainly.** This is `d = 4`, one target, and `λ` ranges only
+over `2.8` to `5.6`, so it is nowhere near asymptotic. The signal part sits at
+about `2.9` against the target's `|D₁f| = 2.0`: a finite-`λ` bias, since leaf
+means average over the other coordinates and make one-dimensional sections
+non-monotone. It is flat, which is what boundedness needs; convergence down to
+`2.0` is the *strict* convergence upgrade, which Part II of
+Lemma~S4 already flags as requiring a further assumption. And an empirical
+bound is not a proof — the gaps in §4 stand. What has changed is that the
+effort is now known to be aimed at a true statement, which was not the case for
+the boosting analogue.
+
 ## 4. What is missing before this is a proof
 
 1. **Expected interface area.** The table uses typical values. The real argument
