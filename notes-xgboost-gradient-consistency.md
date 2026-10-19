@@ -184,14 +184,59 @@ and the trees are fit on the margin scale. Two consequences, both helpful:
   `|D f̂ₙ|(Ω) ≤ ¼ |DF_M|(Ω)`. Bounding the margin's total variation suffices,
   with a factor of four gained.
 - Independently, `0 ≤ σ ≤ 1`, so **every jump in the fitted probability is at
-  most 1, however wild the margin is**. Since `σ∘F_M` is piecewise constant on
-  the common refinement of the `M` partitions, which has at most `M(2^D − 1)`
-  interfaces,
+  most 1, however wild the margin is**, giving
 
       |D f̂ₙ|(Ω) ≤ M (2^D − 1) diam(Ω)^{d-1}
 
   unconditionally — no edge condition, no leaf condition, no assumption on the
-  Hessians.
+  Hessians. The argument is in §6.1.1; what controls it is the **area** of the
+  jump set, not a count of interfaces.
+
+#### 6.1.1 The jump-set bound, carefully
+
+For piecewise constant `g`, `Dg` is concentrated on the jump set `J(g)` and
+
+    |Dg|(Ω) = ∫_{J(g)} |g⁺ − g⁻| dH^{d-1},
+
+so what has to be bounded is `H^{d-1}(J)`, a `(d−1)`-dimensional measure, not a
+number of faces. Three steps:
+
+1. `F_M = ν Σ_m h_m` can only jump where some `h_m` jumps, so
+   `J(F_M) ⊆ ⋃_m J(h_m)`.
+2. Within one tree, two adjacent leaves meet only inside the split face of
+   their lowest common ancestor — the first split that separated them — so
+   `J(h_m) ⊆ ⋃_k F_k^m` over that tree's internal nodes. A binary tree with
+   `L ≤ 2^D` leaves has exactly `L − 1 ≤ 2^D − 1` internal nodes, each
+   contributing one face, and each face is a slice of a cell, so
+   `H^{d-1}(F_k) ≤ diam(Ω)^{d-1}`.
+3. `H^{d-1}` is subadditive, so
+   `H^{d-1}(J(F_M)) ≤ Σ_m Σ_k H^{d-1}(F_k^m) ≤ M(2^D − 1) diam(Ω)^{d-1}`.
+
+Then `|σ⁺ − σ⁻| ≤ 1` pointwise on `J` gives the display above.
+
+**Overlap between rounds cannot break this, in either of the two ways it might
+have.** Step 3 uses subadditivity, so faces that coincide or partially overlap
+make the true area *smaller* than the bound — the slack is in the safe
+direction. And where faces from different rounds do coincide, the margin jumps
+add, possibly to something large; but the final step caps the *probability*
+jump at 1 regardless of the margin, so the addition is absorbed. The cap is
+exactly what makes the bound indifferent to overlap.
+
+**Numerical check (2026-10-19).** `check-tree-faces.py` builds random
+axis-aligned tree partitions of `[0,1]²`, where `H¹` is length and everything
+is computable exactly, and checks all four claims at depths `D = 2,3,4,5,6`
+over 1500–4000 trials each. All pass. In particular **step 2 — the
+lowest-common-ancestor claim — holds in every trial**, which was the step I was
+least sure of. Step 3's inequality is attained (worst ratio exactly 1.0000 at
+every depth), so it is the right bound and not merely a safe one; the
+`2‖h‖_∞` factor in §4 Step 1 is where the looseness lives, with the realised
+ratio falling from 0.87 at `D=2` to 0.14 at `D=6` as random leaf values become
+less likely to differ maximally.
+
+The bound is of course very loose overall — `200 · 15 = 3000` against a truth
+whose `|Df|(Ω) = ∫|∇f|` is typically `O(1)`. That does not matter here:
+condition 1 asks only for a bound uniform in `n`, and this one does not involve
+`n` at all.
 
 ### 6.2 For fixed M, condition 1 is therefore trivial
 
