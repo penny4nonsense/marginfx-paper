@@ -2,13 +2,11 @@
 
 Draft of a replacement for Substeps 2a–2c of §S25. Written 2026-10-19.
 
-**Status.** Lemmas A, B and C are all proved, and each is numerically
+**Status.** Lemmas A, B, B′ and C are all proved, and each is numerically
 confirmed. The per-tree bound is therefore complete, and with Step 1 of §S25 it
-gives the forest bound with no condition on `B`. Two things still need an
-author's eye before any of it goes into the supplement: the boundary case of
-Lemma B on `[0,1]^d`, and Step 0's jump-set containment, which is argued and
-verified numerically in `d ≤ 4` but not proved in general. And none of it has
-been read by anyone but me.
+gives the forest bound with no condition on `B`. **One** item is still not
+proved in general: Step 0's jump-set containment, argued below and verified
+numerically in `d ≤ 4`. And none of it has been read by anyone but me.
 
 Companion to `notes-mondrian-bv-bound.md`, which gives the background and the
 scaling heuristic this makes precise.
@@ -109,20 +107,67 @@ independence `E[s_m/s_1] = E[s_m] E[1/s_1] = (2/λ)·λ = 2`. Finally
 
 **Numerical check** (`check-mondrian-aspect.py`). Sampling the unbounded law
 directly gives `E[s_2/s_1] = 2.00` to two places across `d = 2,3,4` and
-`λ = 4,8,16` (100,000 draws each), confirming the identity. On the unit cube,
-where sides are truncated at the boundary, the measured `E[Σ_m s_m/s_1]`
-straddles `2d−1`: `2.95, 2.90, 3.10` against `3`; `4.86, 4.89, 5.17` against
-`5`; `6.41, 6.66, 7.25` against `7`.
+`λ = 4,8,16` (100,000 draws each), confirming the identity.
 
-**Two caveats, one real.** The truncation on `[0,1]^d` shrinks `s_1` and can
-only inflate the ratio; the inflation is confined to points within `O(1/λ)` of
-the boundary, a vanishing fraction, but the bound as stated still needs a
-boundary argument to be airtight. Separately, and this is why the cube numbers
-wander rather than converging tidily: `s_m/s_1` has **infinite variance**, since
-`E[1/s_1^2] = λ^2 ∫ e^{-λ x}/x \, dx = ∞` for `s_1 ~ Gamma(2,λ)`. The mean
-`E[s_m/s_1] = 2` exists and is all the argument uses, but no sample mean of it
-will stabilise quickly, so the cube figures above are indicative rather than
-precise. That is a fact about the estimator, not about the bound.
+### Lemma B′ (the boundary case on `[0,1]^d`) — **proved**
+
+> On the unit cube, `E[ diam(l(X)) / s_1(l(X)) ] ≤ 2d - 1 + 4(d-1)/λ`.
+
+The concern is real: truncation at the boundary shrinks `s_1` as well as `s_m`,
+and shrinking the denominator inflates the ratio. It costs a constant and
+nothing more.
+
+*B′1: the truncated cell law.* The Mondrian is projective, so `MP(λ,[0,1]^d)`
+is `MP(λ,ℝ^d)` restricted to the cube, and restricting a partition intersects
+every cell with the sub-box. Hence
+
+    s_j = min(E_j^-, X_j) + min(E_j^+, 1 - X_j),    E_j^± iid Exp(λ).
+
+Since `X` is uniform on the cube its coordinates are independent, and the
+`E_j^±` are independent across `j`, so **`s_m` and `s_1` remain independent**
+and `E[s_m/s_1] = E[s_m]·E[1/s_1]`. Truncation only shrinks, so
+`E[s_m] ≤ 2/λ` as before. Everything reduces to `E[1/s_1]`.
+
+*B′2: the inverse moment.* Write `1/s = ∫_0^∞ e^{-rs} dr`. For `E ~ Exp(λ)`
+and a cap `u`,
+
+    E[ e^{-r·min(E,u)} ] = [ λ + r e^{-(λ+r)u} ] / (λ+r).
+
+Given `X_1`, the two sides of the cell are independent, so `E[e^{-rs} | X_1]`
+is the product of that expression at `u = X_1` and at `u = 1-X_1`. Integrating
+over `X_1 ~ U(0,1)` first turns the cross terms into
+`λ r(1-e^{-(λ+r)})/(λ+r)`, leaving
+
+    E[1/s_1] = ∫_0^∞ [ λ² + 2λ r(1-e^{-(λ+r)})/(λ+r) + r² e^{-(λ+r)} ] / (λ+r)² dr.
+
+The three pieces are elementary: `λ²∫(λ+r)^{-2} = λ`;
+`2λ∫ r(λ+r)^{-3} = 1` exactly; and the last is at most
+`e^{-λ}∫_0^∞ e^{-r} dr = e^{-λ}` since `r²/(λ+r)² ≤ 1`. So
+
+    E[1/s_1] ≤ λ + 1 + e^{-λ}.
+
+*B′3: assembly.* `E[s_m/s_1] ≤ (2/λ)(λ + 1 + e^{-λ}) = 2 + 2(1+e^{-λ})/λ
+≤ 2 + 4/λ` for `λ ≥ 1`, and summing over `m` with the `m=1` term equal to `1`
+gives the claim. ∎
+
+**The boundary costs an additive constant, not a rate.** The unbounded value is
+`E[1/s_1] = λ` exactly; the cube value exceeds it by at most `1 + e^{-λ}`. That
+is the `O(1/λ)`-thick boundary layer contributing `O(1)` to an integral of size
+`λ`, which is what one would hope. Since `λ_n = n^{1/(d+2)} → ∞`, the constant
+converges to the unbounded `2d-1`, and for any `λ ≥ 1` it is at most `6d-5`.
+
+**Numerical check** (`check-mondrian-boundary.py`). The `E[1/s_1]` bound holds
+at every `λ` tested and is tight: quadrature against the bound gives ratios
+`0.84, 0.96, 0.995, 0.998, 0.996, 0.992` for `λ = 1,2,4,8,16,32`, with Monte
+Carlo agreeing with the quadrature throughout. The resulting Lemma B′ constants
+also bound the direct cube measurements reported above — for instance `7.75`
+against a measured `7.25` at `d=4, λ=16`.
+
+*(An aside on those direct measurements: `s_m/s_1` has infinite variance, since
+`E[1/s_1²] = ∞` — near the boundary `s_1 ≈ X_1 + Exp(λ)` and `∫ dX_1/X_1`
+diverges. The mean exists and is all the argument uses, but no sample mean of
+it stabilises quickly, which is why the cube figures wander. The quadrature
+above avoids the issue entirely, which is why it is the reliable check.)*
 
 ## Step 3: the signal term — **done, given Lemma B**
 
@@ -214,7 +259,8 @@ turned out to be necessary.
 
 With Lemma C,
 
-    E|D_1 T|(Ω) ≤ E[S_1] + E[N_1] ≤ 2L(2d−1) + 2σ C_d λ^{1+d/2} n^{-1/2},
+    E|D_1 T|(Ω) ≤ E[S_1] + E[N_1]
+                ≤ 2L(2d−1 + 4(d−1)/λ) + 2σ C_d λ^{1+d/2} n^{-1/2},
 
 uniformly bounded at `λ_n ≍ n^{1/(d+2)}`. Summing the `d` coordinates gives
 `sup_n E[|DT|(Ω)] < ∞`, and Step 1 of §S25 — `|Df̂_n|(Ω) ≤ B^{-1} Σ_b |DT_b|(Ω)`
@@ -234,11 +280,14 @@ does not use. The condition `B ≫ n^{2(d−α)/(d+2)}` disappears with them.
 |---|---|
 | Step 0, jump-set representation | argued; LCA containment verified numerically in `d ≤ 4`, not proved in general |
 | Lemma A, interface area `= dλ·vol` | **proved**; confirmed to ~1% |
-| Lemma B, aspect ratio `≤ 2d−1` | **proved** from a published cell law; boundary case on `[0,1]^d` needs an argument |
+| Lemma B, aspect ratio `≤ 2d−1` | **proved** from a published cell law |
+| Lemma B′, the same on `[0,1]^d` | **proved**; boundary costs `+4(d−1)/λ`, an additive constant, not a rate |
 | Step 3, signal `= O(1)` | **proved**, given Lemma B |
 | Lemma C, noise `≲ λ^{1+d/2}n^{-1/2}` | **proved**; rate confirmed sharp, constant loose by 2–4× |
 | Step 5, assembly and the forest | immediate from Step 1 of §S25 |
 
-The two remaining items are both of the "needs a careful author" kind rather
-than the "needs a new idea" kind, which is the opposite of where the boosting
-analogue ended up.
+The one remaining item is of the "needs a careful author" kind rather than the
+"needs a new idea" kind, which is the opposite of where the boosting analogue
+ended up. Step 0 is a deterministic statement about hierarchical axis-aligned
+partitions, with no probability in it; the obstacle is only that I have checked
+it rather than written it.
