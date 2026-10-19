@@ -144,10 +144,17 @@ supplement.
 	
 	\begin{definition}[Well-Behaved Estimator, Sobolev Sense]
 		\label{def:wellbehaved_sobolev}
-		We say that $\fn$ is \emph{well-behaved in the Sobolev sense} if:
+		We say that $\fn$ is \emph{well-behaved in the Sobolev sense} if
 		\begin{equation}
-			\sup_n \norm{\fn}_{W^{2,p}} < \infty \quad \text{and} \quad
-			\norm{\fn - f}_{L^p} \xrightarrowp 0
+			\norm{\fn}_{W^{2,p}} = O_p(1) \quad \text{and} \quad
+			\norm{\fn - f}_{L^p} \xrightarrowp 0 ,
+			\label{eq:wb_sobolev}
+		\end{equation}
+		where the first condition means that the sequence is tight in
+		$W^{2,p}$: for every $\eta > 0$ there is an $M < \infty$ with
+		\begin{equation}
+			\sup_n \Prob\!\left(\norm{\fn}_{W^{2,p}} > M\right) \leq \eta .
+			\label{eq:tight_sobolev}
 		\end{equation}
 	\end{definition}
 	
@@ -160,14 +167,28 @@ supplement.
 		\end{equation}
 	\end{definition}
 	
-	In both cases the well-behaved condition has the same structure: a uniform
-	boundedness condition in a strong space combined with consistency in a weaker space.
-	The uniform boundedness condition is the key regularity requirement---it says that
-	the estimator sequence does not become increasingly irregular as $n$ grows, even as
-	it fits the data more closely. This condition is verifiable from properties of the
-	estimator class and is established for each class in the theorems below. The
-	consistency condition is the standard requirement that the estimator converges to the
-	truth and is available from existing results in each case.
+	In both cases the well-behaved condition has the same structure: a
+	boundedness condition in a strong space combined with consistency in a
+	weaker space. The boundedness condition is the key regularity
+	requirement---it says that the estimator sequence does not become
+	increasingly irregular as $n$ grows, even as it fits the data more closely.
+	This condition is verifiable from properties of the estimator class and is
+	established for each class in the theorems below. The consistency condition
+	is the standard requirement that the estimator converges to the truth and is
+	available from existing results in each case.
+
+	The two boundedness conditions are stated differently, and the difference is
+	not cosmetic. Both $\fn$ and its norms are random, so a condition of the form
+	$\sup_n \norm{\fn} < \infty$ with a single deterministic bound is stronger
+	than any of the estimators below deliver: the boosting bound of
+	Section~\ref{app:boosting} is proportional to $\norm{Y}_{L^2}$, which is
+	$O_p(1)$ but not bounded by a constant. Definition~\ref{def:wellbehaved_sobolev}
+	therefore asks only for tightness. Definition~\ref{def:wellbehaved_bv} asks
+	for a bound in expectation, which is what the Mondrian argument of
+	Section~\ref{app:forests} produces directly; by Markov's inequality it
+	implies tightness of $|D\fn|(\Omega)$, so the two conditions are of the same
+	type, and either is implied by an almost sure uniform bound. What both
+	exclude is norms that diverge in probability.
 
 		% ===== moved from Section 3 of the main paper =====
 	\section{What Learner Gradients Estimate}
@@ -371,7 +392,7 @@ supplement.
 	\begin{theorem}[Gradient Consistency for Neural Networks]
 		\label{thm:neural_nets}
 		Let $\fn$ be a neural network estimator with smooth activations $\sigma \in C^2$,
-		bounded weight norms $\sup_n \prod_\ell \norm{W_\ell^{(n)}} < \infty$, and
+		bounded weight norms $\prod_\ell \norm{W_\ell^{(n)}} = O_p(1)$, and
 		$\norm{\fn - f}_{L^p} \xrightarrowp 0$ for $p > d$. Then $\fn$ is well-behaved in
 		the Sobolev sense and:
 		\begin{equation}
@@ -399,8 +420,9 @@ supplement.
 			\norm{\fn}_{W^{2,p}} \lesssim \prod_\ell \norm{W_\ell^{(n)}}^2 \cdot
 			\norm{\sigma''}_\infty
 		\end{equation}
-		which is uniformly bounded by the weight norm assumption. The $L^p$ consistency
-		condition and Lemma~\ref{lem:sobolev_consistency} then give the result. Full proof
+		which is $O_p(1)$ by the weight norm assumption, the fitted weights being
+		random. The $L^p$ consistency condition and
+		Lemma~\ref{lem:sobolev_consistency} then give the result. Full proof
 		in Section~\ref{app:neural_nets} of the supplement.
 	\end{proof}
 	
@@ -424,10 +446,19 @@ supplement.
 			\sup_n \norm{S_n}_{L^2 \to W^{2,p}} < \infty .
 			\label{eq:boost_uniform}
 		\end{equation}
-		Suppose $\norm{\fn - f}_{L^1} \xrightarrowp 0$. Then $\fn$ is
+		Suppose $\norm{\fn - f}_{L^p} \xrightarrowp 0$. Then $\fn$ is
 		well-behaved in the Sobolev sense and
 		$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
 	\end{theorem}
+
+	The consistency hypothesis is in $L^p$, the same exponent as the
+	conclusion and as the second condition of
+	Definition~\ref{def:wellbehaved_sobolev}; an $L^1$ hypothesis would not
+	suffice, since on a bounded domain $L^p$ consistency implies $L^1$
+	consistency and not the reverse. For $p \leq 2$ it is implied by $L^2$
+	consistency, again by H\"{o}lder on the bounded domain $\Omega$, and $L^2$
+	is the exponent in which the risk results of \citet{buhlmann2003boosting}
+	for this estimator are stated.
 	
 	Theorem~\ref{thm:boosting} is deliberately narrow, and it is worth being
 	explicit about what it does not reach. It applies to $L_2$Boost driven by a
@@ -456,26 +487,28 @@ supplement.
 	understanding the boosting path as gradient descent in function space.
 	
 	\begin{proof}[Proof sketch]
-		For smooth base learners the $\Wtwop$ bound follows from linearity of the estimator:
+		By Proposition~1 of \citet{buhlmann2003boosting} the residual at step $m$
+		is $u_m = (I - S_n)^m Y$, and by Proposition~2 and Theorem~1, under the
+		eigenvalue condition, it decays geometrically:
 		\begin{equation}
-			\norm{\fn}_{W^{2,p}} \leq \sum_m \eta_m \norm{h_m}_{W^{2,p}} < \infty
+			\norm{u_m}_{L^2} \leq C\rho^m,
+			\qquad \rho = \max_k\left(1-\lambda_k^{(n)}\right) \leq \bar{\rho} < 1,
+			\qquad C = \norm{Y}_{L^2},
 		\end{equation}
-		For tree stump base learners the BV bound uses the eigenvalue structure of
-		$L_2$Boost. By Proposition~1 of \citet{buhlmann2003boosting}, the residual at step
-		$m$ is $u_m = (I-S)^m Y$. By Proposition~2, under the eigenvalue condition $0 <
-		\lambda_k \leq 1$, Theorem~1 of \citet{buhlmann2003boosting} gives exponential decay
-		of residuals:
+		in the normalized empirical $L^2$ norm, for which $C = O_p(1)$ under
+		Assumption~\ref{M-ass:sampling}. Each base learner fit satisfies
+		$\norm{h_m}_{W^{2,p}} \leq \norm{S_n}_{L^2 \to W^{2,p}} \norm{u_m}_{L^2}$,
+		so by linearity and the triangle inequality
 		\begin{equation}
-			\norm{u_m}_{L^2} \leq C\rho^m, \quad \rho = \max_k(1-\lambda_k) < 1
+			\norm{\fn}_{W^{2,p}}
+			\leq \sum_{m \geq 1} \norm{h_m}_{W^{2,p}}
+			\leq \frac{C\,\bar{\rho}}{1 - \bar{\rho}} \sup_n \norm{S_n}_{L^2 \to W^{2,p}}
+			= O_p(1),
 		\end{equation}
-		Each stump's BV norm is controlled by its residual magnitude via Lemma~\ref{lem:bv_existence},
-		and the total BV norm of the ensemble satisfies:
-		\begin{equation}
-			\mathbb{E}[|D\fn|(\Omega)] \leq C\sum_{m=1}^\infty \rho^m = \frac{C\rho}{1-\rho} < \infty
-		\end{equation}
-		The geometric series converges because $\rho < 1$, giving uniform BV boundedness
-		without any step size condition. Lemma~\ref{lem:bv_consistency} then gives
-		$D\fn \xrightarrow{w*} Df$. Full proof in
+		the two suprema in \eqref{eq:boost_uniform} making the bound free of $n$
+		apart from the factor $C$. This is the first condition of
+		Definition~\ref{def:wellbehaved_sobolev}; the second is assumed, and
+		Lemma~\ref{lem:sobolev_consistency} gives the conclusion. Full proof in
 		Section~\ref{app:boosting} of the supplement.
 	\end{proof}
 	
@@ -2501,94 +2534,96 @@ supplement.
 	$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
 	
 	\subsection{Proof Strategy}
-	
-	The proof uses a subsequence argument. We show that every subsequence of
-	$\{\fn\}$ has a further subsequence along which
-	$\norm{\nabla \fn - \nabla f}_{L^p} \to 0$ almost surely. By the standard
-	metric space characterization of convergence in probability --- a sequence
-	converges in probability if and only if every subsequence has an almost
-	surely convergent further subsequence --- this implies
-	$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
-	
-	Suppose for contradiction that $\norm{\nabla \fn - \nabla f}_{L^p}$ does
-	not converge to zero in probability. Then there exist $\epsilon > 0$ and
-	$\delta > 0$ and a subsequence $\{n_k\}$ such that:
+
+	Compactness is a statement about deterministic sequences and $\fn$ is
+	random, so the two are kept apart. We first prove a deterministic lemma: on
+	a ball of $\Wtwop$, closeness to $f$ in $L^p$ forces closeness of the
+	gradients in $L^p$, with a modulus depending only on the radius of the ball.
+	The probabilistic conclusion then follows in a few lines, the tightness
+	condition \eqref{eq:tight_sobolev} supplying the radius.
+
+	The order matters. Applying Rellich--Kondrachov directly to $\{\fn\}$
+	extracts a subsequence that depends on the realization, and an almost sure
+	statement along a realization-dependent subsequence does not combine with a
+	probability bound along a deterministic one. Separating the compactness from
+	the randomness avoids the difficulty rather than managing it, and has the
+	further advantage of needing only tightness of the $\Wtwop$ norms, which is
+	what Definition~\ref{def:wellbehaved_sobolev} provides and all that the
+	estimators of Section~\ref{sec:learners} deliver.
+
+	\subsection{Step 1: A Deterministic Gradient Modulus}
+
+	\begin{lemma}[Gradient modulus on a Sobolev ball]
+		\label{lem:sobolev_modulus}
+		Let $\Omega$ be bounded and Lipschitz, let $p > 1$, and let
+		$f \in \Wonep$. For every $M < \infty$ and $\delta > 0$ there is an
+		$\epsilon = \epsilon(M,\delta) > 0$ such that every $g \in \Wtwop$ with
+		\begin{equation}
+			\norm{g}_{W^{2,p}} \leq M
+			\qquad\text{and}\qquad
+			\norm{g - f}_{L^p} \leq \epsilon
+		\end{equation}
+		satisfies $\norm{\nabla g - \nabla f}_{L^p} \leq \delta$.
+	\end{lemma}
+
+	\begin{proof}
+		Suppose not. Then for some $M$ and some $\delta$ there is a sequence
+		$\{g_k\} \subset \Wtwop$ with $\norm{g_k}_{W^{2,p}} \leq M$ and
+		$\norm{g_k - f}_{L^p} \to 0$, but
+		$\norm{\nabla g_k - \nabla f}_{L^p} > \delta$ for every $k$: negating the
+		statement for a fixed $M$ and $\delta$ produces, for each
+		$\epsilon = 1/k$, a witness $g_k$.
+
+		This is a deterministic bounded sequence in $\Wtwop$. By the
+		Rellich--Kondrachov theorem the embedding
+		$W^{2,p}(\Omega) \hookrightarrow\hookrightarrow W^{1,p}(\Omega)$ is
+		compact \citep[Theorem~5,~Section~5.7]{evans2010pde}, so some
+		subsequence $\{g_{k_j}\}$ converges strongly in $\Wonep$ to a limit
+		$h \in \Wonep$. Strong $\Wonep$ convergence implies strong $L^p$
+		convergence, and $g_k \to f$ in $L^p$ by construction, so $h = f$
+		$\mathcal{L}^d$-almost everywhere by uniqueness of limits in
+		$L^p(\Omega)$. Hence $\norm{g_{k_j} - f}_{W^{1,p}} \to 0$, and since
+		$g_{k_j} - f \in \Wonep$ with
+		$\norm{\nabla g - \nabla f}_{L^p} \leq \norm{g - f}_{W^{1,p}}$, this
+		gives $\norm{\nabla g_{k_j} - \nabla f}_{L^p} \to 0$, contradicting
+		$\norm{\nabla g_{k_j} - \nabla f}_{L^p} > \delta$.
+	\end{proof}
+
+	Being a compactness statement, the lemma carries no rate: $\epsilon(M,\delta)$
+	is not quantified and cannot be without further assumptions on $f$. That is
+	sufficient here, because what is being established is consistency and not a
+	rate of convergence. It is also where the extra degree of differentiability
+	is spent --- the hypothesis is a bound in $\Wtwop$ and the conclusion is
+	about gradients in $L^p$, a gap of one derivative that the compact embedding
+	closes and the continuous embedding of Lemma~\ref{lem:sobolev_existence}
+	does not.
+
+	\subsection{Step 2: The Probabilistic Conclusion}
+
+	Fix $\delta > 0$ and $\eta > 0$. By the tightness condition
+	\eqref{eq:tight_sobolev} there is an $M < \infty$ with
+	$\sup_n \Prob(\norm{\fn}_{W^{2,p}} > M) \leq \eta/2$; let
+	$\epsilon = \epsilon(M,\delta) > 0$ be the radius supplied by
+	Lemma~\ref{lem:sobolev_modulus} for this $M$ and $\delta$. On the event
 	\begin{equation}
-		\mathbb{P}\!\left(\norm{\nabla \hat{f}_{n_k} - \nabla f}_{L^p}
-		> \epsilon\right) > \delta
-		\quad \forall k
+		A_n = \left\{\norm{\fn}_{W^{2,p}} \leq M\right\}
+		\cap \left\{\norm{\fn - f}_{L^p} \leq \epsilon\right\}
 	\end{equation}
-	We derive a contradiction by extracting a further subsequence along which
-	the gradient converges to zero almost surely.
-	
-	\subsection{Step 1: Extract a Strongly Convergent Subsequence}
-	
-	Take any subsequence $\{\hat{f}_{n_k}\}$. By the uniform $\Wtwop$
-	boundedness condition:
+	the lemma applies pointwise in $\omega$ --- for each such $\omega$ the
+	realization $\fn(\omega)$ is a fixed element of $\Wtwop$ satisfying both
+	hypotheses --- and yields
+	$\norm{\nabla \fn - \nabla f}_{L^p} \leq \delta$ on $A_n$. Taking
+	complements,
 	\begin{equation}
-		\sup_k \norm{\hat{f}_{n_k}}_{W^{2,p}} < \infty \quad \text{almost surely}
+		\Prob\!\left(\norm{\nabla \fn - \nabla f}_{L^p} > \delta\right)
+		\leq \Prob(A_n^c)
+		\leq \frac{\eta}{2}
+		+ \Prob\!\left(\norm{\fn - f}_{L^p} > \epsilon\right) .
 	\end{equation}
-	The Rellich--Kondrachov compact embedding theorem states that for bounded
-	Lipschitz $\Omega$, the embedding $W^{2,p}(\Omega) \hookrightarrow\hookrightarrow
-	W^{1,p}(\Omega)$ is compact \citep[Theorem~5,~Section~5.7]{evans2010pde}.
-	Compactness of the embedding means that every sequence bounded in $\Wtwop$
-	has a subsequence converging strongly in $\Wonep$. Therefore there exists a
-	further subsequence $\{\hat{f}_{n_{k_j}}\}$ and a function $g \in \Wonep$
-	such that:
-	\begin{equation}
-		\norm{\hat{f}_{n_{k_j}} - g}_{W^{1,p}} \to 0
-		\quad \text{almost surely as } j \to \infty
-	\end{equation}
-	
-	\subsection{Step 2: Identify the Limit}
-	
-	Strong $\Wonep$ convergence implies strong $L^p$ convergence, since by
-	definition of the $W^{1,p}$ norm:
-	\begin{equation}
-		\norm{\hat{f}_{n_{k_j}} - g}_{L^p}
-		\leq \norm{\hat{f}_{n_{k_j}} - g}_{W^{1,p}}
-		\to 0 \quad \text{almost surely}
-	\end{equation}
-	Therefore $\hat{f}_{n_{k_j}} \to g$ in $L^p$ almost surely. By the $L^p$
-	consistency assumption, $\norm{\fn - f}_{L^p} \xrightarrowp 0$, so in
-	particular along the subsequence $\hat{f}_{n_{k_j}} \to f$ in $L^p$ in
-	probability, and hence almost surely along a further subsequence if
-	necessary. By uniqueness of limits in $L^p(\Omega)$:
-	\begin{equation}
-		g = f \quad \mathcal{L}^d\text{-a.e.\ on } \Omega
-	\end{equation}
-	Therefore the strongly convergent subsequence satisfies:
-	\begin{equation}
-		\norm{\hat{f}_{n_{k_j}} - f}_{W^{1,p}} \to 0
-		\quad \text{almost surely}
-	\end{equation}
-	
-	\subsection{Step 3: Extract Gradient Convergence}
-	
-	Since $\hat{f}_{n_{k_j}} \to f$ strongly in $\Wonep$, expanding the
-	$W^{1,p}$ norm:
-	\begin{equation}
-		\norm{\hat{f}_{n_{k_j}} - f}_{W^{1,p}}
-		= \norm{\hat{f}_{n_{k_j}} - f}_{L^p}
-		+ \norm{\nabla \hat{f}_{n_{k_j}} - \nabla f}_{L^p}
-		\to 0
-		\quad \text{almost surely}
-	\end{equation}
-	Since both terms are nonneg­ative and their sum goes to zero, each term goes
-	to zero individually. In particular:
-	\begin{equation}
-		\norm{\nabla \hat{f}_{n_{k_j}} - \nabla f}_{L^p} \to 0
-		\quad \text{almost surely as } j \to \infty
-	\end{equation}
-	
-	\subsection{Conclusion}
-	
-	We have shown that from any subsequence $\{\hat{f}_{n_k}\}$ we can extract
-	a further subsequence $\{\hat{f}_{n_{k_j}}\}$ along which
-	$\norm{\nabla \hat{f}_{n_{k_j}} - \nabla f}_{L^p} \to 0$ almost surely.
-	This contradicts the assumption that
-	$\mathbb{P}(\norm{\nabla \hat{f}_{n_k} - \nabla f}_{L^p} > \epsilon) > \delta$
-	for all $k$. Therefore the assumption was false and:
+	The remaining term tends to zero by the $L^p$ consistency condition of
+	Definition~\ref{def:wellbehaved_sobolev}, with $\epsilon$ held fixed, so the
+	left-hand side is at most $\eta$ for all $n$ sufficiently large. As $\delta$
+	and $\eta$ were arbitrary,
 	\begin{equation}
 		\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0
 	\end{equation}
@@ -2943,14 +2978,20 @@ supplement.
 		Sobolev case, weak-* of measures in the BV case --- reflecting the
 		fundamental difference in the inductive biases of smooth and piecewise
 		constant estimators. The second is in the mode of the boundedness
-		hypothesis, and it is why the two proofs do not run verbatim in parallel.
-		Definition~\ref{def:wellbehaved_sobolev} bounds $\norm{\fn}_{W^{2,p}}$
-		almost surely, so the compact embedding applies to the sequence directly.
-		Definition~\ref{def:wellbehaved_bv} bounds $|D\fn|(\Omega)$ only in
-		expectation, and an expectation bound does not make a sequence almost
-		surely bounded; the BV argument therefore passes through tightness to an
-		event of positive probability on which the realised norms are bounded,
-		and applies the compactness theorem there.
+		hypothesis, and it is a difference of form rather than of substance.
+		Definition~\ref{def:wellbehaved_sobolev} asks for tightness of
+		$\norm{\fn}_{W^{2,p}}$, and Definition~\ref{def:wellbehaved_bv} asks for
+		a bound on $\E[|D\fn|(\Omega)]$, which gives tightness by Markov's
+		inequality. Neither makes the sequence almost surely bounded by a
+		constant, so in neither case may a compactness theorem be applied to
+		$\{\fn\}$ directly: a subsequence extracted from a random sequence
+		depends on the realization, and an almost sure statement along such a
+		subsequence will not combine with a probability bound along a
+		deterministic one. Both proofs therefore work on an event where the
+		realized norms are bounded and apply compactness there --- the Sobolev
+		argument through the deterministic modulus of
+		Lemma~\ref{lem:sobolev_modulus}, the BV argument through an event of
+		positive probability.
 	\end{remark}
 	
 	\begin{remark}
@@ -3074,9 +3115,9 @@ supplement.
 	The proof proceeds in two steps. Step~1 establishes uniform $\Wtwop$
 	boundedness. Step~2 applies Lemma~\ref{lem:sobolev_consistency} to conclude.
 	
-	\subsection{Step 1: Uniform $W^{2,p}$ Boundedness}
+	\subsection{Step 1: $W^{2,p}$ Tightness}
 	
-	\textbf{Claim:} $\sup_n \norm{\fn}_{\Wtwop} < \infty$.
+	\textbf{Claim:} $\norm{\fn}_{\Wtwop} = O_p(1)$.
 	
 	\subsubsection*{Substep 1a: Bound on $\fn$ in $L^p$}
 	
@@ -3085,10 +3126,12 @@ supplement.
 	\begin{equation}
 		\norm{\fn}_{L^p} \leq \norm{\fn - f}_{L^p} + \norm{f}_{L^p}
 	\end{equation}
-	The first term converges to zero in probability and the second is finite
-	since $f \in \Lp$. Therefore $\norm{\fn}_{L^p}$ is eventually bounded in
-	probability and this bound can be made uniform in $n$ by passing to
-	a subsequence or imposing a mild boundedness condition on the network output.
+	The first term converges to zero in probability and the second is a finite
+	constant since $f \in \Lp$. Hence $\norm{\fn}_{L^p} = O_p(1)$, which is the
+	form of boundedness the claim asserts; no appeal to a subsequence or to an
+	auxiliary condition on the network output is needed, because tightness is
+	preserved under addition and a term converging to zero in probability is
+	tight.
 	
 	\subsubsection*{Substep 1b: First Derivative Bound}
 	
@@ -3180,15 +3223,18 @@ supplement.
 		\leq C\!\left(\prod_\ell \norm{W_\ell^{(n)}},\,
 		\norm{\sigma'}_\infty,\, \norm{\sigma''}_\infty,\, L,\, |\Omega|\right)
 	\end{equation}
-	where $C$ is a finite constant depending on the indicated quantities but not
-	on $n$ or $x$. By the assumption $\sup_n \prod_\ell \norm{W_\ell^{(n)}}
-	< \infty$ --- which formalizes the effect of $L^2$ regularization during
-	training \citep{bartlett2017spectrally} --- and the finiteness of
-	$\norm{\sigma'}_\infty$ and $\norm{\sigma''}_\infty$ from $\sigma \in C^2$,
-	the right-hand side is uniformly bounded in $n$. Therefore:
+	where $C$ is continuous and increasing in its first argument and depends on
+	the remaining quantities but not on $n$ or $x$. The weight product
+	$\prod_\ell \norm{W_\ell^{(n)}}$ is a function of the fitted weights and so
+	is random; by assumption it is $O_p(1)$ --- which formalizes the effect of
+	$L^2$ regularization during training \citep{bartlett2017spectrally} --- and
+	$\norm{\sigma'}_\infty$, $\norm{\sigma''}_\infty$ are finite constants since
+	$\sigma \in C^2$. A continuous increasing function of a tight sequence is
+	tight, so
 	\begin{equation}
-		\sup_n \norm{\fn}_{W^{2,p}} < \infty
+		\norm{\fn}_{W^{2,p}} = O_p(1) ,
 	\end{equation}
+	which is the first condition of Definition~\ref{def:wellbehaved_sobolev}.
 	This completes Step~1.
 	
 	\subsection{Step 2: $L^p$ Consistency}
@@ -3204,7 +3250,9 @@ supplement.
 	
 	\subsection{Step 3: Applying Lemma~\ref{lem:sobolev_consistency}}
 	
-	By Step~1, $\sup_n \norm{\fn}_{W^{2,p}} < \infty$. By Step~2,
+	By Step~1, $\norm{\fn}_{W^{2,p}} = O_p(1)$, the bound being a fixed multiple
+	of the random quantity $\prod_\ell \norm{W_\ell^{(n)}}$, which is $O_p(1)$
+	by hypothesis. By Step~2,
 	$\norm{\fn - f}_{L^p} \xrightarrowp 0$. These are precisely the two
 	conditions of the well-behaved definition in the Sobolev sense
 	(Definition~\ref{def:wellbehaved_sobolev}). Lemma~\ref{lem:sobolev_consistency}
@@ -3300,7 +3348,7 @@ supplement.
 	the eigenvalue condition and $\rho$ are unaffected.
 	
 	
-	\subsection{Uniform $W^{2,p}$ Boundedness and the Conclusion}
+	\subsection{$W^{2,p}$ Tightness and the Conclusion}
 	
 	\subsubsection*{Step 1: $W^{2,p}$ Bound for a Single Base Learner}
 	
@@ -3326,13 +3374,32 @@ supplement.
 		< \infty
 	\end{equation}
 	using the geometric decay \eqref{eq:geometric_decay} and the fact that
-	$\sum_{j=1}^\infty \rho^j = \rho/(1-\rho) < \infty$ for $\rho < 1$. The bound is
-	uniform in $m$.
-	
+	$\sum_{j=1}^\infty \rho^j = \rho/(1-\rho) < \infty$ for $\rho < 1$. The bound
+	is uniform in $m$, and uniform in $n$ as well once the two suprema of
+	\eqref{eq:boost_uniform} are used: $C' \leq \sup_n \norm{S_n}_{L^2 \to W^{2,p}}$
+	and $\rho/(1-\rho) \leq \bar{\rho}/(1-\bar{\rho})$.
+
+	What the bound is not is deterministic. Its remaining factor is
+	$C = \norm{Y}_{L^2}$, a random quantity, so what Step~2 establishes is
+	\begin{equation}
+		\norm{\hat{F}_m}_{W^{2,p}}
+		\leq \frac{\bar{\rho}}{1-\bar{\rho}}
+		\left(\sup_n \norm{S_n}_{L^2 \to W^{2,p}}\right) \norm{Y}_{L^2}
+		= O_p(1),
+		\label{eq:boost_tight}
+	\end{equation}
+	since $\norm{Y}_{L^2} = O_p(1)$ as noted after \eqref{eq:geometric_decay}.
+	This is tightness in $\Wtwop$, which is what
+	Definition~\ref{def:wellbehaved_sobolev} requires; a bound by a single
+	deterministic constant would be stronger than the geometric-decay argument
+	can deliver, because nothing caps $\norm{Y}_{L^2}$ almost surely under
+	Assumption~\ref{M-ass:sampling}.
+
 	\subsubsection*{Step 3: Apply Lemma~\ref{lem:sobolev_consistency}}
-	
-	$L^p$ consistency is assumed. Uniform $\Wtwop$ boundedness follows from Step~2.
-	Lemma~\ref{lem:sobolev_consistency} gives
+
+	$L^p$ consistency is assumed --- in $L^p$ and not $L^1$, matching
+	Definition~\ref{def:wellbehaved_sobolev}. Tightness in $\Wtwop$ is
+	\eqref{eq:boost_tight}. Lemma~\ref{lem:sobolev_consistency} gives
 	$\norm{\nabla \hat{F}_m - \nabla f}_{L^p} \xrightarrowp 0$. \qed
 	
 	\begin{remark}[Why tree base learners are excluded]
