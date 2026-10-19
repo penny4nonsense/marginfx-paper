@@ -3261,7 +3261,18 @@ supplement.
 	\end{equation}
 	so that each base learner fit is $\hat{f}_m = Su_m$ and the ensemble updates as
 	$\hat{F}_m = \hat{F}_{m-1} + \hat{f}_m$.
-	
+
+	Throughout this section $\norm{\cdot}_{L^2}$ on $\R^n$ denotes the
+	\emph{normalized} empirical norm $\norm{v}_{L^2}^2 = n^{-1}\sum_{i=1}^n v_i^2$,
+	so that it is the $L^2(P_n)$ norm of the function $i \mapsto v_i$ and is
+	directly comparable across sample sizes. This matters because the constant
+	in \eqref{eq:geometric_decay} is $\norm{Y}_{L^2}$: under the normalized norm
+	$\norm{Y}_{L^2}^2 = n^{-1}\sum_i y_i^2 \to \E[Y^2] < \infty$ almost surely
+	by Assumption~\ref{M-ass:sampling} and the law of large numbers, so
+	$\norm{Y}_{L^2} = O_p(1)$ uniformly in $n$. Under the unnormalized Euclidean
+	norm it would instead grow like $n^{1/2}$ and the uniform bounds below
+	would be vacuous.
+
 	By Proposition~2 of \citet{buhlmann2003boosting}, for a symmetric linear learner $S$
 	with eigenvalues $\{\lambda_k; k = 1,\ldots,n\}$, the eigenvalues of the boosting
 	operator $\mathcal{B}_m = I - (I-S)^{m+1}$ are $\{1-(1-\lambda_k)^{m+1}; k =
@@ -3280,10 +3291,13 @@ supplement.
 	\end{equation}
 	In particular:
 	\begin{equation}
-		\norm{u_m}_{L^2} \leq C\rho^m, \quad C = \norm{Y}_{L^2}
+		\norm{u_m}_{L^2} \leq C\rho^m, \quad C = \norm{Y}_{L^2} = O_p(1)
 		\label{eq:geometric_decay}
 	\end{equation}
-	This geometric decay is the engine of the argument below.
+	This geometric decay is the engine of the argument below. Note that $S$ is a
+	contraction in the normalized norm exactly when it is one in the
+	unnormalized norm, the normalization being a positive scalar multiple, so
+	the eigenvalue condition and $\rho$ are unaffected.
 	
 	
 	\subsection{Uniform $W^{2,p}$ Boundedness and the Conclusion}
@@ -3345,7 +3359,7 @@ supplement.
 		Theorem~\ref{M-thm:pairing}, a finite sum of piecewise constant trees
 		being of bounded variation. What is not established for it is gradient
 		consistency of the \emph{uncorrected} plug-in, and there is reason to
-		think it does not hold: at the number of rounds minimising its own risk,
+		think it does not hold: at the number of rounds minimizing its own risk,
 		such an ensemble can carry substantially more total variation than the
 		function it estimates, with the gap widening in $n$ on targets poorly
 		matched to axis-aligned splits. That is the regularization bias of
@@ -3506,7 +3520,7 @@ supplement.
 	boundary would produce an empty child and a face coinciding with an
 	ancestor's.
 
-	\subsection{Step 4: Two Facts About the Mondrian Partition}
+	\subsection{Step 4: Three Facts About the Mondrian Partition}
 
 	\begin{lemma}[Expected interface area]
 		\label{lem:interface}
@@ -3545,6 +3559,65 @@ supplement.
 	so each side is $\mathrm{Gamma}(2,\lambda)$ and the sides are independent
 	across coordinates.
 
+	Both of the remaining steps need inverse moments of a single side of the
+	cell, and both need them for the \emph{truncated} side, since the cells of
+	$MP(\lambda,[0,1]^d)$ are the whole-space cells intersected with the cube.
+	The following records them once.
+
+	\begin{lemma}[Inverse moments of a truncated side]
+		\label{lem:invmom}
+		Let $s = \min(E^-, U) + \min(E^+, 1-U)$ with $E^\pm$ i.i.d.\
+		$\mathrm{Exp}(\lambda)$ and $U \sim \mathrm{Unif}(0,1)$, which by
+		projectivity is the law of a side of the cell of $MP(\lambda,[0,1]^d)$
+		containing a uniform point. Then for $0 < p < 2$,
+		\begin{equation}
+			\E\!\left[s^{-p}\right]
+			\leq \lambda^p\,\Gamma(2-p)\left(1 + \frac{p}{\lambda}\right)
+			+ e^{-\lambda} .
+			\label{eq:invmom}
+		\end{equation}
+	\end{lemma}
+
+	\begin{proof}
+		Write $s^{-p} = \Gamma(p)^{-1}\int_0^\infty r^{p-1}e^{-rs}\,dr$ and use
+		$\E[e^{-r\min(E,u)}] = [\lambda + re^{-(\lambda+r)u}]/(\lambda+r)$. Given
+		$U$ the two sides are independent, so integrating $U \sim \mathrm{Unif}(0,1)$
+		out before $r$,
+		\begin{equation}
+			\E\!\left[e^{-rs}\right]
+			= \frac{\lambda^2
+			+ 2\lambda r\,(1-e^{-(\lambda+r)})/(\lambda+r)
+			+ r^2 e^{-(\lambda+r)}}{(\lambda+r)^2} .
+		\end{equation}
+		Three elementary integrals follow, using
+		$\int_0^\infty v^{a-1}(1+v)^{-a-b}dv = B(a,b)$ after $r = \lambda v$.
+		The first gives
+		$\Gamma(p)^{-1}\lambda^2\int r^{p-1}(\lambda+r)^{-2}dr
+		= \lambda^p\Gamma(2-p)$. The second, after discarding
+		$1-e^{-(\lambda+r)} \leq 1$, gives
+		$\Gamma(p)^{-1} 2\lambda\int r^{p}(\lambda+r)^{-3}dr
+		= p\,\lambda^{p-1}\Gamma(2-p)$. The third is at most $e^{-\lambda}$
+		because $r^2/(\lambda+r)^2 \leq 1$ and
+		$\Gamma(p)^{-1}\int r^{p-1}e^{-r}dr = 1$.
+	\end{proof}
+
+	The untruncated value is $\lambda^p\Gamma(2-p)$, so truncation costs the
+	factor $1 + p/\lambda$ together with an exponentially small additive term:
+	an $O(1/\lambda)$-thick boundary layer, as one would expect. At $p=1$ this
+	is the bound $\lambda + 1 + e^{-\lambda}$ used in Lemma~\ref{lem:aspect}
+	below; at $p = 1/2$ and $p = 3/2$ it is what Lemma~\ref{lem:noise} needs. It
+	is convenient to write \eqref{eq:invmom} as
+	\begin{equation}
+		\E\!\left[s^{-p}\right] \leq c_p(\lambda)\,\lambda^p,
+		\qquad
+		c_p(\lambda) = \Gamma(2-p)\left(1 + \frac{p}{\lambda}\right)
+		+ \lambda^{-p}e^{-\lambda},
+		\label{eq:cp}
+	\end{equation}
+	so that $c_p(\lambda)$ decreases to the untruncated constant $\Gamma(2-p)$
+	and is bounded by $c_p(1)$ for $\lambda \geq 1$. Only boundedness in
+	$\lambda$ is used below; the rates come from the powers of $\lambda$.
+
 	\begin{lemma}[Aspect ratio]
 		\label{lem:aspect}
 		Let $l(X)$ be the cell of $MP(\lambda, [0,1]^d)$ containing a uniform
@@ -3565,21 +3638,7 @@ supplement.
 		$\E[s_m/s_1] = \E[s_m]\,\E[1/s_1]$. Truncation only shrinks, so
 		$\E[s_m] \leq 2/\lambda$.
 
-		For the inverse moment write $1/s = \int_0^\infty e^{-rs}\,dr$ and use
-		$\E[e^{-r\min(E,u)}] = [\lambda + re^{-(\lambda+r)u}]/(\lambda+r)$ for
-		$E \sim \mathrm{Exp}(\lambda)$. Given $X_1$ the two sides are
-		independent, so integrating $X_1 \sim U(0,1)$ out before $r$,
-		\begin{equation}
-			\E\!\left[\frac{1}{s_1}\right]
-			= \int_0^\infty \frac{\lambda^2
-			+ 2\lambda r\,(1-e^{-(\lambda+r)})/(\lambda+r)
-			+ r^2 e^{-(\lambda+r)}}{(\lambda+r)^2}\, dr .
-		\end{equation}
-		The three pieces are elementary:
-		$\lambda^2\int_0^\infty (\lambda+r)^{-2} dr = \lambda$;
-		$2\lambda\int_0^\infty r(\lambda+r)^{-3} dr = 1$; and the last is at
-		most $e^{-\lambda}\int_0^\infty e^{-r} dr = e^{-\lambda}$ because
-		$r^2/(\lambda+r)^2 \leq 1$. Hence
+		For the inverse moment apply Lemma~\ref{lem:invmom} with $p = 1$:
 		$\E[1/s_1] \leq \lambda + 1 + e^{-\lambda}$, against the value $\lambda$
 		on $\R^d$, so
 		$\E[s_m/s_1] \leq 2 + 2(1+e^{-\lambda})/\lambda \leq 2 + 4/\lambda$ for
@@ -3609,16 +3668,48 @@ supplement.
 	$T^{\mathrm{s}}$ across faces with both sides nonempty, and $S_0$ those
 	across faces with an empty side.
 
-	Along a line in coordinate~1 the tree is a step function whose jumps occur
-	at the $1$-perpendicular cuts, and each leaf $l$ is crossed by a set of such
-	lines of measure $\mathrm{vol}(l)/s_1(l)$. Hence for either part
-	\begin{equation}
-		\sum_k \int_{F_k} \abs{\Delta_k}\, d\mathcal{H}^{d-1}
-		\leq 2 \sum_l \left(\sup_{u \in \partial R_l} \abs{\Delta(u)}\right)
-		\frac{\mathrm{vol}(l)}{s_1(l)} .
-		\label{eq:sections}
-	\end{equation}
-	Let $u \in \partial R_l \cap \partial R_m$ be a point of a face at which both
+	Fix the coordinate~$1$; the argument is identical for each. Along the line
+	$\ell(x_{-1}) = \{(t, x_{-1}) : t \in [0,1]\}$ the tree is a step function
+	whose jumps occur at the $1$-perpendicular cuts. The following records the
+	only property of such a sum that is used, and in particular how a bound on a
+	jump \emph{between two leaves} becomes a sum over single leaves.
+
+	\begin{lemma}[Per-leaf charging]
+		\label{lem:charging}
+		Suppose each jump between consecutive leaves is bounded by
+		$\delta(l') + \delta(l'')$ for the two leaves $l', l''$ meeting there and
+		some nonnegative $\delta$ defined on leaves. Then
+		\begin{equation}
+			\sum_k \int_{F_k} \abs{\Delta_k}\, d\mathcal{H}^{d-1}
+			\leq 2\sum_l \delta(l)\,\frac{\mathrm{vol}(l)}{s_1(l)}
+			= 2\,\E_X\!\left[\frac{\delta(l(X))}{s_1(l(X))}\right],
+			\label{eq:sections}
+		\end{equation}
+		the expectation being over a uniform $X$ with $l(X)$ its leaf.
+	\end{lemma}
+
+	\begin{proof}
+		Let $l_0, \dots, l_{m}$ be the leaves $\ell$ crosses, in order, with
+		values $v_0, \dots, v_m$. By hypothesis
+		\begin{equation}
+			\sum_{i=1}^{m} \abs{v_i - v_{i-1}}
+			\leq \sum_{i=1}^{m}\left(\delta(l_{i-1}) + \delta(l_i)\right)
+			\leq 2\sum_{i=0}^{m} \delta(l_i),
+		\end{equation}
+		because each index appears in at most two summands --- once for the
+		neighbour on its left and once for the neighbour on its right. The
+		neighbouring leaf's contribution is therefore absorbed, and what remains
+		is a sum over single leaves. Integrating over $x_{-1}$ and using that
+		leaf $l$ is crossed by a set of lines of measure
+		$\mathrm{vol}(l)/s_1(l)$ gives the first form; the second is
+		$\sum_l g(l)\mathrm{vol}(l) = \E_X[g(l(X))]$.
+	\end{proof}
+
+	It is \eqref{eq:sections}, with a per-leaf $\delta$, that the next three
+	steps apply: $\delta(l) = L\,\mathrm{diam}(R_l)$ for the signal,
+	$\delta(l) = \norm{f}_\infty \mathbf{1}\{N_l = 0\}$ for the empty-leaf term,
+	and $\delta(l) = \abs{\varepsilon_l}$ for the noise.
+Let $u \in \partial R_l \cap \partial R_m$ be a point of a face at which both
 	leaves are nonempty, and let $f$ be Lipschitz with constant $L$. Every
 	$\mathbf{x}_i \in R_l$ lies within $\mathrm{diam}(R_l)$ of $u$, so
 	$|\bar{f}_l - f(u)| \leq L\,\mathrm{diam}(R_l)$, and likewise for $m$;
@@ -3629,11 +3720,11 @@ supplement.
 		\label{eq:signaljump}
 	\end{equation}
 	The diameters here are those of the two \emph{leaves} meeting at $u$, not
-	that of the ancestor cell $C_k$, which may be larger than either; it is the
-	leaf diameters that \eqref{eq:sections} consumes. Combining
-	\eqref{eq:signaljump} with \eqref{eq:sections}, using
-	$\sum_l g(l)\mathrm{vol}(l) = \E_X[g(l(X))]$ for uniform $X$, and then
-	Lemma~\ref{lem:aspect},
+	that of the ancestor cell $C_k$, which may be larger than either. The bound
+	is pairwise, involving both leaves; it is Lemma~\ref{lem:charging}, applied
+	with the per-leaf quantity $\delta(l) = L\,\mathrm{diam}(R_l)$, that turns
+	it into a sum over single leaves, the neighbour's diameter being absorbed by
+	the factor of two. Then by Lemma~\ref{lem:aspect},
 	\begin{equation}
 		\E[S_1] \leq 2L\,
 		\E\!\left[\frac{\mathrm{diam}(l(X))}{s_1(l(X))}\right]
@@ -3660,20 +3751,20 @@ supplement.
 		\sum_{l\,:\,N_l = 0} \frac{\mathrm{vol}(l)}{s_1(l)} .
 	\end{equation}
 	Conditionally on the partition $\Prob(N_l = 0) = (1-\mathrm{vol}(l))^n
-	\leq e^{-n\,\mathrm{vol}(l)}$, so in the parametrisation of
-	Lemma~\ref{lem:noise}, with $\mu = MW$ and $1/s_1 = \lambda/T_1$,
+	\leq e^{-n\,\mathrm{vol}(l)}$, so with $V = \mathrm{vol}(l(X))$ as in
+	Lemma~\ref{lem:noise},
 	\begin{equation}
-		\E[S_0] \leq 2\norm{f}_\infty \lambda\,
-		\E\!\left[\frac{e^{-MW}}{T_1}\right]
-		\leq 2\norm{f}_\infty \lambda M^{-1/2}
-		\E[T_1^{-3/2}]\prod_{j \geq 2}\E[T_j^{-1/2}],
+		\E[S_0] \leq 2\norm{f}_\infty\,
+		\E\!\left[\frac{e^{-nV}}{s_1}\right]
+		\leq 2\norm{f}_\infty n^{-1/2}\,
+		\E\!\left[s_1^{-3/2}\right]\prod_{j \geq 2}\E\!\left[s_j^{-1/2}\right],
 	\end{equation}
 	using $e^{-x} \leq x^{-1/2}$, valid for $x > 0$ since
 	$\sup_{x>0} x^{1/2}e^{-x} = (2e)^{-1/2} < 1$. The moments are those of
-	Lemma~\ref{lem:noise}, so
+	Lemma~\ref{lem:invmom}, so by \eqref{eq:cp}
 	\begin{equation}
-		\E[S_0] \leq 2\norm{f}_\infty \sqrt{\pi}
-		\left(\tfrac{\sqrt{\pi}}{2}\right)^{d-1} \lambda^{1+d/2} n^{-1/2},
+		\E[S_0] \leq 2\norm{f}_\infty\, c_{3/2}\,c_{1/2}^{\,d-1}\,
+		\lambda^{1+d/2} n^{-1/2},
 	\end{equation}
 	the same order as the noise term, and so $O(1)$ at
 	$\lambda_n \asymp n^{1/(d+2)}$. Empty leaves are rare at this budget because
@@ -3686,10 +3777,14 @@ supplement.
 		\label{lem:noise}
 		Under Assumption~\ref{M-ass:sampling},
 		\begin{equation}
-			\E[N] \leq 2\bar{\sigma} C_d\, \lambda^{1 + d/2} n^{-1/2},
+			\E[N] \leq 2\bar{\sigma} C_d(\lambda)\, \lambda^{1 + d/2} n^{-1/2},
 			\qquad
-			C_d = \sqrt{2\pi}\left(\tfrac{\sqrt{\pi}}{2}\right)^{d-1} + \pi^{(2+d)/6}.
+			C_d(\lambda) = \sqrt{2}\,c_{3/2}\,c_{1/2}^{\,d-1}
+			+ c_{3/2}^{\,(2+d)/3},
 		\end{equation}
+		with $c_p = c_p(\lambda)$ as in \eqref{eq:cp}. For $\lambda \geq 1$,
+		$C_d(\lambda) \leq C_d(1) < \infty$, and $C_d(\lambda)$ decreases to
+		$\sqrt{2\pi}(\sqrt{\pi}/2)^{d-1} + \pi^{(2+d)/6}$.
 	\end{lemma}
 
 	\begin{proof}
@@ -3704,49 +3799,57 @@ supplement.
 		$\E[(N+1)^{-1}] = (1-(1-p)^{n+1})/((n+1)p) \leq 1/\mu$. So
 		$\psi \leq \min(\sqrt{2}\mu^{-1/2}, \mu)$.
 
-		Write $s_j = T_j/\lambda$ with $T_j$ i.i.d.\ $\mathrm{Gamma}(2,1)$ by the
-		cell law, $W = \prod_j T_j$ and $M = n\lambda^{-d}$, so that
-		$\mu = MW$ and $1/s_1 = \lambda/T_1$. By \eqref{eq:sections} and
-		$\sum_l g(l)\mathrm{vol}(l) = \E_X[g(l(X))]$ it suffices to show
-		$\E[\psi/T_1] \leq C_d M^{-1/2}$, since
-		$\lambda M^{-1/2} = \lambda^{1+d/2} n^{-1/2}$.
+		Write $V = \mathrm{vol}(l(X)) = \prod_j s_j$, so that $\mu = nV$. The
+		sides $s_j$ of the cell containing a uniform point are independent
+		across $j$ and each has the truncated law of Lemma~\ref{lem:invmom}; we
+		use that law throughout rather than the whole-space $\mathrm{Gamma}(2,\lambda)$,
+		since both truncation effects --- shorter sides and hence larger inverse
+		moments --- go against the bound. By \eqref{eq:sections} and
+		$\sum_l g(l)\,\mathrm{vol}(l) = \E_X[g(l(X))]$ it suffices to show
+		$\E[\psi/s_1] \leq C_d(\lambda)\,\lambda^{1+d/2} n^{-1/2}$.
 
-		On $\{\mu \geq 1\}$ use $\psi \leq \sqrt{2}\mu^{-1/2}$ and independence:
+		On $\{\mu \geq 1\}$ use $\psi \leq \sqrt{2}\mu^{-1/2}
+		= \sqrt{2}\,n^{-1/2}V^{-1/2}$ and independence across coordinates:
 		\begin{equation}
-			\E\!\left[\frac{\psi}{T_1}; \mu \geq 1\right]
-			\leq \sqrt{2}\,M^{-1/2}\,
-			\E[T_1^{-3/2}]\prod_{j \geq 2}\E[T_j^{-1/2}]
-			= \sqrt{2\pi}\left(\tfrac{\sqrt{\pi}}{2}\right)^{d-1} M^{-1/2},
+			\E\!\left[\frac{\psi}{s_1}; \mu \geq 1\right]
+			\leq \sqrt{2}\,n^{-1/2}\,
+			\E\!\left[s_1^{-3/2}\right]\prod_{j \geq 2}\E\!\left[s_j^{-1/2}\right]
+			\leq \sqrt{2}\,c_{3/2}\,c_{1/2}^{\,d-1}\,\lambda^{1+d/2} n^{-1/2},
 		\end{equation}
-		using $\E[T^{-3/2}] = \Gamma(1/2)$ and $\E[T^{-1/2}] = \Gamma(3/2)$.
-		The first is finite because a $\mathrm{Gamma}(2,1)$ density vanishes
-		linearly at the origin, so that $t^{-3/2}\cdot t$ is integrable; it is
-		the last inverse moment that exists, and is exactly what the factor
-		$1/s_1$ from \eqref{eq:sections} and the factor $\mu^{-1/2}$ from the
-		binomial jointly require.
+		by \eqref{eq:cp} twice, the exponents combining as
+		$3/2 + (d-1)/2 = 1 + d/2$. The moment $\E[s_1^{-3/2}]$ is finite
+		because the law of a side has density vanishing linearly at the origin,
+		so that $t^{-3/2}\cdot t$ is integrable; $p = 2$ is the threshold in
+		Lemma~\ref{lem:invmom} for exactly this reason. It is the last inverse
+		moment that exists, and $3/2$ is precisely what the factor $1/s_1$ from
+		\eqref{eq:sections} and the factor $\mu^{-1/2}$ from the binomial
+		jointly require.
 
-		On $\{\mu < 1\}$ use $\psi \leq \mu = MW \leq 1$, then H\"{o}lder with
+		On $\{\mu < 1\}$ use $\psi \leq \mu \leq 1$, then H\"{o}lder with
 		exponents $3/2$ and $3$, then the Chernoff bound
-		$\Prob(W < w) \leq w^s\,\E[W^{-s}] = w^s\,\Gamma(2-s)^d$ at $s = 3/2$:
+		$\Prob(V < w) \leq w^s\,\E[V^{-s}] = w^s\prod_j \E[s_j^{-s}]
+		\leq w^s (c_s \lambda^s)^d$ at $s = 3/2$:
 		\begin{equation}
-			\E\!\left[\frac{\psi}{T_1}; \mu < 1\right]
-			\leq \left(\E[T_1^{-3/2}]\right)^{2/3}
-			\Prob(W < 1/M)^{1/3}
-			\leq \pi^{(2+d)/6} M^{-1/2}.
+			\E\!\left[\frac{\psi}{s_1}; \mu < 1\right]
+			\leq \left(\E\!\left[s_1^{-3/2}\right]\right)^{2/3}
+			\Prob(V < 1/n)^{1/3}
+			\leq c_{3/2}^{\,(2+d)/3}\,\lambda^{1+d/2} n^{-1/2}.
 		\end{equation}
 		Adding the two gives the claim.
 	\end{proof}
 
 	The small-cell regime, where $\psi$ behaves like $\mu$ rather than
 	$\mu^{-1/2}$, needs no separate treatment: there the bound $\psi \leq \mu$ is
-	the stronger of the two, and all that is required is that $\{W < 1/M\}$ carry
+	the stronger of the two, and all that is required is that $\{V < 1/n\}$ carry
 	little mass.
 
 	\subsection{Step 7: Uniform BV Boundedness}
 
 	Summing Steps~5, 5a and~6 over the $d$ coordinates and inserting
 	$\lambda_n \asymp n^{1/(d+2)}$, for which
-	$\lambda^{1+d/2}n^{-1/2} = O(1)$ because $(1 + d/2)/(d+2) = 1/2$,
+	$\lambda^{1+d/2}n^{-1/2} = O(1)$ because $(1 + d/2)/(d+2) = 1/2$ --- the
+	constants in those three steps being bounded in $\lambda$ by
+	\eqref{eq:cp} ---
 	\begin{equation}
 		\sup_n \E\!\left[|DT|(\Omega)\right] < \infty ,
 	\end{equation}
