@@ -17,6 +17,43 @@ the truncated cell law.
 Companion to `notes-mondrian-bv-bound.md`, which gives the background and the
 scaling heuristic this makes precise.
 
+
+## Corrections after the second referee pass (2026-10-19)
+
+The supplement is now ahead of this note. Three defects were found and fixed
+there; this note has not been rewritten, so read §S25 of `jrssb-supp.tex` as
+authoritative.
+
+1. **Step 3's signal bound was stated wrongly.** It bounded the jump by
+   `L·diam(C_k)`, the ancestor cell, and then used the *leaf* diameter in the
+   section argument. Those are not interchangeable. The correct pointwise bound
+   is `|f̄_l − f̄_m| ≤ L(diam(R_l) + diam(R_m))`, from the fact that every
+   sample point in a leaf lies within that leaf's diameter of a boundary point
+   of it — which is tighter than what was written and is what the section
+   representation actually consumes. The conclusion is unchanged.
+
+2. **Empty leaves were not handled.** With `ȳ_l = 0` on an empty leaf, `f̄_l`
+   bears no relation to `f` near the face, so the Lipschitz bound does not
+   apply there and a jump can be of size `‖f‖_∞`. A separate term `S_0` now
+   collects those faces and is bounded by `2‖f‖_∞ √π(√π/2)^{d-1} λ^{1+d/2}
+   n^{-1/2}` — the same order as the noise term — using
+   `P(N_l = 0) ≤ e^{-n·vol(l)}` and `e^{-x} ≤ x^{-1/2}`.
+
+   This mattered more than expected. Measured at the minimax budget,
+   **24–44% of Mondrian leaves are empty** (41.6%, 44.4%, 32.1%, 24.5% at
+   `n = 500, 2000, 8000, 32000`), so these faces are common, not a negligible
+   tail. What saves the term is not their scarcity but their *geometry*: the
+   quantity `Σ_{empty} vol(l)/s_1(l)` that the bound controls comes out at
+   `0.29, 0.52, 0.26, 0.26`, flat in `n` and comfortably inside the constant
+   bound of `1.23`.
+
+3. **The boosting theorem needed uniformity in `n`.** `S_n` acts on `ℝ^n`, so a
+   spectral gap for each `n` does not bound `sup_n (1-ρ_n)^{-1}`, which is what
+   the geometric series produces, nor is the `L² → W^{2,p}` operator norm
+   automatically uniform. Both are now explicit hypotheses, with a remark
+   noting that they fail for a smoothing spline at fixed smoothing parameter
+   (where `ρ_n → 1`) and hold for `S_n = εI + (1-ε)S_n^0`.
+
 ---
 
 ## Setup

@@ -413,12 +413,20 @@ supplement.
 	
 	\begin{theorem}[Gradient Consistency for Gradient Boosted Models]
 		\label{thm:boosting}
-		Let $\fn = \hat{F}_m = (I - (I-S)^{m+1})Y$ be an $L_2$Boost estimator with
-		a \emph{fixed} symmetric linear learner $S$ satisfying the eigenvalue
-		condition $0 < \lambda_k \leq 1$ for all $k$, and with base learners
-		$h_m = S u_m$ lying in $W^{2,p}$. Suppose
-		$\norm{\fn - f}_{L^1} \xrightarrowp 0$. Then $\fn$ is well-behaved in the
-		Sobolev sense and $\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
+		Let $\fn = \hat{F}_m = (I - (I-S_n)^{m+1})Y$ be an $L_2$Boost estimator
+		with a \emph{fixed} symmetric linear learner $S_n$ whose eigenvalues
+		satisfy $0 < \lambda_k^{(n)} \leq 1$ for all $k$, and with base learners
+		$h_m = S_n u_m$ lying in $W^{2,p}$. Suppose in addition that the
+		spectral gap and the smoothing bound are \emph{uniform in $n$}:
+		\begin{equation}
+			\bar{\rho} := \sup_n \max_k \left(1 - \lambda_k^{(n)}\right) < 1,
+			\qquad
+			\sup_n \norm{S_n}_{L^2 \to W^{2,p}} < \infty .
+			\label{eq:boost_uniform}
+		\end{equation}
+		Suppose $\norm{\fn - f}_{L^1} \xrightarrowp 0$. Then $\fn$ is
+		well-behaved in the Sobolev sense and
+		$\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
 	\end{theorem}
 	
 	Theorem~\ref{thm:boosting} is deliberately narrow, and it is worth being
@@ -729,7 +737,7 @@ supplement.
 			\end{tabular}
 			\begin{tablenotes}
 			\footnotesize
-			\item \textit{Notes:} $h_j$ is the default adaptive step size, $\max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features so that a count is contrasted over a whole unit. Features declared binary use the level contrast $f(x \mid x_j=1) - f(x \mid x_j=0)$, for which $h_j$ is undefined and no trimming applies. The trimmed fraction is the share of observations lying within $h_j$ of the boundary of the observed support of $x_j$, which receive weight zero; for those features the estimand is the window effect on the untrimmed subpopulation.
+			\item \textit{Notes:} $h_j$ is the default adaptive step size, $\max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features so that a count is contrasted over a whole unit. Features declared binary use the level contrast $f(x \mid x_j=1) - f(x \mid x_j=0)$, for which $h_j$ is undefined and no trimming applies. The trimmed fraction is the share of observations lying within $h_j$ of the boundary of the observed support of $x_j$, which receive weight zero. The estimand is the \emph{weighted} effect $\E[w(X)\Dh f(X)]$ of Definition~\ref{M-def:window}, not the effect among retained observations: by \eqref{M-eq:trimscale} the two differ by the factor $\E[w(X)]$, which is one minus the trimmed fraction. For a feature trimmed at $92.3\%$ the reported number is about one thirteenth of its conditional counterpart, so entries in this table are not comparable across features without that rescaling.
 			\end{tablenotes}
 		\end{threeparttable}
 		\end{table}
@@ -3358,6 +3366,28 @@ supplement.
 	\end{remark}
 	
 	\begin{remark}
+		\label{rem:uniformity}
+		Condition \eqref{eq:boost_uniform} is a genuine restriction, not a
+		technicality. The operator $S_n$ acts on $\R^n$, so its spectrum moves
+		with the sample size, and a gap for each $n$ separately does not bound
+		$\sup_n (1-\rho_n)^{-1}$, which is what the geometric series in Step~2
+		produces. The same applies to the constant $C'$ of Step~1, which is the
+		$L^2 \to W^{2,p}$ norm of $S_n$. Both enter the uniform $\Wtwop$ bound
+		that Lemma~\ref{lem:sobolev_consistency} consumes, and that bound is a
+		statement about the sequence in $n$.
+
+		The condition fails whenever the smoother's spectrum accumulates at
+		zero as the sample grows, which includes a smoothing spline at a fixed
+		smoothing parameter: there $\lambda_k^{(n)} = (1+\gamma d_k)^{-1}$ with
+		the penalty eigenvalues $d_k$ unbounded in $n$, so $\rho_n \to 1$. It
+		holds for smoothers that are bounded away from singularity by
+		construction, for instance $S_n = \epsilon I + (1-\epsilon)S_n^0$ with
+		$\epsilon \in (0,1)$ fixed and $S_n^0$ symmetric with spectrum in
+		$[0,1]$, for which $\rho_n \leq 1 - \epsilon$ uniformly. Verifying
+		\eqref{eq:boost_uniform} is therefore part of applying the theorem.
+	\end{remark}
+
+	\begin{remark}
 		\label{rem:degenerate}
 		When $\lambda_k \in \{0,1\}$ for all $k$ --- as occurs for linear projection
 		operators --- Corollary~1 of \citet{buhlmann2003boosting} shows that
@@ -3567,8 +3597,17 @@ supplement.
 	Write $\bar{y}_l = \bar{f}_l + \varepsilon_l$, where
 	$\bar{f}_l = N_l^{-1}\sum_{i \in R_l} f(\mathbf{x}_i)$ and
 	$\varepsilon_l = N_l^{-1}\sum_{i \in R_l}(y_i - f(\mathbf{x}_i))$, both zero
-	on empty leaves. By \eqref{eq:nodeface} and the triangle inequality,
-	$|DT|(\Omega) \leq S + N$ with $S$ and $N$ the corresponding sums.
+	on empty leaves, and set
+	$T^{\mathrm{s}} = \sum_{N_l \geq 1} \bar{f}_l \mathbf{1}_{R_l}$,
+	$T^{\mathrm{n}} = \sum_{N_l \geq 1} \varepsilon_l \mathbf{1}_{R_l}$, so that
+	$T = T^{\mathrm{s}} + T^{\mathrm{n}}$. By \eqref{eq:nodeface} and the
+	triangle inequality,
+	\begin{equation}
+		|DT|(\Omega) \leq S_1 + S_0 + N ,
+	\end{equation}
+	where $N$ collects the jumps of $T^{\mathrm{n}}$, $S_1$ the jumps of
+	$T^{\mathrm{s}}$ across faces with both sides nonempty, and $S_0$ those
+	across faces with an empty side.
 
 	Along a line in coordinate~1 the tree is a step function whose jumps occur
 	at the $1$-perpendicular cuts, and each leaf $l$ is crossed by a set of such
@@ -3579,19 +3618,67 @@ supplement.
 		\frac{\mathrm{vol}(l)}{s_1(l)} .
 		\label{eq:sections}
 	\end{equation}
-	Two leaves meeting at a point of $F_k$ both lie in $C_k$, so if $f$ is
-	Lipschitz with constant $L$ then
-	$|\bar{f}_m - \bar{f}_l| \leq L\,\mathrm{diam}(C_k)$. Using
-	$\sum_l g(l)\mathrm{vol}(l) = \E_X[g(l(X))]$ for uniform $X$ and then
+	Let $u \in \partial R_l \cap \partial R_m$ be a point of a face at which both
+	leaves are nonempty, and let $f$ be Lipschitz with constant $L$. Every
+	$\mathbf{x}_i \in R_l$ lies within $\mathrm{diam}(R_l)$ of $u$, so
+	$|\bar{f}_l - f(u)| \leq L\,\mathrm{diam}(R_l)$, and likewise for $m$;
+	hence
+	\begin{equation}
+		\abs{\bar{f}_m - \bar{f}_l}
+		\leq L\left(\mathrm{diam}(R_l) + \mathrm{diam}(R_m)\right).
+		\label{eq:signaljump}
+	\end{equation}
+	The diameters here are those of the two \emph{leaves} meeting at $u$, not
+	that of the ancestor cell $C_k$, which may be larger than either; it is the
+	leaf diameters that \eqref{eq:sections} consumes. Combining
+	\eqref{eq:signaljump} with \eqref{eq:sections}, using
+	$\sum_l g(l)\mathrm{vol}(l) = \E_X[g(l(X))]$ for uniform $X$, and then
 	Lemma~\ref{lem:aspect},
 	\begin{equation}
-		\E[S] \leq 2L\,
+		\E[S_1] \leq 2L\,
 		\E\!\left[\frac{\mathrm{diam}(l(X))}{s_1(l(X))}\right]
 		\leq 2L\left(2d - 1 + \frac{4(d-1)}{\lambda}\right).
 	\end{equation}
 	No rate in $n$ or $\lambda$ enters: the discrete variation of a Lipschitz
 	function over a refining partition is controlled by the partition's aspect
 	ratio, not by how fine it is.
+
+	The bound \eqref{eq:signaljump} requires both leaves to be nonempty, since
+	$\bar{f}_l$ is set to zero on an empty leaf and then bears no relation to
+	$f$ near $u$. Faces with an empty side are collected in $S_0$ and bounded
+	separately in Step~5a; a jump there is at most $\norm{f}_\infty$, which is
+	not small, so the term is controlled by the scarcity of empty leaves rather
+	than by the size of the jump.
+
+	\subsection{Step 5a: Empty Leaves}
+
+	At a face with one side empty the jump of $T^{\mathrm{s}}$ is at most
+	$\norm{f}_\infty$, and at a face with both sides empty it is zero. By
+	\eqref{eq:sections},
+	\begin{equation}
+		S_0 \leq 2\norm{f}_\infty
+		\sum_{l\,:\,N_l = 0} \frac{\mathrm{vol}(l)}{s_1(l)} .
+	\end{equation}
+	Conditionally on the partition $\Prob(N_l = 0) = (1-\mathrm{vol}(l))^n
+	\leq e^{-n\,\mathrm{vol}(l)}$, so in the parametrisation of
+	Lemma~\ref{lem:noise}, with $\mu = MW$ and $1/s_1 = \lambda/T_1$,
+	\begin{equation}
+		\E[S_0] \leq 2\norm{f}_\infty \lambda\,
+		\E\!\left[\frac{e^{-MW}}{T_1}\right]
+		\leq 2\norm{f}_\infty \lambda M^{-1/2}
+		\E[T_1^{-3/2}]\prod_{j \geq 2}\E[T_j^{-1/2}],
+	\end{equation}
+	using $e^{-x} \leq x^{-1/2}$, valid for $x > 0$ since
+	$\sup_{x>0} x^{1/2}e^{-x} = (2e)^{-1/2} < 1$. The moments are those of
+	Lemma~\ref{lem:noise}, so
+	\begin{equation}
+		\E[S_0] \leq 2\norm{f}_\infty \sqrt{\pi}
+		\left(\tfrac{\sqrt{\pi}}{2}\right)^{d-1} \lambda^{1+d/2} n^{-1/2},
+	\end{equation}
+	the same order as the noise term, and so $O(1)$ at
+	$\lambda_n \asymp n^{1/(d+2)}$. Empty leaves are rare at this budget because
+	the typical cell holds $n\,\mathrm{vol}(l) \asymp n^{2/(d+2)}$ observations,
+	and that is what the bound exploits.
 
 	\subsection{Step 6: The Noise Term}
 
@@ -3657,7 +3744,7 @@ supplement.
 
 	\subsection{Step 7: Uniform BV Boundedness}
 
-	Summing Steps~5 and~6 over the $d$ coordinates and inserting
+	Summing Steps~5, 5a and~6 over the $d$ coordinates and inserting
 	$\lambda_n \asymp n^{1/(d+2)}$, for which
 	$\lambda^{1+d/2}n^{-1/2} = O(1)$ because $(1 + d/2)/(d+2) = 1/2$,
 	\begin{equation}
