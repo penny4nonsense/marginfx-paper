@@ -166,7 +166,89 @@ way — but it would improve the explicit constant if the lemma is ever stated.
 | `reg_lambda` (L2 on leaf weights) | gives `θ_l ≤ 1` in Step 3, strengthening `⟨u,h⟩ ≥ ‖h‖²` |
 | `min_child_weight` | **(A2) — load-bearing.** See the gap below |
 
-## 6. What is still missing
+## 6. The logistic (Newton) case
+
+Worked 2026-10-19. The conclusion is that §4 **does not translate routinely**,
+but that the obstruction is narrower than it first looks, and that for the
+configuration actually run the classification case is in fact the *easy* one.
+
+### 6.1 The estimand is the probability, not the margin
+
+The paper extracts classification predictions as `predict_proba(X)[:,1]`, so
+
+    f̂ₙ = σ ∘ F_M ,      F_M = ν Σ_{m≤M} h_m   (the margin),
+
+and the trees are fit on the margin scale. Two consequences, both helpful:
+
+- `σ` is `1/4`-Lipschitz (`σ' = σ(1−σ) ≤ 1/4`), so
+  `|D f̂ₙ|(Ω) ≤ ¼ |DF_M|(Ω)`. Bounding the margin's total variation suffices,
+  with a factor of four gained.
+- Independently, `0 ≤ σ ≤ 1`, so **every jump in the fitted probability is at
+  most 1, however wild the margin is**. Since `σ∘F_M` is piecewise constant on
+  the common refinement of the `M` partitions, which has at most `M(2^D − 1)`
+  interfaces,
+
+      |D f̂ₙ|(Ω) ≤ M (2^D − 1) diam(Ω)^{d-1}
+
+  unconditionally — no edge condition, no leaf condition, no assumption on the
+  Hessians.
+
+### 6.2 For fixed M, condition 1 is therefore trivial
+
+At the 100–200 rounds actually run, with `max_depth = 4`, the display above
+gives `|D f̂ₙ|(Ω) ≤ 200 · 15 · diam(Ω)^{d-1}`, uniformly in `n`, with no
+assumptions beyond depth and round count. **The classification case needs none
+of §4.** What it needs is condition 2, which fixed `M` does not supply — see §8.
+
+### 6.3 Where §4 breaks if M → ∞
+
+Step 2 is the casualty. For logistic loss `g_i = p_i − y_i` and
+`h_i = p_i(1−p_i)`, so the leaf weight is
+
+    w_l = −G_l/(H_l + λ) = Σ_{i∈l}(y_i − p_i) / (Σ_{i∈l} p_i(1−p_i) + λ),
+
+and the working response `z_i = −g_i/h_i` equals `1/p_i` when `y_i = 1` and
+`−1/(1−p_i)` when `y_i = 0`. **Both are unbounded as predictions sharpen.** A
+confidently wrong observation has vanishing Hessian and order-one gradient, so
+its Newton step diverges. This is the well-known instability of second-order
+boosting under logistic loss, and `λ > 0` alone does not fix it: it gives only
+`|w_l| ≤ n_l/λ`, which grows with the sample.
+
+### 6.4 What replaces it
+
+The structure of §4 does carry over, in the Hessian-weighted geometry. Write
+`‖a‖²_{H,n} = n^{-1} Σ_i h_i a_i²`. The leaf weight is a shrunk
+`h`-weighted mean of the working responses, so by Cauchy–Schwarz in that inner
+product, and writing `H_l ≥ ηn` for a minimum *average* leaf Hessian,
+
+    ‖h_m‖_∞ ≤ η^{-1/2} ‖z_m‖_{H,n} ,
+
+which is exactly Step 2 with `κ → η` and `‖·‖_{2,n} → ‖·‖_{H,n}`. And `η` is
+precisely what `min_child_weight` controls: **XGBoost defines it as a minimum
+sum of instance Hessians, not a minimum count.** For squared error `h_i = 1` and
+it reduces to the leaf-fraction assumption (A2); for logistic it is the
+assumption that predictions in a leaf are not uniformly saturated. So the two
+cases share one parameter, read in the loss's own units.
+
+### 6.5 The two genuine obstacles
+
+1. **The decay argument has to be rebuilt.** Step 3 used
+   `u_{m+1} = u_m − νh_m` with an exact quadratic loss. Logistic loss is not
+   quadratic, so what decays is the loss itself, via the gain
+   `Σ_l G_l²/(H_l + λ)`, and the quadratic model's error has to be controlled.
+   The standard tool is self-concordance of the logistic loss; that is real
+   work, not a translation.
+2. **`η` is in tension with what the algorithm does.** Logistic boosting
+   *drives* `p` towards 0 and 1 — on separable data that is its whole
+   behaviour — so the average leaf Hessian degrades as `M` grows and a fixed
+   `η` cannot hold uniformly. This is the same shape as the (A2)-versus-edge
+   interaction in item 2 of §7 but sharper, because here the algorithm actively
+   destroys the assumption rather than merely exhausting it.
+
+Obstacle 2 is the reason I would not expect a clean `M → ∞` theorem for the
+logistic case, and the reason §6.2 and §8 matter more here than for regression.
+
+## 7. What is still missing
 
 1. **(A2) versus the runs actually performed.** This is the practical problem.
    XGBoost's default `min_child_weight` is 1, so leaves may hold a handful of
@@ -184,17 +266,16 @@ way — but it would improve the explicit constant if the lemma is ever stated.
    actually run — which is fine, since the bound is uniform in `M` — but the
    interaction should be stated rather than left implicit. It is also a further
    reason the relevant regime is the early-stopped one.
-3. **Newton boosting / logistic loss.** Step 2 and Step 3 both use
-   `g_i = −u_i`, `h_i = 1`, which is squared-error. The paper's classification
-   applications fit XGBoost under logistic loss, where `h_i = p_i(1−p_i)` and
-   the recursion differs. The regression case is covered by §4 as written; the
-   classification case needs the analysis redone.
+3. **Newton boosting / logistic loss.** Worked out in §6. Step 2 survives in
+   Hessian-weighted form; Step 3 does not, and the minimum-Hessian parameter is
+   in tension with what logistic boosting does. For the fixed round counts
+   actually run, §6.2 makes condition 1 trivial and the issue disappears.
 4. **Subsampling**, if enabled, as additional randomness to condition on.
 5. **The consistency half** still has to be imported and matched to the same
    assumption set — in particular, Zhang & Yu's step-size conditions must be
    compatible with (A3) and (A4).
 
-## 7. The alternative worth weighing
+## 8. The alternative worth weighing
 
 With `M` **fixed** at the 100–200 rounds actually run, condition 1 is trivial —
 a finite sum of bounded-depth trees has bounded total variation, with no edge
@@ -206,13 +287,24 @@ So there is a defensible position in which the correct statement about
 XGBoost-as-run is a double-robustness one, and gradient consistency belongs to
 the `M → ∞` idealisation. Worth deciding deliberately rather than by default.
 
-## 8. Effort
+**§6 strengthens this considerably for classification.** There the fixed-`M`
+bound is not merely tractable but unconditional — `|D f̂ₙ|(Ω) ≤ M(2^D−1)A`
+follows from `0 ≤ σ ≤ 1` alone, with no edge condition, no minimum-Hessian
+assumption, and no appeal to §4 — while the `M → ∞` route runs into an
+obstruction (§6.5, item 2) that looks structural rather than technical. If the
+fixed-`M`, double-robustness framing is adopted anywhere, classification is
+where it is most clearly the right call.
 
-If §4 survives checking, the remaining work is items 1–5 of §6, of which 1 and 3
-are the substantive ones. That is weeks rather than months, and materially more
-tractable than the Mondrian repair, whose nearly-empty-cells obstacle has no
-comparable workaround. §4 itself took an afternoon, which is a reason to be
-suspicious of it until it has been read carefully.
+## 9. Effort
+
+If §4 survives checking, the remaining work is items 1–5 of §7. Item 1 (the
+minimum leaf fraction versus the settings actually run) is the substantive one
+for regression; §6 now supplies the answer for classification, and that answer
+is that the `M → ∞` logistic theorem is the hardest object here and probably
+not worth chasing. Weeks rather than months for the regression case, and
+materially more tractable than the Mondrian repair, whose nearly-empty-cells
+obstacle has no comparable workaround. §4 and §6 each took an afternoon, which
+is a reason to be suspicious of both until they have been read carefully.
 
 Nothing in the main inference theory waits on any of this: Theorem 1 consumes an
 `L²` rate and nothing else, and the pairing identity (Theorem 3) already
@@ -221,7 +313,7 @@ piecewise-constant trees being BV. What is unproved is only that the
 **uncorrected plug-in** is gradient-consistent — the quantity the paper argues
 throughout should not be relied on.
 
-## 9. If it is not proved before submission
+## 10. If it is not proved before submission
 
 Narrow the three places that currently imply coverage:
 
