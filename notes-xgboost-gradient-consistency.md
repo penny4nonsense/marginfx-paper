@@ -3,10 +3,12 @@
 Status, by section:
 
 - **§2 is a finding about Theorem S2.** I am confident in it.
-- **§4 is a draft lemma whose conclusion now appears to be false.** Its Step 2
-  is verified, but assumption (A3) does not hold and, more seriously, the
-  quantity it bounds **grows with the number of rounds** rather than staying
-  uniformly bounded. See §4.4, added after running XGBoost. Do not build on §4.
+- **§4 is a draft lemma whose conclusion is false as an `M → ∞` statement.**
+  Step 2 is verified and (A2) is repairable by configuration, but (A3) does not
+  hold, and the quantity the lemma bounds — while convergent in `M` for each
+  fixed `n` — has a limit growing like `n^{0.8}`, so it is not uniform in `n`.
+  Crucially, **at a fixed round count it is flat in `n`**, so early stopping
+  supplies exactly the uniformity that is missing. See §4.4.
 - **§6.1–6.2 are verified** — geometry in `d ≤ 4` and the ensemble bound with
   face overlap deliberately induced. §6.5's two obstacles stand.
 - **§8 is now the recommended position**, for regression as well as
@@ -165,62 +167,77 @@ problem.**
    and is what makes the failure diagnosable — the `γ^{-2}` is where the
    three-orders-of-magnitude slack in §4.4 comes from.
 
-### 4.4 Empirical check — and why the lemma fails
+### 4.4 Empirical check — the hypotheses and the conclusion
 
-Run 2026-10-19 with `check-xgboost-assumptions.py` and
-`check-xgboost-growth.py`, on the paper's own linear
-regression DGP (`y = 2x₁ + 3x₂ + ε`, `x ∼ N(0,I₄)`) and settings
-(`max_depth 4`, `eta 0.05`, `reg_lambda 1`), at `n = 250, 1000, 5000`.
+Run 2026-10-19 with `check-xgboost-assumptions.py`, `check-xgboost-growth.py`
+and `check-xgboost-settings.py`, on the paper's own linear regression DGP
+(`y = 2x₁ + 3x₂ + ε`, `x ∼ N(0,I₄)`) and settings (`max_depth 4`, `eta 0.05`,
+`reg_lambda 1`).
 
-**Step 2 holds.** `‖h_m‖_∞ ≤ κ^{-1/2}‖u_m‖_{2,n}` is satisfied at every round
-in every configuration, worst ratio 0.35. Reconstructing the leaf values as
-shrunk means `G_l/(n_l+λ)` matches XGBoost's output to `1e-6`, so the model of
-the algorithm underlying Step 2 is right.
+**Step 2 holds.** `‖h_m‖_∞ ≤ κ^{-1/2}‖u_m‖_{2,n}` is satisfied at every round in
+every configuration, worst ratio 0.35. Reconstructing leaf values as shrunk
+means `G_l/(n_l+λ)` matches XGBoost to `1e-6`, so the model of the algorithm
+behind the step is right.
 
-**(A2) fails as configured, but is repairable.** With the default
+**(A2) fails as configured, but is repairable.** At the default
 `min_child_weight = 1` the smallest leaf holds exactly one observation at every
-sample size, so `κ̂ = 1/n`: `4.0e-3`, `1.0e-3`, `2.0e-4`. Not bounded below —
-it vanishes at rate `1/n`. Setting `min_child_weight = n/32` gives
-`κ̂ = 0.028, 0.031, 0.031`, stable in `n`, so the assumption is available at
-the cost of a configuration change.
+sample size, so `κ̂ = 1/n`: `4.0e-3`, `1.0e-3`, `2.0e-4` at
+`n = 250, 1000, 5000`. Setting `min_child_weight = n/32` gives
+`κ̂ ≈ 0.03`, stable in `n`. A configuration change, not an obstacle.
 
-**(A3) fails and is not repairable by configuration.** The realised edge ratio
-`‖h_m‖_{2,n}/‖u_m‖_{2,n}` decays in both arguments: its minimum over rounds is
-`0.104, 0.058, 0.031` at `n = 250, 1000, 5000` — roughly `n^{-0.4}` — and
-within a run it falls from `0.91` at round 1 to `0.066` at round 200. There is
-no uniform `γ > 0`. The resulting bound `2γ^{-2}‖Y‖` is correspondingly
-useless: `694`, `2187`, `7833` against a realised quantity of about `10`.
+**(A3) fails and is not repairable.** The realised edge ratio decays in both
+arguments — roughly `n^{-0.4}` across sample sizes, and from `0.91` to `0.066`
+within a 200-round run. No uniform `γ` exists, and the `2γ^{-2}‖Y‖` bound it
+yields is three orders of magnitude loose: `694`, `2187`, `7833` against a
+realised quantity near `10`.
 
-**The conclusion itself is false.** This is the part that matters. Taking the
-run out to `M = 4000` rounds, the quantity the whole lemma turns on grows:
+**The conclusion fails too — but in `n`, not in `M`.** This needed two passes to
+get right. Fitting the growth of `Σ ν‖h_m‖_∞` over `M ≤ 4000` gives `M^{0.3}`
+to `M^{0.5}` and suggests divergence in `M`. **That is a transient.** Carried
+to `M = 16000` at the paper's settings the local slope collapses —
+`0.52, 0.46, 0.22, 0.05` — and the sum saturates. For each `n` it converges.
 
-| M | 50 | 200 | 1000 | 4000 | implied |
-|---|---|---|---|---|---|
-| `Σ ν‖h_m‖_∞`, `n=1000`, `mcw = n/32` | 8.3 | 11.4 | 18.4 | 32.0 | `M^0.34` |
-| `Σ ν‖h_m‖_∞`, `n=5000`, `mcw = n/32` | 8.0 | 10.3 | 14.7 | 25.6 | `M^0.30` |
-| `Σ ν‖h_m‖_∞`, `n=1000`, default | 10.2 | 17.1 | 38.3 | 58.3 | `M^0.41` |
+What it converges *to* is the problem:
 
-Bounded would be `M^0`; the energy/Cauchy–Schwarz route gives `M^0.5`. The
-truth sits between, so **`Σ ν‖h_m‖_∞` is not uniformly bounded in `M`** and
-neither, therefore, is the bound on `|Df̂_M|(Ω)` that §4 derives from it. The
-mechanism is visible in the gap between `‖h_m‖_∞` and `‖h_m‖_{2,n}`: the
-telescoping energy budget `Σ ν(2−ν)‖h_m‖²_{2,n} ≤ ‖Y − base‖²_{2,n}` is
-essentially saturated (13.98 against 14.40), so late rounds carry almost no
-energy, but they spend it on increasingly spiky trees — large on one small
-leaf, negligible elsewhere. Those contribute nothing in RMS and a great deal
-in sup norm, which is the norm the BV bound needs.
+| `n` | 500 | 1000 | 2000 | 4000 |
+|---|---|---|---|---|
+| `Σ ν‖h_m‖_∞` at `M = 200` | 15.1 | 19.0 | 20.4 | 19.4 |
+| saturated limit (`M → ∞`) | 34.6 | 60.9 | 106.3 | >195.8 |
+| local slope at `M = 16000` | 0.000 | 0.000 | 0.048 | 0.242 |
 
-**What this means.** Gradient consistency needs `M → ∞` for `L¹` consistency,
-and the BV bound diverges in exactly that limit. The two conditions of §1 are
-in direct conflict for XGBoost, not merely hard to establish together. That is
-a stronger obstruction than §7 item 2 anticipated, and it applies to the
-**regression** case — the one §6 had left standing.
+The saturated limit grows like `n^{0.8}`, so
+`sup_n E[|Df̂_n|(Ω)] = ∞` and the lemma's conclusion is false — but as a
+statement about `n`, which is the uniformity Lemma S4 actually demands.
 
-A caveat on reading the table: `M = 4000` at `ν = 0.05` is `νM = 200`, far past
-any sensible stopping point. Over the realistic range `M = 50 → 200` the growth
-is only a factor of 1.4. The divergence is a statement about the limit the
-theorem would need, not about the estimator as it is actually run — which is
-precisely why §8 is the position that survives.
+The mechanism is ordinary overfitting seen in the BV norm. Unstopped boosting
+at these settings eventually interpolates the training data; an interpolant of
+`n` noisy points needs about `n` jumps, so its total variation grows with `n`.
+The energy budget does not prevent this: `Σ ν(2−ν)‖h_m‖²_{2,n}` is essentially
+saturated (13.98 against 14.40), so late rounds carry almost no energy, but
+they spend it on increasingly spiky trees — large on one small leaf, negligible
+elsewhere. That costs nothing in RMS and a great deal in sup norm, which is the
+norm the BV bound needs.
+
+**The row that matters is the first one.** At `M = 200` the sum is `15.1, 19.0,
+20.4, 19.4` — **flat in `n`**. Early stopping is what delivers the uniformity,
+and it delivers it without any change of settings. So the obstruction is not
+that XGBoost is unsuited to the BV route; it is that the `M → ∞` idealisation
+is the wrong object, and §8's early-stopped regime is the right one.
+
+**Settings cannot substitute for stopping.** Sweeping `reg_lambda ∈ {1, n/100,
+n/10, n, 10n}`, `min_child_weight ∈ {1, n/32, n/16}` and `max_depth ∈ {1,2,4}`,
+no configuration removes the `n`-growth of the unstopped limit, and the two
+knobs pull against each other: light regularisation gives fast residual decay
+but spiky late trees, heavy regularisation gives small trees but residuals that
+barely decay, so the sum accrues over more rounds. `reg_lambda = n/10` was
+best over `M ≤ 4000` yet, unlike the defaults, had **not** saturated by
+`M = 16000` (slope 0.36) — heavy shrinkage prevents the interpolation that
+makes the default sum converge at all.
+
+Settings do help the **constant** in the early-stopped regime, which is where
+they are worth using: at `M = 200`, `reg_lambda = n/10` cuts the sum from
+`20.4` to `7.9`, and `depth 1 + min_child_weight = n/16 + reg_lambda = 10n`
+reaches `0.93`.
 
 ## 5. XGBoost's regularisers in the light of §4
 
@@ -382,10 +399,11 @@ logistic case, and the reason §6.2 and §8 matter more here than for regression
    and falls by an order of magnitude within a run, so no uniform `γ` exists,
    and the `γ^{-2}` bound it yields is three orders of magnitude loose. This
    hypothesis should be abandoned rather than repaired.
-3. **The conclusion of §4** — also refuted in §4.4. `Σ ν‖h_m‖_∞` grows like
-   `M^{0.3}`, so no route, edge-based or otherwise, will deliver a bound on
-   `|Df̂_M|(Ω)` uniform in `M`. Anyone revisiting this should start by deciding
-   whether a `M → ∞` statement is wanted at all.
+3. **The conclusion of §4** — refuted in §4.4, as an `M → ∞` statement: the
+   unstopped limit grows like `n^{0.8}`. No configuration removes this, and the
+   regularisation knobs pull against each other. Anyone revisiting this should
+   start by deciding whether an `M → ∞` statement is wanted at all, since the
+   early-stopped version of the same quantity is flat in `n`.
 4. **Newton boosting / logistic loss.** Worked out in §6. Step 2 survives in
    Hessian-weighted form; Step 3 does not, and the minimum-Hessian parameter is
    in tension with what logistic boosting does. For the fixed round counts
@@ -408,11 +426,13 @@ XGBoost-as-run is a double-robustness one, and gradient consistency belongs to
 the `M → ∞` idealisation. Worth deciding deliberately rather than by default.
 
 **This is now the recommended position, and for regression too.** §4.4 shows
-`Σ ν‖h_m‖_∞` growing like `M^{0.3}`, so the BV bound diverges in precisely the
-limit that `L¹` consistency requires: the two conditions of §1 are in conflict
-for XGBoost rather than merely hard to establish together. And §6.5 item 2
-gives an independent structural obstruction for logistic loss. Both routes to
-an `M → ∞` theorem are blocked, by different mechanisms.
+the unstopped limit of `Σ ν‖h_m‖_∞` growing like `n^{0.8}` — the BV bound is
+not uniform in `n` precisely when boosting is allowed to run to interpolation,
+which is what `L¹` consistency would require. At a fixed round count the same
+quantity is flat in `n`. And §6.5 item 2 gives an independent obstruction for
+logistic loss. Both routes to an `M → ∞` theorem are blocked, by different
+mechanisms, while the early-stopped regime is empirically well behaved in both
+cases.
 
 For classification the fixed-`M` bound is additionally *unconditional* —
 `|D f̂ₙ|(Ω) ≤ M(2^D−1)A` follows from `0 ≤ σ ≤ 1` alone, needing no edge
@@ -428,8 +448,8 @@ machinery for exactly that case.
 
 The honest summary after the checks: **do not chase the `M → ∞` theorem.**
 
-§4's route is refuted, not merely unproved — its hypothesis (A3) is false and
-its conclusion is false. §6.5's obstruction for logistic loss is independent
+§4's route is refuted, not merely unproved — (A3) is false, and the conclusion
+is false in `n` once boosting runs to interpolation. §6.5's obstruction for logistic loss is independent
 and also structural. The remaining work to rescue a limit theorem would be to
 find some other functional of the ensemble that is both uniformly bounded and
 strong enough to drive BV convergence, and nothing in the checks suggests one
