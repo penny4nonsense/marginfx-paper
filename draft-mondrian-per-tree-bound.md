@@ -2,12 +2,13 @@
 
 Draft of a replacement for Substeps 2a–2c of §S25. Written 2026-10-19.
 
-**Status.** Lemma A is proved and numerically confirmed. Lemma B rests on a
-published distributional fact about Mondrian cells and reduces the signal term
-to arithmetic. The noise term is reduced to a single tail estimate, Lemma C,
-which is **not yet proved** — it is where the remaining work is. Step 5
-assembles. Nothing here should go into the supplement until Lemma C is
-discharged and someone other than me has read Lemmas A and B.
+**Status.** Lemmas A, B and C are all proved, and each is numerically
+confirmed. The per-tree bound is therefore complete, and with Step 1 of §S25 it
+gives the forest bound with no condition on `B`. Two things still need an
+author's eye before any of it goes into the supplement: the boundary case of
+Lemma B on `[0,1]^d`, and Step 0's jump-set containment, which is argued and
+verified numerically in `d ≤ 4` but not proved in general. And none of it has
+been read by anyone but me.
 
 Companion to `notes-mondrian-bv-bound.md`, which gives the background and the
 scaling heuristic this makes precise.
@@ -138,36 +139,82 @@ what the note asserted without proof: the signal part is `O(1)` because the
 discrete variation of a Lipschitz function over a refining partition is
 controlled by the partition's aspect ratio, not by how fine it is.
 
-## Lemma C (small cells) — **open; this is the remaining work**
+## Lemma C (the noise term) — **proved**
 
-> `E[ Σ_l E[|ε_l| | P] · vol(l)/s_1(l) ] ≲ σ · λ^{1+d/2} n^{-1/2}`.
+> `E[ Σ_l E[|ε_l| \mid P] · vol(l)/s_1(l) ] ≤ 2σ C_d · λ^{1+d/2} n^{-1/2}`,
+> with `C_d = √(2π)(√π/2)^{d-1} + π^{(2+d)/6}`.
+> At `λ_n ≍ n^{1/(d+2)}` the right side is a constant.
 
-Given `P`, `N_l ~ Bin(n, vol(l))` and `E[|ε_l| | N_l] ≤ σ N_l^{-1/2}` for
-`N_l ≥ 1`, with `ε_l = 0` otherwise. In the bulk regime `n·vol(l) ≫ 1` this
-gives `E|ε_l| ≲ σ (n vol(l))^{-1/2}` and, with `vol(l) ≈ λ^{-d}`,
-`s_1(l) ≈ λ^{-1}` and `λ^d` leaves,
+*Step C1: a binomial bound.* Given `P`, `N_l ~ Bin(n, vol(l))` and
+`E[|ε_l| \mid N_l] ≤ σ N_l^{-1/2}` for `N_l ≥ 1`, so with `μ = n·vol(l)` we need
+`ψ(n,p) := E[N^{-1/2} 1\{N ≥ 1\}]`. Two bounds:
 
-    Σ_l σ (n vol(l))^{-1/2} vol(l)/s_1(l) ≈ λ^d · σ λ^{-d/2} n^{-1/2} · λ
-                                          = σ λ^{1+d/2} n^{-1/2},
+- `ψ ≤ P(N ≥ 1) ≤ μ`, since `N^{-1/2} ≤ 1` on `\{N ≥ 1\}`;
+- `N^{-1/2} ≤ √2 (N+1)^{-1/2}` on `\{N ≥ 1\}`, and by Jensen
+  `E[(N+1)^{-1/2}] ≤ (E[(N+1)^{-1}])^{1/2}`, while the classical identity
+  `E[(N+1)^{-1}] = (1-(1-p)^{n+1})/((n+1)p) ≤ 1/μ` gives `ψ ≤ √2\,μ^{-1/2}`.
 
-which at `λ = n^{1/(d+2)}` is exactly `O(1)`, since
-`(1+d/2)/(d+2) = 1/2`. **This is the arithmetic the note gave, and it is sound
-in the bulk.** What is missing is the tail: cells with `n vol(l) = O(1)`, where
-`E[N_l^{-1/2} 1{N_l ≥ 1}] ≈ P(N_l ≥ 1) ≈ n vol(l)` rather than
-`(n vol(l))^{-1/2}`.
+So `ψ ≤ min(√2\,μ^{-1/2}, μ)`.
 
-Two things make this look tractable rather than open-ended. First, the typical
-cell is not small: `n vol(l) ≈ n λ^{-d} = n^{2/(d+2)} → ∞`, so small cells are
-a tail event rather than the norm — this is the budget doing its work.
-Second, the cell volume has an explicit law, `vol(l) = Π_j s_j` with
-`s_j` iid `Gamma(2,λ)` by Lemma B's fact, so the tail probability is a
-computable integral rather than something needing concentration machinery.
+*Step C2: change of variables.* By the identity `Σ_l g(l)vol(l) = E_X[g(l(X))]`
+and the cell law of Lemma B, write `S_j = T_j/λ` with `T_j` iid `Gamma(2,1)`,
+`W = Π_j T_j`, and `M := nλ^{-d}`. Then `vol(l) = λ^{-d}W`, `μ = MW`,
+`1/s_1 = λ/T_1`, and the quantity to bound is
+
+    λ · E[ ψ_μ / T_1 ],     ψ_μ = min(√2 μ^{-1/2}, μ).
+
+Since `λ M^{-1/2} = λ^{1+d/2} n^{-1/2}`, the claim is exactly
+`E[ψ_μ/T_1] ≤ C_d M^{-1/2}`.
+
+*Step C3: the bulk, `μ ≥ 1`.* Use `ψ ≤ √2μ^{-1/2}` and independence:
+
+    E[ψ/T_1 ; μ≥1] ≤ √2 M^{-1/2} E[T_1^{-3/2}] ∏_{j≥2} E[T_j^{-1/2}]
+                      = √2 M^{-1/2} Γ(1/2) Γ(3/2)^{d-1}
+                      = √(2π) (√π/2)^{d-1} M^{-1/2}.
+
+**The crux is that `E[T^{-3/2}] = Γ(1/2) = √π` is finite.** A `Gamma(2,1)`
+density vanishes linearly at the origin, so `t^{-3/2}·t = t^{-1/2}` is
+integrable — the `-3/2` power is exactly what the `1/s_1` from the section
+representation and the `μ^{-1/2}` from the binomial together demand, and it is
+the last moment that exists. Had the Mondrian cell law been `Exp` rather than
+`Gamma(2,·)` per side, this step would fail.
+
+*Step C4: the tail, `μ < 1`.* Use `ψ ≤ μ = MW`, and on the event `W < 1/M`
+bound `MW ≤ 1`:
+
+    E[ψ/T_1 ; μ<1] ≤ E[T_1^{-1} 1\{W < 1/M\}]
+                     ≤ (E[T_1^{-3/2}])^{2/3} · P(W < 1/M)^{1/3}   (Hölder, 3/2 and 3)
+                     = π^{1/3} P(W < 1/M)^{1/3}.
+
+A Chernoff bound on the Mellin transform gives, for any `s ∈ (0,2)`,
+`P(W<w) ≤ w^s E[W^{-s}] = w^s Γ(2-s)^d`; at `s = 3/2`,
+`P(W < 1/M) ≤ M^{-3/2} π^{d/2}`. Hence the tail is at most
+`π^{1/3}·π^{d/6} M^{-1/2} = π^{(2+d)/6} M^{-1/2}`.
+
+Adding C3 and C4 gives `E[ψ_μ/T_1] ≤ C_d M^{-1/2}`. ∎
+
+**Numerical check** (`check-mondrian-lemmaC.py`). The moment facts come out at
+`E[T^{-1/2}] = 0.8867` against `Γ(3/2) = 0.8862` and
+`E[T^{-3/2}] = 1.7785` against `Γ(1/2) = 1.7725`. The bound holds at every
+`(d, M)` tested, `d ∈ \{2,3,4\}` and `M` from `10` to `10⁴`, with realised /
+bound between `0.24` and `0.50`. The ratio **stabilises** as `M` grows
+(`d=2`: `0.351, 0.448, 0.496, 0.502`), so the `M^{-1/2}` rate is sharp and only
+the constant is loose. The Chernoff bound holds in every cell, by one to two
+orders of magnitude.
+
+**Why the small-cell worry dissolved.** The concern was cells with
+`n·vol(l) = O(1)`, where `ψ` behaves like `μ` rather than `μ^{-1/2}`. Step C4
+handles them without needing them to be rare: the `ψ ≤ μ` branch is *stronger*
+than `μ^{-1/2}` there, and all that is required is that the event `W < 1/M`
+carry little enough mass, which the Mellin bound supplies with room to spare.
+No concentration machinery and no appeal to Mourtada et al.'s risk analysis
+turned out to be necessary.
 
 ## Step 5: assembly
 
 With Lemma C,
 
-    E|D_1 T|(Ω) ≤ E[S_1] + E[N_1] ≤ 2L(2d−1) + C σ λ^{1+d/2} n^{-1/2},
+    E|D_1 T|(Ω) ≤ E[S_1] + E[N_1] ≤ 2L(2d−1) + 2σ C_d λ^{1+d/2} n^{-1/2},
 
 uniformly bounded at `λ_n ≍ n^{1/(d+2)}`. Summing the `d` coordinates gives
 `sup_n E[|DT|(Ω)] < ∞`, and Step 1 of §S25 — `|Df̂_n|(Ω) ≤ B^{-1} Σ_b |DT_b|(Ω)`
@@ -185,9 +232,13 @@ does not use. The condition `B ≫ n^{2(d−α)/(d+2)}` disappears with them.
 
 | piece | status |
 |---|---|
-| Step 0, jump-set representation | argued; LCA containment verified numerically in `d ≤ 4` |
-| Lemma A, interface area `= dλ·vol` | **proved**, and confirmed to ~1% |
-| Lemma B, aspect ratio `≤ 2d−1` | proved from a published fact; boundary case needs care |
-| Step 3, signal `= O(1)` | **done given Lemma B** |
-| Lemma C, noise tail | **open** — the bulk arithmetic is right, small cells are not handled |
+| Step 0, jump-set representation | argued; LCA containment verified numerically in `d ≤ 4`, not proved in general |
+| Lemma A, interface area `= dλ·vol` | **proved**; confirmed to ~1% |
+| Lemma B, aspect ratio `≤ 2d−1` | **proved** from a published cell law; boundary case on `[0,1]^d` needs an argument |
+| Step 3, signal `= O(1)` | **proved**, given Lemma B |
+| Lemma C, noise `≲ λ^{1+d/2}n^{-1/2}` | **proved**; rate confirmed sharp, constant loose by 2–4× |
 | Step 5, assembly and the forest | immediate from Step 1 of §S25 |
+
+The two remaining items are both of the "needs a careful author" kind rather
+than the "needs a new idea" kind, which is the opposite of where the boosting
+analogue ended up.
