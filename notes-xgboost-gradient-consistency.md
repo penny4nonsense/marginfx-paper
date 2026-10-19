@@ -331,6 +331,28 @@ separately for each target and each `n` — and the overshoot is measured at
 `M*`. Stopping earlier would trade away the consistency that `M → ∞` was
 needed for in the first place.
 
+**How hard does the target have to be? Harder than anything the paper uses.**
+Repeating the measurement on all three of the paper's DGPs:
+
+| target | `n=500` | `n=2000` | `n=8000` | verdict |
+|---|---|---|---|---|
+| `2x₁+3x₂` (paper) | 0.83× | 0.97× | 0.99× | converges to the truth |
+| `2x₁+3x₂+2x₁x₂` (paper) | 0.70× | 0.95× | 0.97× | converges to the truth |
+| `2x₁²+3x₂` (paper) | 0.82× | 0.94× | 0.96× | converges to the truth |
+| `5exp(−‖x‖²/2)` | 1.33× | 1.78× | 2.13× | overshoots, widening |
+
+**All three of the paper's designs converge to the truth from below** — which
+is what lower semicontinuity plus strict convergence predicts, and is textbook
+behaviour. The overshoot is confined to the radial target, constructed to be
+awkward for axis-aligned splits: smooth, rotationally symmetric, four
+dimensional. Nothing in Section 5 of the paper is in that regime.
+
+So the scope of the failure is narrower than §4.5 alone suggested. Gradient
+consistency for boosted trees is *not* established in general, and the radial
+case shows it genuinely fails — but it fails on targets the tree class is badly
+matched to, not on the designs the paper reports. The narrowing in §10 is a
+scoping correction, not a repair of anything the paper claims empirically.
+
 **And this is good news for the paper.** A learner whose fitted surface has
 twice the variation of the truth, at its own optimal stopping point, has a
 plug-in gradient that is largely measuring its own wiggle. That is precisely
