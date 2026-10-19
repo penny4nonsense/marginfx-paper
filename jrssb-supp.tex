@@ -2785,93 +2785,103 @@ supplement.
 	
 	\subsection{Part I: Weak-* Convergence}
 	
-	\subsubsection*{Step 1: Bound the Full BV Norm}
-	
-	To apply the BV compactness theorem we require a uniform bound on the full
-	$BV$ norm:
+	\subsubsection*{Step 1: Tightness of the $BV$ Norms}
+
+	The well-behaved condition in the $BV$ sense controls $|D\fn|(\Omega)$ in
+	expectation, and an expectation bound does not make the sequence bounded
+	almost surely: the total variation may be arbitrarily large on an event of
+	vanishing but positive probability for every $n$. What the condition does
+	deliver is uniform tightness, and tightness is what the subsequence
+	architecture needs. Fix $\epsilon$, $\delta$, $\phi$ and $\{n_k\}$ as in the
+	contradiction hypothesis and write
 	\begin{equation}
-		\norm{\fn}_{BV} = \norm{\fn}_{L^1} + |D\fn|(\Omega)
+		A_k = \left\{\left|
+		\int_\Omega \phi \cdot d(D\hat{f}_{n_k})
+		- \int_\Omega \phi \cdot d(Df)\right| > \epsilon\right\},
+		\qquad \Prob(A_k) > \delta .
 	\end{equation}
-	For the total variation term, the well-behaved condition gives:
+
+	Since $\norm{\fn - f}_{L^1} \xrightarrowp 0$, pass once to a subsequence of
+	$\{n_k\}$ along which $\norm{\hat{f}_{n_k} - f}_{L^1} \to 0$ almost surely.
+	The contradiction hypothesis is inherited by every subsequence, so nothing
+	is lost and we continue to write $\{n_k\}$. Let $\Omega_0$ be the
+	probability-one event on which that convergence holds. Securing it here,
+	rather than by a second extraction later, is what keeps the argument free of
+	a subsequence that depends on the sample point.
+
+	For the total variation term, $C_1 = \sup_n \E[|D\fn|(\Omega)] < \infty$,
+	so Markov's inequality gives $\Prob(|D\fn|(\Omega) > M) \leq C_1/M$
+	uniformly in $n$; fix $M$ with $C_1/M < \delta/8$. For the $L^1$ term,
+	$\norm{\fn}_{L^1} \leq \norm{\fn - f}_{L^1} + \norm{f}_{L^1}$ with
+	$\norm{f}_{L^1} < \infty$ because $f \in \Wonep \subset \Lone$, so there are
+	$C_2 < \infty$ and $K_0$ with
+	$\Prob(\norm{\hat{f}_{n_k}}_{L^1} > C_2) < \delta/8$ for $k \geq K_0$.
+	Setting
 	\begin{equation}
-		\sup_n \E\!\left[|D\fn|(\Omega)\right] < \infty
+		E_k = \left\{|D\hat{f}_{n_k}|(\Omega) \leq M\right\} \cap
+		\left\{\norm{\hat{f}_{n_k}}_{L^1} \leq C_2\right\} ,
 	\end{equation}
-	so $|D\fn|(\Omega)$ is bounded in expectation and hence bounded almost
-	surely along subsequences by Markov's inequality.
-	
-	For the $L^1$ term, the consistency assumption
-	$\norm{\fn - f}_{L^1} \xrightarrowp 0$ implies that $\norm{\fn}_{L^1}$ is
-	eventually bounded in probability. Since $f \in \Wonep \subset \Lone$, we
-	have $\norm{f}_{L^1} < \infty$, and:
+	we have $\Prob(E_k) \geq 1 - \delta/4$ for $k \geq K_0$, and on $E_k$ the
+	realized $BV$ norm satisfies
+	$\norm{\hat{f}_{n_k}}_{BV} \leq R := C_2 + M$.
+
+	\subsubsection*{Step 2: A Positive-Probability Event of Bounded Realizations}
+
+	For $k \geq K_0$ we have $\Prob(A_k \cap E_k) \geq \delta - \delta/4 =
+	3\delta/4$. Because $\Prob(\limsup_k B_k) \geq \limsup_k \Prob(B_k)$ for any
+	sequence of events $B_k$ in a probability space, the event
 	\begin{equation}
-		\norm{\fn}_{L^1}
-		\leq \norm{\fn - f}_{L^1} + \norm{f}_{L^1}
+		G = \left(\limsup_{k \to \infty} \, A_k \cap E_k\right) \cap \Omega_0
 	\end{equation}
-	which is bounded in probability. Combining the two terms:
-	\begin{equation}
-		\sup_n \norm{\fn}_{BV} < \infty \quad \text{almost surely}
-	\end{equation}
-	
-	\subsubsection*{Step 2: Extract a Weakly-* Convergent Subsequence}
-	
-	Take any subsequence $\{\hat{f}_{n_k}\}$. By Step~1 it is bounded in
-	$\BV$ almost surely. The BV compactness theorem
-	\citep[Theorem~5.5]{evans2015measure} states that every sequence bounded in
-	$BV(\Omega)$ for bounded Lipschitz $\Omega$ has a subsequence
-	$\{\hat{f}_{n_{k_j}}\}$ and $g \in \BV$ such that:
+	satisfies $\Prob(G) \geq 3\delta/4 > 0$. Fix $\omega \in G$. By
+	construction $\omega$ lies in $A_k \cap E_k$ for infinitely many $k$; let
+	$\{k_j\}$ enumerate those indices. Along them the realized functions
+	$\hat{f}_{n_{k_j}}(\omega)$ are a deterministic sequence bounded in $BV$ by
+	$R$, so the $BV$ compactness theorem
+	\citep[Theorem~5.5]{evans2015measure} applies to it as a statement about
+	functions, with no measurable selection required: there are a further
+	subsequence $\{k_{j_i}\}$ and $g \in \BV$ with
 	\begin{enumerate}
-		\item $\hat{f}_{n_{k_j}} \to g$ strongly in $\Lone$
-		\item $D\hat{f}_{n_{k_j}} \xrightarrow{w*} Dg$ in $\cM$
+		\item $\hat{f}_{n_{k_{j_i}}}(\omega) \to g$ strongly in $\Lone$,
+		\item $D\hat{f}_{n_{k_{j_i}}}(\omega) \xrightarrow{w*} Dg$ in $\cM$.
 	\end{enumerate}
-	both holding almost surely. This is the BV analog of the Rellich--Kondrachov
-	compact embedding: the BV compactness theorem gives simultaneously the $L^1$
-	convergence of the functions and the weak-* convergence of their gradient
-	measures, in a single extraction.
-	
+	This is the $BV$ analogue of Rellich--Kondrachov: one extraction delivers
+	both the $L^1$ convergence of the functions and the weak-* convergence of
+	their gradient measures.
+
 	\subsubsection*{Step 3: Identify the Limit}
-	
-	From item~(1) of Step~2, $\hat{f}_{n_{k_j}} \to g$ strongly in $\Lone$
-	almost surely. By the $L^1$ consistency assumption
-	$\norm{\fn - f}_{L^1} \xrightarrowp 0$, along the subsequence
-	$\hat{f}_{n_{k_j}} \to f$ in $L^1$ in probability, hence almost surely
-	along a further subsequence. By uniqueness of $L^1$ limits:
+
+	Because $\omega \in \Omega_0$, $\norm{\hat{f}_{n_k}(\omega) - f}_{L^1} \to 0$
+	along the whole index set and hence along $\{k_{j_i}\}$. Limits in $\Lone$
+	are unique, so $g = f$ $\mathcal{L}^d$-almost everywhere on $\Omega$,
+	$Dg = Df$ as Radon measures, and item~(2) of Step~2 gives
 	\begin{equation}
-		g = f \quad \mathcal{L}^d\text{-a.e.\ on } \Omega
+		\int_\Omega \phi \cdot d\!\left(D\hat{f}_{n_{k_{j_i}}}(\omega)\right)
+		\longrightarrow \int_\Omega \phi \cdot d(Df) .
 	\end{equation}
-	Therefore $Dg = Df$ as Radon measures, and from item~(2) of Step~2:
-	\begin{equation}
-		D\hat{f}_{n_{k_j}} \xrightarrow{w*} Df \quad \text{in } \cM
-		\quad \text{almost surely}
-	\end{equation}
-	In particular, for the test function $\phi$ from the contradiction
-	assumption:
-	\begin{equation}
-		\int_\Omega \phi \cdot d(D\hat{f}_{n_{k_j}})
-		\to \int_\Omega \phi \cdot d(Df)
-		\quad \text{almost surely}
-	\end{equation}
-	
+
 	\subsubsection*{Step 4: Derive the Contradiction}
-	
-	The almost sure convergence in Step~3 implies:
+
+	But $\omega \in A_{k_j}$ for every $j$, so
 	\begin{equation}
-		\mathbb{P}\!\left(\left|
-		\int_\Omega \phi \cdot d(D\hat{f}_{n_{k_j}})
-		- \int_\Omega \phi \cdot d(Df)
-		\right| > \epsilon\right) \to 0
+		\left|\int_\Omega \phi \cdot d\!\left(D\hat{f}_{n_{k_j}}(\omega)\right)
+		- \int_\Omega \phi \cdot d(Df)\right| > \epsilon
 	\end{equation}
-	This contradicts the assumption that the probability exceeds $\delta > 0$
-	for all $k$. Therefore the assumption was false.
-	
+	for every $j$, in particular along $\{k_{j_i}\}$, contradicting the
+	convergence just established. As $\omega \in G$ was arbitrary and
+	$\Prob(G) > 0$, the contradiction hypothesis is untenable.
+
 	\subsubsection*{Conclusion of Part I}
-	
-	Since every subsequence $\{D\hat{f}_{n_k}\}$ has a further subsequence
-	converging weak-* to $Df$ almost surely, the full sequence satisfies:
+
+	The test function $\phi \in C_0(\Omega)^d$ in the contradiction hypothesis
+	was arbitrary, so for every such $\phi$ the integrals
+	$\int_\Omega \phi \cdot d(D\fn)$ converge in probability to
+	$\int_\Omega \phi \cdot d(Df)$, which is to say
 	\begin{equation}
 		D\fn \xrightarrow{w*} Df \quad \text{in } \cM
-		\quad \text{in probability}
+		\quad \text{in probability.}
 	\end{equation}
-	
+
 	\subsection{Part II: Strict Convergence Upgrade}
 	
 	We now prove the additional claim: if $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$
@@ -2890,41 +2900,51 @@ supplement.
 	This gives the lower bound on the total variation of the limit.
 	
 	\subsubsection*{Step 2: The Additional Condition Gives the Other Direction}
-	
-	By the additional assumption $\E[|D\fn|(\Omega)] \to |Df|(\Omega)$, we have:
+
+	The additional assumption constrains a sequence of expectations and does not
+	by itself bound $\limsup_n |D\fn|(\Omega)$ pathwise; a sequence of random
+	variables can have convergent means while fluctuating without limit. The two
+	directions combine through Fatou's lemma instead. Write
+	$Z_n = |D\fn|(\Omega) - |Df|(\Omega)$ and take any subsequence. By Part~I it
+	has a further subsequence along which $D\fn \xrightarrow{w*} Df$ almost
+	surely, and along that further subsequence lower semicontinuity gives
+	$\liminf_n Z_n \geq 0$ almost surely. Hence the negative part satisfies
+	$Z_n^- \to 0$ almost surely, and since $0 \leq Z_n^- \leq |Df|(\Omega)
+	< \infty$ the bounded convergence theorem gives $\E[Z_n^-] \to 0$. The
+	assumption gives $\E[Z_n] \to 0$, so
+	$\E[Z_n^+] = \E[Z_n] + \E[Z_n^-] \to 0$, whence $Z_n^+ \to 0$ in $L^1$ and
+	therefore in probability. Both parts vanish, so $Z_n \to 0$ in probability
+	along that further subsequence; as the initial subsequence was arbitrary,
 	\begin{equation}
-		\limsup_{n \to \infty} |D\fn|(\Omega) \leq |Df|(\Omega)
+		|D\fn|(\Omega) \longrightarrow |Df|(\Omega) \quad \text{in probability.}
 	\end{equation}
-	in expectation, hence in probability along subsequences.
-	
-	\subsubsection*{Step 3: Pin the Total Variation}
-	
-	Step~1 gives the $\liminf$ inequality by lower semicontinuity of total
-	variation under weak-* convergence, and Step~2 gives the $\limsup$
-	inequality from the additional assumption. Since $\liminf \leq \limsup$
-	always, combining gives:
-	\begin{equation}
-		|Df|(\Omega)
-		\leq \liminf_{n \to \infty} |D\fn|(\Omega)
-		\leq \limsup_{n \to \infty} |D\fn|(\Omega)
-		\leq |Df|(\Omega)
-	\end{equation}
-	All inequalities are therefore equalities and $|D\fn|(\Omega) \to |Df|(\Omega)$
-	in probability. Combined with the weak-* convergence $D\fn \xrightarrow{w*}
-	Df$ established in Part~I, this is precisely the definition of strict
-	convergence in $\cM$ \citep[Definition~3.13]{ambrosio2000bv}. \qed
-	
+
+	\subsubsection*{Step 3: Conclude Strict Convergence}
+
+	Part~I gives $D\fn \xrightarrow{w*} Df$ in $\cM$ in probability and Step~2
+	gives convergence of the total masses in probability. Together these are
+	precisely strict convergence in $\cM$
+	\citep[Definition~3.13]{ambrosio2000bv}. \qed
+
 	\begin{remark}
 		The parallel between Lemma~\ref{lem:sobolev_consistency} and
-		Lemma~\ref{lem:bv_consistency} is exact at the structural level. In both
-		cases: uniform boundedness in a strong space gives compactness via a
-		compact embedding or compactness theorem; the consistency condition
-		identifies the limit; and the subsequence argument promotes deterministic
-		convergence to convergence in probability. The difference is entirely in
-		the function spaces and the topology of convergence --- strong $L^p$ in the
+		Lemma~\ref{lem:bv_consistency} is close but not exact. In both cases
+		uniform boundedness in a strong space gives compactness via a compact
+		embedding or compactness theorem, the consistency condition identifies
+		the limit, and the subsequence argument promotes deterministic
+		convergence to convergence in probability. The first difference is in the
+		function spaces and the topology of convergence --- strong $L^p$ in the
 		Sobolev case, weak-* of measures in the BV case --- reflecting the
 		fundamental difference in the inductive biases of smooth and piecewise
-		constant estimators.
+		constant estimators. The second is in the mode of the boundedness
+		hypothesis, and it is why the two proofs do not run verbatim in parallel.
+		Definition~\ref{def:wellbehaved_sobolev} bounds $\norm{\fn}_{W^{2,p}}$
+		almost surely, so the compact embedding applies to the sequence directly.
+		Definition~\ref{def:wellbehaved_bv} bounds $|D\fn|(\Omega)$ only in
+		expectation, and an expectation bound does not make a sequence almost
+		surely bounded; the BV argument therefore passes through tightness to an
+		event of positive probability on which the realised norms are bounded,
+		and applies the compactness theorem there.
 	\end{remark}
 	
 	\begin{remark}

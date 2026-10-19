@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  17 OCT 2026 16:57
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  19 OCT 2026 12:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -634,34 +634,46 @@ Overfull \hbox (15.73434pt too wide) in paragraph at lines 2764--2771
 ][], re-plac-ing the Rellich--Kondrachov
  []
 
-[73] [74] [75] [76] [77] [78]
+[73]
+Overfull \hbox (3.1874pt too wide) in paragraph at lines 2830--2833
+\T1/cmr/m/n/12 For $\OML/cmm/m/it/12 k \OMS/cmsy/m/n/12 ^^U \OML/cmm/m/it/12 K[
+]$ \T1/cmr/m/n/12 we have $\U/msb/m/n/12 P\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 A[]
+ \OMS/cmsy/m/n/12 \ \OML/cmm/m/it/12 E[]\OT1/cmr/m/n/12 ) \OMS/cmsy/m/n/12 ^^U 
+\OML/cmm/m/it/12 ^^N \OMS/cmsy/m/n/12 ^^@ \OML/cmm/m/it/12 ^^N=\OT1/cmr/m/n/12 
+4 = 3\OML/cmm/m/it/12 ^^N=\OT1/cmr/m/n/12 4$\T1/cmr/m/n/12 . Be-cause $\U/msb/m
+/n/12 P\OT1/cmr/m/n/12 ([][] \OML/cmm/m/it/12 B[]\OT1/cmr/m/n/12 ) \OMS/cmsy/m/
+n/12 ^^U [][] \U/msb/m/n/12 P\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 B[]\OT1/cmr/m/n/
+12 )$
+ []
+
+[74] [75] [76] [77] [78]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3051.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3051.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3051.
-
-[79] [80]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3168.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3168.
+(hyperref)                removing `math shift' on input line 3071.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3168.
+(hyperref)                removing `superscript' on input line 3071.
 
-[81] [82] [83] [84] [85] [86] [87] [88] [89] [90] (./jrssb-supp.bbl [91]
-[92]) [93] (./jrssb-supp.aux)
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3071.
+
+[79] [80] [81]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3188.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `superscript' on input line 3188.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3188.
+
+[82] [83] [84] [85] [86] [87] [88] [89] [90] [91] (./jrssb-supp.bbl [92]
+[93]) [94] (./jrssb-supp.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
@@ -670,13 +682,13 @@ Package rerunfilecheck Info: File `jrssb-supp.out' has not changed.
 (rerunfilecheck)             Checksum: 434626487CA0758A0CEC7402D7BFB879;15622.
  ) 
 Here is how much of TeX's memory you used:
- 12820 strings out of 474934
- 196301 string characters out of 5757826
+ 12817 strings out of 474934
+ 196252 string characters out of 5757826
  1955785 words of memory out of 5000000
  33754 multiletter control sequences out of 15000+600000
  584708 words of font info for 104 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,18n,79p,2110b,577s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,18n,79p,2110b,587s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12
 .pfb><c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cme
 x10.pfb><c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/
@@ -713,10 +725,10 @@ ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb><c
 <c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sftt1000.pf
 b><c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sftt1200.
 pfb>
-Output written on jrssb-supp.pdf (93 pages, 802877 bytes).
+Output written on jrssb-supp.pdf (94 pages, 808093 bytes).
 PDF statistics:
- 1492 PDF objects out of 1728 (max. 8388607)
- 1314 compressed objects within 14 object streams
- 401 named destinations out of 1000 (max. 500000)
+ 1497 PDF objects out of 1728 (max. 8388607)
+ 1318 compressed objects within 14 object streams
+ 398 named destinations out of 1000 (max. 500000)
  521 words of extra memory for PDF output out of 10000 (max. 10000000)
 
