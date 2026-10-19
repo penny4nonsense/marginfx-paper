@@ -7,8 +7,10 @@ Status, by section:
   Step 2 is verified and (A2) is repairable by configuration, but (A3) does not
   hold, and the quantity the lemma bounds — while convergent in `M` for each
   fixed `n` — has a limit growing like `n^{0.8}`, so it is not uniform in `n`.
-  Crucially, **at a fixed round count it is flat in `n`**, so early stopping
-  supplies exactly the uniformity that is missing. See §4.4.
+  At a fixed round count it is flat in `n`, but a fixed round count gives no
+  consistency; §4.5 shows that stopping at the risk-minimising round rescues
+  the bound only for targets the tree class captures with a bounded boosting
+  path. See §4.4 and §4.5.
 - **§6.1–6.2 are verified** — geometry in `d ≤ 4` and the ensemble bound with
   face overlap deliberately induced. §6.5's two obstacles stand.
 - **§8 is now the recommended position**, for regression as well as
@@ -239,6 +241,52 @@ they are worth using: at `M = 200`, `reg_lambda = n/10` cuts the sum from
 `20.4` to `7.9`, and `depth 1 + min_child_weight = n/16 + reg_lambda = 10n`
 reaches `0.93`.
 
+### 4.5 Does early stopping rescue it? Only for easy targets
+
+§4.4 ends on an encouraging note — at a fixed round count the sum is flat in
+`n`. But a fixed round count gives no consistency: as `n → ∞` with `M` fixed,
+`f̂` converges to the `M`-round *population* boosting limit, not to `f`. The
+theorem needs `M_n → ∞`, so the question is whether `M_n` can grow fast enough
+for consistency while `Σ_{m<M_n} ν‖h_m‖_∞` stays bounded.
+
+Measured by stopping at `M*`, the round minimising risk against the noiseless
+target on 20,000 held-out points (`check-xgboost-earlystop.py`):
+
+| target | `M*` growth | sum at `M*` growth | risk/var at `n=8000` |
+|---|---|---|---|
+| `2x₁ + 3x₂` (paper, linear) | `n^{0.03}` | `n^{0.11}` | 0.004 |
+| `2x₁ + 3x₂ + 2x₁x₂` (paper, interaction) | `n^{0.25}` | `n^{0.17}` | 0.006 |
+| `2x₁² + 3x₂` (paper, nonlinear) | `n^{0.04}` | `n^{0.18}` | 0.011 |
+| `3sin(4x₁) + 3x₂` | `n^{-0.05}` | `n^{0.04}` | 0.009 |
+| `5exp(−‖x‖²/2)` (radial, 4-d) | `n^{0.36}` | `n^{0.32}` | 0.076 |
+
+**The sum at `M*` grows whenever `M*` grows, and at about the same rate.** The
+radial target is the clear failure: a smooth rotationally symmetric function is
+badly suited to axis-aligned splits, boosting has not converged to it even at
+`n = 8000` (risk still 7.6% of signal variance), `M*` keeps climbing at
+`n^{0.36}` and the sum climbs with it at `n^{0.32}`. Nothing suggests either
+levels off.
+
+So **early stopping does not supply the uniformity on its own.** It supplies it
+exactly when `M*` is bounded — when the tree class captures `f` with a bounded
+boosting path. The first four rows are targets of that kind: the oscillation is
+fine, despite looking hard, because a one-dimensional wiggle is cheap for
+axis-aligned trees. The radial target is not, and it is not exotic.
+
+**What this leaves is a theorem with a hypothesis on `f`, not on the
+algorithm.** Something of the form: *if `f` lies in the variation space of the
+depth-`D` tree dictionary — equivalently, if the population boosting path
+reaches `f` with bounded total variation — then early-stopped XGBoost is
+BV-bounded and gradient-consistent.* That is a real and statable result, and it
+is the condition §4 should have carried from the start. It is also much
+narrower than "gradient consistency for XGBoost", and verifying it for a given
+application is not obviously easier than the problem it replaces.
+
+**For the paper's own simulations this is benign.** All three of its DGPs sit
+in the slow-growth group (`n^{0.11}` to `n^{0.18}` over a 16-fold range of `n`),
+so nothing in Section 5 of the paper is in jeopardy. The difficulty is with the
+generality a theorem would have to claim, not with the experiments reported.
+
 ## 5. XGBoost's regularisers in the light of §4
 
 | setting | role in the lemma |
@@ -399,11 +447,12 @@ logistic case, and the reason §6.2 and §8 matter more here than for regression
    and falls by an order of magnitude within a run, so no uniform `γ` exists,
    and the `γ^{-2}` bound it yields is three orders of magnitude loose. This
    hypothesis should be abandoned rather than repaired.
-3. **The conclusion of §4** — refuted in §4.4, as an `M → ∞` statement: the
-   unstopped limit grows like `n^{0.8}`. No configuration removes this, and the
-   regularisation knobs pull against each other. Anyone revisiting this should
-   start by deciding whether an `M → ∞` statement is wanted at all, since the
-   early-stopped version of the same quantity is flat in `n`.
+3. **The conclusion of §4** — refuted in §4.4 as an `M → ∞` statement (the
+   unstopped limit grows like `n^{0.8}`, and no configuration removes it), and
+   only partly recovered by early stopping in §4.5. What survives is a theorem
+   conditional on `f` lying in the variation space of the tree dictionary.
+   Anyone revisiting this should start there, and should decide whether that
+   hypothesis is checkable in practice — if it is not, the result buys little.
 4. **Newton boosting / logistic loss.** Worked out in §6. Step 2 survives in
    Hessian-weighted form; Step 3 does not, and the minimum-Hessian parameter is
    in tension with what logistic boosting does. For the fixed round counts
@@ -434,6 +483,11 @@ logistic loss. Both routes to an `M → ∞` theorem are blocked, by different
 mechanisms, while the early-stopped regime is empirically well behaved in both
 cases.
 
+§4.5 narrows this further: stopping at the risk-minimising round keeps the sum
+flat only for targets the tree class captures cheaply, and fails on a plain
+4-dimensional radial function. So even the early-stopped regression statement
+needs a hypothesis on `f`.
+
 For classification the fixed-`M` bound is additionally *unconditional* —
 `|D f̂ₙ|(Ω) ≤ M(2^D−1)A` follows from `0 ≤ σ ≤ 1` alone, needing no edge
 condition, no leaf condition and nothing from §4 — and that bound is verified
@@ -448,8 +502,10 @@ machinery for exactly that case.
 
 The honest summary after the checks: **do not chase the `M → ∞` theorem.**
 
-§4's route is refuted, not merely unproved — (A3) is false, and the conclusion
-is false in `n` once boosting runs to interpolation. §6.5's obstruction for logistic loss is independent
+§4's route is refuted, not merely unproved — (A3) is false, the conclusion is
+false in `n` once boosting runs to interpolation (§4.4), and early stopping
+recovers it only under a hypothesis on `f` that is no easier to check than the
+original problem (§4.5). §6.5's obstruction for logistic loss is independent
 and also structural. The remaining work to rescue a limit theorem would be to
 find some other functional of the ensemble that is both uniformly bounded and
 strong enough to drive BV convergence, and nothing in the checks suggests one
