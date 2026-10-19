@@ -90,8 +90,8 @@ attains the semiparametric efficiency bound and returns a coefficient table
 analogous to parametric regression output without resampling. The score is also
 doubly robust. A pairing identity characterizes what the marginal effect of a
 tree-based model measures, and gradient consistency results for neural
-networks, boosted trees and Mondrian forests delineate when uncorrected
-plug-in effects are already consistent.
+networks and Mondrian forests delineate the narrower regime where an
+uncorrected plug-in is already consistent.
 \end{abstract}
 
 \medskip
@@ -1093,16 +1093,26 @@ representation; semiparametric efficiency.
 	question, and the answer depends on where the learner lives. Neural networks
 	with smooth activations converge in the Sobolev space $W^{1,p}$, where
 	Rellich--Kondrachov compactness upgrades $L^p$ consistency of the fit to
-	convergence of its gradient (Theorem~\ref{S-thm:neural_nets}). Gradient boosted
-	models with tree base learners and Mondrian forests live in $BV$, where the
-	corresponding upgrade comes from BV compactness
-	(Theorems~\ref{S-thm:boosting} and~\ref{S-thm:forests}). For Breiman forests the
+	convergence of its gradient (Theorem~\ref{S-thm:neural_nets}). Mondrian
+	forests live in $BV$, where the corresponding upgrade comes from BV
+	compactness (Theorem~\ref{S-thm:forests}), as does $L_2$Boost with a fixed
+	symmetric linear smoother (Theorem~\ref{S-thm:boosting}).
+
+	Two tree-based classes fall outside these results, for different reasons,
+	and both are used in Section~\ref{sec:empirical}. For Breiman forests the
 	result is conjectured rather than proved: data-dependent splits couple the
-	partition geometry to the response in a way that defeats the argument. None
-	of this is required for inference --- Theorem~\ref{thm:main} consumes an
-	$L^2(P)$ rate and nothing else --- which is why the debiased estimator is
-	available for Breiman forests even though the interpretation of their
-	uncorrected plug-in is not settled.
+	partition geometry to the response in a way that defeats the argument. For
+	gradient boosting with greedily grown trees --- XGBoost and its relatives
+	--- Theorem~\ref{S-thm:boosting} does not apply at all, since the greedy
+	tree is not a fixed linear operator and the spectral argument behind the
+	geometric decay is unavailable. Neither is a gap in the inference theory.
+	Theorem~\ref{thm:main} consumes an $L^2(P)$ rate and nothing else, and the
+	pairing identity of Theorem~\ref{thm:pairing} already characterizes what the
+	window effect of any bounded-variation learner measures, both tree ensembles
+	included. What is unsettled for these two classes is only whether their
+	\emph{uncorrected} plug-in is consistent for the gradient --- and the
+	evidence of Section~\ref{sec:simulation} is that for the boosted ensemble it
+	is not, which is precisely the case the correction exists to handle.
 
 	That separation is what makes the framework extensible, and it is worth
 	stating plainly what a reader must check to bring in a learner not treated
@@ -1140,7 +1150,8 @@ representation; semiparametric efficiency.
 			Kernel ridge          & established       & $W^{1,p}$ via smooth kernel \\
 			GAM                   & componentwise     & $W^{1,p}$ \\
 			Neural networks       & established       & $W^{1,p}$, proved here \\
-			Gradient boosting     & established       & BV, proved here \\
+			$L_2$Boost, fixed smoother & established  & $W^{1,p}$/BV, proved here \\
+			Tree boosting (XGBoost) & established     & BV; gradient \emph{open} \\
 			Mondrian forests      & minimax optimal   & BV, proved here \\
 			Breiman forests       & \emph{open}       & BV; gradient \emph{conjectured} \\
 			SVM (smooth kernel)   & available         & $W^{1,p}$ via kernel; not treated \\
@@ -1416,10 +1427,18 @@ and the closed-form representer. Full per-feature results are in the supplement.
 	representer is known or parametrically estimable. The third part is
 	interpretation: a pairing identity characterizes the population quantity that
 	a tree-based model's marginal effect measures, and gradient consistency holds
-	for neural networks in $W^{1,p}$ \citep{evans2010pde} and for gradient
-	boosted models and Mondrian forests \citep{mourtada2017mondrian} in the space
-	of functions of bounded variation \citep{ambrosio2000bv}, delineating the
-	regime in which the uncorrected plug-in is already consistent.
+	for neural networks in $W^{1,p}$ \citep{evans2010pde} and for Mondrian
+	forests \citep{mourtada2017mondrian} in the space of functions of bounded
+	variation \citep{ambrosio2000bv}, delineating the regime in which the
+	uncorrected plug-in is already consistent. That regime is narrower than it
+	may appear. For gradient boosting with greedily grown trees it is not
+	established, and the reason is instructive rather than technical: at its own
+	risk-minimizing number of rounds such an ensemble can carry substantially
+	more total variation than the function it is estimating, so its uncorrected
+	plug-in gradient is in part measuring its own roughness. That is the
+	regularization bias of Section~\ref{sec:inference} seen from the
+	interpretation side, and it is an argument for the correction rather than a
+	gap in it.
 
 	The empirical results validate the framework on binary classification and
 	continuous regression outcomes. Under the debiased estimator the four model

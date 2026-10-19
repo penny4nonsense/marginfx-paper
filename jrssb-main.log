@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  19 OCT 2026 12:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  19 OCT 2026 14:20
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -564,7 +564,7 @@ al-
  []
 
 [28] [29] [30] [31] [32] [33] [34] [35] [36] [37] [38] [39] [40] [41]
-Overfull \hbox (30.90022pt too wide) in paragraph at lines 1499--1514
+Overfull \hbox (30.90022pt too wide) in paragraph at lines 1518--1533
 \T1/cmr/m/n/12 gen-er-ate each ta-ble --- is avail-able at [][]$\T1/cmtt/m/n/12
  https : / / github . com / penny4nonsense / marginfx-[]paper$[][]\T1/cmr/m/n/1
 2 ,
@@ -579,10 +579,10 @@ Package rerunfilecheck Info: File `jrssb-main.out' has not changed.
 (rerunfilecheck)             Checksum: 37061B3AA244AD132B78F61D53C97566;2747.
  ) 
 Here is how much of TeX's memory you used:
- 12528 strings out of 474934
- 192804 string characters out of 5757826
+ 12530 strings out of 474934
+ 192844 string characters out of 5757826
  1933785 words of memory out of 5000000
- 33713 multiletter control sequences out of 15000+600000
+ 33715 multiletter control sequences out of 15000+600000
  584882 words of font info for 107 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,12n,79p,2246b,603s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -620,10 +620,10 @@ amData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb><c:/Pro
 gramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfti1200.pfb><c:/P
 rogramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb><c:
 /ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb>
-Output written on jrssb-main.pdf (46 pages, 634133 bytes).
+Output written on jrssb-main.pdf (46 pages, 635482 bytes).
 PDF statistics:
- 807 PDF objects out of 1000 (max. 8388607)
- 683 compressed objects within 7 object streams
+ 812 PDF objects out of 1000 (max. 8388607)
+ 688 compressed objects within 7 object streams
  149 named destinations out of 1000 (max. 500000)
  129 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -414,27 +414,25 @@ supplement.
 	\begin{theorem}[Gradient Consistency for Gradient Boosted Models]
 		\label{thm:boosting}
 		Let $\fn = \hat{F}_m = (I - (I-S)^{m+1})Y$ be an $L_2$Boost estimator with
-		symmetric linear learner $S$ satisfying the eigenvalue condition $0 < \lambda_k \leq
-		1$ for all $k$, and with base learners $h_m$ that are either smooth ($h_m \in
-		W^{2,p}$) or tree stumps. Suppose $\norm{\fn - f}_{L^1} \xrightarrowp 0$. Then:
-		\begin{enumerate}
-			\item[(i)] If base learners are smooth, $\fn$ is well-behaved in the Sobolev
-			sense and $\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
-			\item[(ii)] If base learners are tree stumps, $\fn$ is well-behaved in the
-			BV sense and $D\fn \wstar Df$ in $\cM$.
-		\end{enumerate}
+		a \emph{fixed} symmetric linear learner $S$ satisfying the eigenvalue
+		condition $0 < \lambda_k \leq 1$ for all $k$, and with base learners
+		$h_m = S u_m$ lying in $W^{2,p}$. Suppose
+		$\norm{\fn - f}_{L^1} \xrightarrowp 0$. Then $\fn$ is well-behaved in the
+		Sobolev sense and $\norm{\nabla \fn - \nabla f}_{L^p} \xrightarrowp 0$.
 	\end{theorem}
 	
-	Theorem~\ref{thm:boosting} covers both cases that arise in practice and illustrates
-	how the function space framework adapts to the base learner. XGBoost and
-	LightGBM --- the implementations used in Section~3 --- use shallow trees as base
-	learners and therefore fall under case~(ii). The two cases in the theorem are not
-	merely technical alternatives --- they reflect a genuine difference in what the
-	gradient of the estimator is. For smooth base learners the gradient is an ordinary
-	function and $L^p$ convergence is available. For tree base learners the gradient is a
-	measure and only weak-$*$ convergence can be established. The average marginal effects
-	are well defined and consistent in both cases, but the sense in which they are
-	consistent differs.
+	Theorem~\ref{thm:boosting} is deliberately narrow, and it is worth being
+	explicit about what it does not reach. It applies to $L_2$Boost driven by a
+	single fixed symmetric linear smoother --- a smoothing spline at a fixed
+	smoothing parameter is the canonical example --- for which
+	\citet{buhlmann2003boosting} supply the representation and the spectral
+	decay. It does \emph{not} apply to XGBoost or LightGBM, the implementations
+	used in Section~\ref{M-sec:empirical}. Those grow each tree greedily from the
+	current residual, so there is no fixed operator $S$, the representation
+	$\hat{F}_m = (I - (I-S)^{m+1})Y$ fails, and the geometric decay that the
+	proof turns on is unavailable. Remark~\ref{rem:boosting_trees} sets out why
+	no choice of tree base learner can be brought inside the hypotheses, and what
+	is and is not known about those implementations in consequence.
 	
 	The eigenvalue condition $0 < \lambda_k \leq 1$ is the key regularity condition on
 	the base learner. \citet{buhlmann2003boosting} impose this condition explicitly in
@@ -3277,11 +3275,10 @@ supplement.
 		\norm{u_m}_{L^2} \leq C\rho^m, \quad C = \norm{Y}_{L^2}
 		\label{eq:geometric_decay}
 	\end{equation}
-	This geometric decay is the key engine for both cases of the proof.
+	This geometric decay is the engine of the argument below.
 	
-	The two cases of the theorem are handled separately.
 	
-	\subsection{Case (i): Smooth Base Learners}
+	\subsection{Uniform $W^{2,p}$ Boundedness and the Conclusion}
 	
 	\subsubsection*{Step 1: $W^{2,p}$ Bound for a Single Base Learner}
 	
@@ -3316,89 +3313,52 @@ supplement.
 	Lemma~\ref{lem:sobolev_consistency} gives
 	$\norm{\nabla \hat{F}_m - \nabla f}_{L^p} \xrightarrowp 0$. \qed
 	
-	\subsection{Case (ii): Tree Stump Base Learners}
-	
-	Each base learner $\hat{f}_m = Su_m$ is a depth-1 tree (stump) of the form:
-	\begin{equation}
-		\hat{f}_m(x) = c_m^L \,\mathbf{1}[x_j \leq t_m] + c_m^R \,\mathbf{1}[x_j > t_m]
-	\end{equation}
-	for some split variable $j$, threshold $t_m$, and leaf constants:
-	\begin{equation}
-		c_m^L = \frac{1}{|I_L|}\sum_{i \in I_L} u_m(x_i), \quad
-		c_m^R = \frac{1}{|I_R|}\sum_{i \in I_R} u_m(x_i)
-	\end{equation}
-	where $I_L = \{i : x_{ij} \leq t_m\}$ and $I_R = \{i : x_{ij} > t_m\}$ are the
-	left and right leaf index sets.
-	
-	\subsubsection*{Step 1: BV Norm of a Single Stump}
-	
-	By Lemma~\ref{lem:bv_existence} the distributional gradient of $\hat{f}_m$ is:
-	\begin{equation}
-		D\hat{f}_m = (c_m^R - c_m^L) \cdot \nu_m \cdot
-		\mathcal{H}^{d-1}\lfloor_{\{x_j = t_m\} \cap \Omega}
-	\end{equation}
-	so the total variation is:
-	\begin{equation}
-		|D\hat{f}_m|(\Omega) =
-		|c_m^R - c_m^L| \cdot
-		\mathcal{H}^{d-1}\!\left(\{x_j = t_m\} \cap \Omega\right)
-	\end{equation}
-	The geometric term satisfies
-	$\mathcal{H}^{d-1}(\{x_j = t_m\} \cap \Omega) \leq \operatorname{diam}(\Omega)^{d-1}$,
-	a constant depending only on $\Omega$. For the response term, by Cauchy--Schwarz
-	applied to the leaf means:
-	\begin{equation}
-		|c_m^R - c_m^L|
-		\leq \frac{1}{|I_R|}\sum_{i \in I_R} |u_m(x_i)|
-		+ \frac{1}{|I_L|}\sum_{i \in I_L} |u_m(x_i)|
-		\leq 2\norm{u_m}_{L^2}
-	\end{equation}
-	Therefore:
-	\begin{equation}
-		|D\hat{f}_m|(\Omega)
-		\leq 2\operatorname{diam}(\Omega)^{d-1} \cdot \norm{u_m}_{L^2}
-		\leq 2\operatorname{diam}(\Omega)^{d-1} \cdot C\rho^m
-	\end{equation}
-	using the geometric decay \eqref{eq:geometric_decay}.
-	
-	\subsubsection*{Step 2: Ensemble BV Bound via Geometric Series}
-	
-	By subadditivity of total variation:
-	\begin{equation}
-		|D\hat{F}_m|(\Omega)
-		\leq \sum_{j=1}^m |D\hat{f}_j|(\Omega)
-		\leq 2\operatorname{diam}(\Omega)^{d-1} \cdot C \sum_{j=1}^m \rho^j
-		\leq \frac{2\operatorname{diam}(\Omega)^{d-1} \cdot C\rho}{1-\rho}
-		< \infty
-	\end{equation}
-	The geometric series $\sum_{j=1}^\infty \rho^j = \rho/(1-\rho)$ converges because
-	$\rho < 1$, which follows from the eigenvalue condition $\lambda_k > 0$ for all $k$.
-	Taking expectations:
-	\begin{equation}
-		\mathbb{E}[|D\hat{F}_m|(\Omega)]
-		\leq \frac{2\operatorname{diam}(\Omega)^{d-1} \cdot \mathbb{E}[C]\rho}{1-\rho}
-		< \infty
-	\end{equation}
-	uniformly in $m$, where $\mathbb{E}[C] = \mathbb{E}[\norm{Y}_{L^2}] < \infty$
-	by assumption.
-	
-	\subsubsection*{Step 3: Apply Lemma~\ref{lem:bv_consistency}}
-	
-	$L^1$ consistency is assumed. Uniform BV boundedness follows from Step~2.
-	Lemma~\ref{lem:bv_consistency} gives $D\hat{F}_m \xrightarrow{w*} Df$ in $\cM$.
-	\qed
-	
-	\begin{remark}
-		The key step in both cases is the geometric decay $\norm{u_m}_{L^2} \leq C\rho^m$,
+	\begin{remark}[Why tree base learners are excluded]
+		\label{rem:boosting_trees}
+		An earlier form of this theorem carried a second case for tree stump base
+		learners. It is withdrawn, because the hypotheses cannot be met by a tree.
+		The eigenvalue condition $0 < \lambda_k \leq 1$ requires $S$ to have full
+		rank, but a tree is the orthogonal projection onto the piecewise constant
+		functions on its partition, so its spectrum is $\{0,1\}$ with
+		$n - (\#\text{leaves})$ zeros. Then $\rho = \max_k(1-\lambda_k) = 1$ and
+		the geometric series driving both steps above diverges --- the degenerate
+		situation already noted in Remark~\ref{rem:degenerate}. Shrinkage does not
+		help, since $\nu S$ has spectrum $\{0,\nu\}$, and nor does an $L^2$ leaf
+		penalty; the zero eigenvalues are unavoidable for any finite-rank base
+		learner. A tree whose split is instead chosen from the current residual,
+		as in gradient boosting as it is implemented, is not a fixed linear
+		operator at all, so the representation
+		$\hat{F}_m = (I - (I-S)^{m+1})Y$ does not hold for it and neither does the
+		decay that the representation supplies.
+
+		Gradient boosting with greedily grown trees is therefore outside this
+		theorem. It remains inside Theorem~\ref{M-thm:main}, which consumes an
+		$L^2(P)$ rate and nothing else, and inside the pairing identity of
+		Theorem~\ref{M-thm:pairing}, a finite sum of piecewise constant trees
+		being of bounded variation. What is not established for it is gradient
+		consistency of the \emph{uncorrected} plug-in, and there is reason to
+		think it does not hold: at the number of rounds minimising its own risk,
+		such an ensemble can carry substantially more total variation than the
+		function it estimates, with the gap widening in $n$ on targets poorly
+		matched to axis-aligned splits. That is the regularization bias of
+		Section~\ref{M-sec:inference} appearing in the interpretation theory, and
+		it is an argument for the orthogonal correction rather than an omission
+		from it.
+	\end{remark}
+
+\begin{remark}
+		The key step is the geometric decay $\norm{u_m}_{L^2} \leq C\rho^m$,
 		which follows from the eigenvalue condition $0 < \lambda_k \leq 1$ via Proposition~1
 		and Theorem~1 of \citet{buhlmann2003boosting}. This decay is much faster than any
 		polynomial rate and implies that the geometric series $\sum_j \rho^j$ converges
 		without any condition on step sizes. The eigenvalue condition is the operative
-		regularity assumption for both cases of the theorem, replacing the step size
-		conditions common in the boosting literature.
+		regularity assumption of the theorem, replacing the step size conditions common
+		in the boosting literature. It is also what confines the result to full-rank
+		smoothers; see Remarks~\ref{rem:degenerate} and~\ref{rem:boosting_trees}.
 	\end{remark}
 	
 	\begin{remark}
+		\label{rem:degenerate}
 		When $\lambda_k \in \{0,1\}$ for all $k$ --- as occurs for linear projection
 		operators --- Corollary~1 of \citet{buhlmann2003boosting} shows that
 		$\mathcal{B}_m \equiv S$ for all $m$, meaning boosting does not improve on the
