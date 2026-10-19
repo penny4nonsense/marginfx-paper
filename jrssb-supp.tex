@@ -474,9 +474,8 @@ supplement.
 	\begin{theorem}[Gradient Consistency for Mondrian Forests]
 		\label{thm:forests}
 		Let $\fn$ be a Mondrian random forest estimator with budget $\lambda_n \asymp
-		n^{1/(d+2)}$, $B \gg n^{2(d-\alpha)/(d+2)}$ trees where $\alpha = 1 - d/p$, $f$
-		Lipschitz on $[0,1]^d$, and $f \in \Wonep$ for $p > d$. Then $\fn$ is well-behaved
-		in the BV sense and:
+		n^{1/(d+2)}$ and any fixed number $B \geq 1$ of trees, with $f$ Lipschitz
+		on $[0,1]^d$. Then $\fn$ is well-behaved in the BV sense and:
 		\begin{equation}
 			D\fn \wstar Df \quad \text{in } \cM
 		\end{equation}
@@ -495,37 +494,38 @@ supplement.
 	$O(n^{-2/(d+2)})$ for Lipschitz regression functions, and $L^1$ consistency follows
 	by Cauchy--Schwarz on the bounded domain $\Omega$.
 	
-	The budget condition $\lambda_n \asymp n^{1/(d+2)}$ and the tree count condition $B
-	\gg n^{2(d-\alpha)/(d+2)}$ are natural and interpretable. The budget determines the
-	approximation rate --- balancing the bias from coarse partitions against the variance
-	from fine partitions at the minimax optimal rate. The tree count condition ensures that
-	the forest average has sufficient cancellation across trees to control the total
-	variation; it is mild in practice, satisfied by standard forest sizes for moderate
-	dimension and sample size.
+	The budget condition $\lambda_n \asymp n^{1/(d+2)}$ is the only condition the
+	theorem imposes, and it is the natural one: it balances the bias from coarse
+	partitions against the variance from fine ones at the minimax optimal rate.
+	What is perhaps surprising is that the same rate balances the two
+	contributions to the \emph{total variation} of the fitted tree. The jumps
+	across leaf boundaries carry a signal part, which reflects the variation of
+	$f$ itself, and a noise part, which reflects the sampling error in the leaf
+	means; at this budget both are $O(1)$, and the partition may refine without
+	limit without the total variation growing. No condition on the number of
+	trees is needed.
 	
 	\begin{proof}[Proof sketch]
 		Each tree is piecewise constant and therefore in $BV$ by
-		Lemma~\ref{lem:bv_existence}. The key difficulty is that individual tree BV norms
-		grow with $n$, so the triangle inequality applied to the forest average is too crude.
-		Instead we work with the second moment of the total variation. Writing $D\fn =
-		\frac{1}{B}\sum_b DT_b$:
-		\begin{equation}
-			\mathbb{E}[|D\fn|(\Omega)] \leq \sqrt{\mathbb{E}[|D\fn|(\Omega)^2]}
-			= \sqrt{\frac{1}{B^2}\mathbb{E}\!\left[\left|\sum_b DT_b\right|(\Omega)^2\right]}
-		\end{equation}
-		The cross terms between trees $b \neq b'$ vanish by independence of the Mondrian
-		partitions and the zero-mean condition on the jumps. The diagonal terms are bounded
-		using the cell diameter result $\mathbb{E}[D_{\lambda_n}(x)^2] \leq 4d/\lambda_n^2$
-		of \citet{roy2009mondrian} and the split count bound $\mathbb{E}[K_{\lambda_n}]
-		\leq (e(\lambda_n+1))^d$ of \citet{mourtada2017mondrian}, giving:
-		\begin{equation}
-			\mathbb{E}[|D\fn|(\Omega)^2]
-			= \frac{1}{B}\,\mathbb{E}[|DT_1|(\Omega)^2]
-			\leq \frac{1}{B}\,O(n^{2(d-\alpha)/(d+2)})
-		\end{equation}
-		Under the condition $B \gg n^{2(d-\alpha)/(d+2)}$ this is uniformly bounded.
-		Lemma~\ref{lem:bv_consistency} then gives $D\fn \xrightarrow{w*} Df$ in $\cM$.
-		Full proof in Section~\ref{app:forests} of the supplement.
+		Lemma~\ref{lem:bv_existence}, and the forest average is a convex
+		combination, so $|D\fn|(\Omega) \leq B^{-1}\sum_b |DT_b|(\Omega)$. It
+		therefore suffices to bound a single tree, and no cancellation between
+		trees is required.
+
+		For one tree, the distributional gradient is carried by the split faces
+		(Lemma~\ref{lem:nodeface}), and the jump across a face splits into a
+		signal part and a noise part. Reducing both to one-dimensional sections
+		turns the signal part into the expected aspect ratio
+		$\E[\mathrm{diam}(l(X))/s_1(l(X))]$ of the cell containing a uniform
+		point, which Lemma~\ref{lem:aspect} bounds by $2d-1+O(1/\lambda)$ using
+		the Mondrian cell law of \citet{mourtada2017mondrian} --- a bound with no
+		rate in it, because the variation of a Lipschitz function over a refining
+		partition depends on the partition's shape and not on how fine it is. The
+		noise part is bounded by Lemma~\ref{lem:noise} at
+		$O(\lambda^{1+d/2}n^{-1/2})$, which is $O(1)$ precisely when
+		$\lambda \asymp n^{1/(d+2)}$, since $(1+d/2)/(d+2) = 1/2$.
+		Lemma~\ref{lem:bv_consistency} then gives $D\fn \xrightarrow{w*} Df$ in
+		$\cM$. Full proof in Section~\ref{app:forests}.
 	\end{proof}
 	
 	\begin{remark}
@@ -3396,181 +3396,277 @@ supplement.
 	by convexity of the total variation functional
 	\citep[Proposition~3.6]{ambrosio2000bv}.
 	
-	\subsection{Step 2: Uniform BV Boundedness via the Second Moment Argument}
-	
-	\textbf{Claim:} $\sup_n \E[|D\fn|(\Omega)] < \infty$.
-	
-	The triangle inequality applied to the forest average is too crude because
-	individual tree BV norms grow with $n$. Instead we work with the second
-	moment and apply Cauchy--Schwarz:
+	\subsection{Step 2: Reduction to a Single Tree}
+
+	Step~1 is already the whole of the forest argument. By convexity it suffices
+	to bound one tree:
 	\begin{equation}
 		\E\!\left[|D\fn|(\Omega)\right]
-		\leq \sqrt{\E\!\left[|D\fn|(\Omega)^2\right]}
+		\leq \frac{1}{B}\sum_{b=1}^B \E\!\left[|DT_b|(\Omega)\right]
+		= \E\!\left[|DT|(\Omega)\right]
+		\label{eq:forest_convexity}
 	\end{equation}
-	It therefore suffices to show $\E[|D\fn|(\Omega)^2] < \infty$ uniformly
-	in $n$.
-	
-	\subsubsection*{Substep 2a: Expand the Second Moment}
-	
-	Writing $D\fn = \frac{1}{B}\sum_b DT_b$ and expanding:
+	for a single Mondrian tree $T$, the trees being identically distributed. No
+	cancellation between trees is needed, and consequently no condition on $B$:
+	the bound below holds for a forest of any fixed size, including $B = 1$.
+
+	Steps~3 to~6 establish $\sup_n \E[|DT|(\Omega)] < \infty$. Write
+	$\bar{y}_l$ for the mean of the responses falling in leaf $R_l$, with
+	$\bar{y}_l = 0$ when $R_l$ is empty, and $N_l$ for that count.
+
+	\subsection{Step 3: The Jump Set is Carried by the Split Faces}
+
+	Let $k$ index the internal nodes of the tree, let $C_k$ be the cell split at
+	node $k$ along coordinate $j_k$ at threshold $t_k$, and write
 	\begin{equation}
-		\E\!\left[|D\fn|(\Omega)^2\right]
-		= \frac{1}{B^2} \E\!\left[\left|\sum_b DT_b\right|(\Omega)^2\right]
-		= \frac{1}{B^2} \sum_{b,b'} \E\!\left[
-		\int \phi \cdot d(DT_b) \cdot \int \phi \cdot d(DT_{b'})
-		\right]
+		F_k = \overline{C}_k \cap \{x : x_{j_k} = t_k\}
 	\end{equation}
-	for a suitable test function $\phi$ with $\norm{\phi}_\infty \leq 1$.
-	The double sum splits into diagonal terms $b = b'$ and cross terms
-	$b \neq b'$.
-	
-	\subsubsection*{Substep 2b: Cross Terms Vanish}
-	
-	For $b \neq b'$ the partitions $\mathcal{P}_b$ and $\mathcal{P}_{b'}$ are
-	independent of each other and of the data. By independence:
+	for the split face. Lemma~\ref{lem:bv_existence} gives the distributional
+	gradient of a piecewise constant function as a sum over adjacent leaf pairs;
+	the following re-indexes that sum by internal nodes, which is the form the
+	later steps use.
+
+	\begin{lemma}[Node-face representation]
+		\label{lem:nodeface}
+		Let $T$ be piecewise constant on the leaves of a hierarchical
+		axis-aligned partition whose cuts are strictly interior to their cells.
+		Then
+		\begin{equation}
+			|DT|(\Omega)
+			= \sum_k \int_{F_k} \abs{\Delta_k(u)}\, d\mathcal{H}^{d-1}(u),
+			\label{eq:nodeface}
+		\end{equation}
+		where $\Delta_k(u)$ is the difference of the two leaf values meeting at
+		$u$.
+	\end{lemma}
+
+	\begin{proof}
+		Two facts suffice. \emph{First}, each leaf-pair interface lies in the
+		face of that pair's lowest common ancestor. Let $R_l$ and $R_m$ be
+		adjacent leaves with lowest common ancestor $k$. They lie in opposite
+		children of $k$, so after relabelling every $x \in \overline{R}_l$ has
+		$x_{j_k} \leq t_k$ and every $x \in \overline{R}_m$ has
+		$x_{j_k} \geq t_k$. A point of $\partial R_l \cap \partial R_m$ lies in
+		both closures, hence satisfies $x_{j_k} = t_k$, and lies in
+		$\overline{C}_k$; so $\partial R_l \cap \partial R_m \subseteq F_k$.
+
+		\emph{Second}, distinct faces meet in an $\mathcal{H}^{d-1}$-null set.
+		Take internal nodes $k \neq k'$. If neither is an ancestor of the other
+		they lie in opposite subtrees of their own lowest common ancestor, so
+		$C_k \cap C_{k'} = \emptyset$. Otherwise let $k$ be a strict ancestor of
+		$k'$, so that $C_{k'}$ lies in one child of $k$. If $j_{k'} \neq j_k$
+		the two hyperplanes are transverse and meet in dimension $d-2$, which is
+		$\mathcal{H}^{d-1}$-null. If $j_{k'} = j_k$ they are parallel, and
+		distinct: $t_{k'}$ is strictly interior to the extent of $C_{k'}$ in
+		that coordinate while $C_{k'}$ lies entirely on one side of $t_k$.
+
+		The map sending an adjacent leaf pair to its lowest common ancestor
+		therefore sorts the interfaces into the faces without repetition, and
+		conversely each point in the relative interior of $F_k$ lies between the
+		leaf of $C_k \cap \{x_{j_k} \le t_k\}$ and the leaf of
+		$C_k \cap \{x_{j_k} > t_k\}$ containing it, whose lowest common ancestor
+		is $k$. Regrouping the sum of Lemma~\ref{lem:bv_existence} gives
+		\eqref{eq:nodeface}.
+	\end{proof}
+
+	The argument is deterministic: it uses no probability, no property of the
+	Mondrian process, and holds in every dimension. The hypothesis that cuts are
+	strictly interior holds almost surely here, cut positions being uniform on an
+	open interval, and is what the second fact requires --- a cut on a cell
+	boundary would produce an empty child and a face coinciding with an
+	ancestor's.
+
+	\subsection{Step 4: Two Facts About the Mondrian Partition}
+
+	\begin{lemma}[Expected interface area]
+		\label{lem:interface}
+		For $\mathcal{P} \sim MP(\lambda, C)$ on a box $C$,
+		\begin{equation}
+			\E\!\left[\sum_k \mathcal{H}^{d-1}(F_k)\right] = d\,\lambda\,\mathrm{vol}(C).
+		\end{equation}
+	\end{lemma}
+
+	\begin{proof}
+		Write $A(C,\lambda)$ for the left side, $s$ for the side lengths of $C$,
+		$a = \sum_j s_j$ and $V = \mathrm{vol}(C)$. A cut of $C$ in coordinate
+		$j$ has face area $\prod_{m \neq j} s_m = V/s_j$ whatever the cut
+		position, and the two children have volumes summing to $V$. Conditioning
+		on the first cut,
+		\begin{equation}
+			A(C,\lambda) = \int_0^\lambda a e^{-at}
+			\left[ \frac{dV}{a} + d(\lambda - t)V \right] dt,
+		\end{equation}
+		where the induction hypothesis $A(\cdot,\lambda') = d\lambda'\,\mathrm{vol}(\cdot)$
+		has been used on the children and is independent of which coordinate is
+		cut and where. Evaluating,
+		\begin{equation}
+			A(C,\lambda)
+			= dV\,\frac{1-e^{-a\lambda}}{a}
+			+ dVa\left[\frac{\lambda}{a} - \frac{1-e^{-a\lambda}}{a^2}\right]
+			= d\lambda V,
+		\end{equation}
+		the two boundary terms cancelling exactly.
+	\end{proof}
+
+	The cancellation is why the answer is free of the cell's shape. The second
+	fact is the cell law of \citet{mourtada2017mondrian}: for $MP(\lambda)$ on
+	$\R^d$ the cell containing a fixed point is
+	$\prod_j [-E_j^-, E_j^+]$ with the $2d$ variables i.i.d.\ $\mathrm{Exp}(\lambda)$,
+	so each side is $\mathrm{Gamma}(2,\lambda)$ and the sides are independent
+	across coordinates.
+
+	\begin{lemma}[Aspect ratio]
+		\label{lem:aspect}
+		Let $l(X)$ be the cell of $MP(\lambda, [0,1]^d)$ containing a uniform
+		point $X$, with side lengths $s_j$. Then
+		\begin{equation}
+			\E\!\left[\frac{\mathrm{diam}(l(X))}{s_1(l(X))}\right]
+			\leq 2d - 1 + \frac{4(d-1)}{\lambda}.
+		\end{equation}
+	\end{lemma}
+
+	\begin{proof}
+		The Mondrian is projective, so $MP(\lambda,[0,1]^d)$ is $MP(\lambda,\R^d)$
+		restricted to the cube and restriction intersects every cell with the
+		sub-box; hence
+		$s_j = \min(E_j^-, X_j) + \min(E_j^+, 1 - X_j)$. The coordinates of $X$
+		are independent and the $E_j^\pm$ are independent across $j$, so $s_m$
+		and $s_1$ are independent and
+		$\E[s_m/s_1] = \E[s_m]\,\E[1/s_1]$. Truncation only shrinks, so
+		$\E[s_m] \leq 2/\lambda$.
+
+		For the inverse moment write $1/s = \int_0^\infty e^{-rs}\,dr$ and use
+		$\E[e^{-r\min(E,u)}] = [\lambda + re^{-(\lambda+r)u}]/(\lambda+r)$ for
+		$E \sim \mathrm{Exp}(\lambda)$. Given $X_1$ the two sides are
+		independent, so integrating $X_1 \sim U(0,1)$ out before $r$,
+		\begin{equation}
+			\E\!\left[\frac{1}{s_1}\right]
+			= \int_0^\infty \frac{\lambda^2
+			+ 2\lambda r\,(1-e^{-(\lambda+r)})/(\lambda+r)
+			+ r^2 e^{-(\lambda+r)}}{(\lambda+r)^2}\, dr .
+		\end{equation}
+		The three pieces are elementary:
+		$\lambda^2\int_0^\infty (\lambda+r)^{-2} dr = \lambda$;
+		$2\lambda\int_0^\infty r(\lambda+r)^{-3} dr = 1$; and the last is at
+		most $e^{-\lambda}\int_0^\infty e^{-r} dr = e^{-\lambda}$ because
+		$r^2/(\lambda+r)^2 \leq 1$. Hence
+		$\E[1/s_1] \leq \lambda + 1 + e^{-\lambda}$, against the value $\lambda$
+		on $\R^d$, so
+		$\E[s_m/s_1] \leq 2 + 2(1+e^{-\lambda})/\lambda \leq 2 + 4/\lambda$ for
+		$\lambda \geq 1$. Summing over $m$ with
+		$\mathrm{diam} \leq \sum_m s_m$ and the $m = 1$ term equal to one gives
+		the claim.
+	\end{proof}
+
+	The boundary therefore costs an additive constant rather than a rate: an
+	$O(1/\lambda)$-thick layer contributing $O(1)$ to an integral of size
+	$\lambda$. Since $\lambda_n \to \infty$ the constant converges to $2d-1$.
+
+	\subsection{Step 5: The Signal Term}
+
+	Write $\bar{y}_l = \bar{f}_l + \varepsilon_l$, where
+	$\bar{f}_l = N_l^{-1}\sum_{i \in R_l} f(\mathbf{x}_i)$ and
+	$\varepsilon_l = N_l^{-1}\sum_{i \in R_l}(y_i - f(\mathbf{x}_i))$, both zero
+	on empty leaves. By \eqref{eq:nodeface} and the triangle inequality,
+	$|DT|(\Omega) \leq S + N$ with $S$ and $N$ the corresponding sums.
+
+	Along a line in coordinate~1 the tree is a step function whose jumps occur
+	at the $1$-perpendicular cuts, and each leaf $l$ is crossed by a set of such
+	lines of measure $\mathrm{vol}(l)/s_1(l)$. Hence for either part
 	\begin{equation}
-		\E\!\left[\int \phi \cdot d(DT_b) \cdot \int \phi \cdot d(DT_{b'})\right]
-		= \E\!\left[\int \phi \cdot d(DT_b)\right] \cdot
-		\E\!\left[\int \phi \cdot d(DT_{b'})\right]
+		\sum_k \int_{F_k} \abs{\Delta_k}\, d\mathcal{H}^{d-1}
+		\leq 2 \sum_l \left(\sup_{u \in \partial R_l} \abs{\Delta(u)}\right)
+		\frac{\mathrm{vol}(l)}{s_1(l)} .
+		\label{eq:sections}
 	\end{equation}
-	We claim each factor is zero. By Lemma~\ref{lem:bv_existence} and the
-	explicit formula for $DT_b$:
+	Two leaves meeting at a point of $F_k$ both lie in $C_k$, so if $f$ is
+	Lipschitz with constant $L$ then
+	$|\bar{f}_m - \bar{f}_l| \leq L\,\mathrm{diam}(C_k)$. Using
+	$\sum_l g(l)\mathrm{vol}(l) = \E_X[g(l(X))]$ for uniform $X$ and then
+	Lemma~\ref{lem:aspect},
 	\begin{equation}
-		\E\!\left[\int \phi \cdot d(DT_b)\right]
-		= \E\!\left[\sum_{j \sim k}
-		(\bar{y}_k^b - \bar{y}_j^b)
-		\int_{\partial R_j^b \cap \partial R_k^b} \phi \cdot \nu_{jk}
-		\, d\mathcal{H}^{d-1}\right]
+		\E[S] \leq 2L\,
+		\E\!\left[\frac{\mathrm{diam}(l(X))}{s_1(l(X))}\right]
+		\leq 2L\left(2d - 1 + \frac{4(d-1)}{\lambda}\right).
 	\end{equation}
-	Since $\mathcal{P}_b$ is independent of the data, we condition on the
-	partition and take the expectation over the data first:
+	No rate in $n$ or $\lambda$ enters: the discrete variation of a Lipschitz
+	function over a refining partition is controlled by the partition's aspect
+	ratio, not by how fine it is.
+
+	\subsection{Step 6: The Noise Term}
+
+	\begin{lemma}[Noise]
+		\label{lem:noise}
+		Under Assumption~\ref{M-ass:sampling},
+		\begin{equation}
+			\E[N] \leq 2\bar{\sigma} C_d\, \lambda^{1 + d/2} n^{-1/2},
+			\qquad
+			C_d = \sqrt{2\pi}\left(\tfrac{\sqrt{\pi}}{2}\right)^{d-1} + \pi^{(2+d)/6}.
+		\end{equation}
+	\end{lemma}
+
+	\begin{proof}
+		Given the partition, $N_l \sim \mathrm{Bin}(n, \mathrm{vol}(l))$ and
+		$\E[\abs{\varepsilon_l} \mid N_l] \leq \bar{\sigma} N_l^{-1/2}$ on
+		$\{N_l \geq 1\}$. With $\mu = n\,\mathrm{vol}(l)$ and
+		$\psi = \E[N^{-1/2}\mathbf{1}\{N \geq 1\}]$ we have
+		$\psi \leq \mu$, since $N^{-1/2} \leq 1$ there, and also
+		$\psi \leq \sqrt{2}\,\mu^{-1/2}$: indeed
+		$N^{-1/2} \leq \sqrt{2}(N+1)^{-1/2}$ on $\{N \geq 1\}$, Jensen gives
+		$\E[(N+1)^{-1/2}] \leq (\E[(N+1)^{-1}])^{1/2}$, and
+		$\E[(N+1)^{-1}] = (1-(1-p)^{n+1})/((n+1)p) \leq 1/\mu$. So
+		$\psi \leq \min(\sqrt{2}\mu^{-1/2}, \mu)$.
+
+		Write $s_j = T_j/\lambda$ with $T_j$ i.i.d.\ $\mathrm{Gamma}(2,1)$ by the
+		cell law, $W = \prod_j T_j$ and $M = n\lambda^{-d}$, so that
+		$\mu = MW$ and $1/s_1 = \lambda/T_1$. By \eqref{eq:sections} and
+		$\sum_l g(l)\mathrm{vol}(l) = \E_X[g(l(X))]$ it suffices to show
+		$\E[\psi/T_1] \leq C_d M^{-1/2}$, since
+		$\lambda M^{-1/2} = \lambda^{1+d/2} n^{-1/2}$.
+
+		On $\{\mu \geq 1\}$ use $\psi \leq \sqrt{2}\mu^{-1/2}$ and independence:
+		\begin{equation}
+			\E\!\left[\frac{\psi}{T_1}; \mu \geq 1\right]
+			\leq \sqrt{2}\,M^{-1/2}\,
+			\E[T_1^{-3/2}]\prod_{j \geq 2}\E[T_j^{-1/2}]
+			= \sqrt{2\pi}\left(\tfrac{\sqrt{\pi}}{2}\right)^{d-1} M^{-1/2},
+		\end{equation}
+		using $\E[T^{-3/2}] = \Gamma(1/2)$ and $\E[T^{-1/2}] = \Gamma(3/2)$.
+		The first is finite because a $\mathrm{Gamma}(2,1)$ density vanishes
+		linearly at the origin, so that $t^{-3/2}\cdot t$ is integrable; it is
+		the last inverse moment that exists, and is exactly what the factor
+		$1/s_1$ from \eqref{eq:sections} and the factor $\mu^{-1/2}$ from the
+		binomial jointly require.
+
+		On $\{\mu < 1\}$ use $\psi \leq \mu = MW \leq 1$, then H\"{o}lder with
+		exponents $3/2$ and $3$, then the Chernoff bound
+		$\Prob(W < w) \leq w^s\,\E[W^{-s}] = w^s\,\Gamma(2-s)^d$ at $s = 3/2$:
+		\begin{equation}
+			\E\!\left[\frac{\psi}{T_1}; \mu < 1\right]
+			\leq \left(\E[T_1^{-3/2}]\right)^{2/3}
+			\Prob(W < 1/M)^{1/3}
+			\leq \pi^{(2+d)/6} M^{-1/2}.
+		\end{equation}
+		Adding the two gives the claim.
+	\end{proof}
+
+	The small-cell regime, where $\psi$ behaves like $\mu$ rather than
+	$\mu^{-1/2}$, needs no separate treatment: there the bound $\psi \leq \mu$ is
+	the stronger of the two, and all that is required is that $\{W < 1/M\}$ carry
+	little mass.
+
+	\subsection{Step 7: Uniform BV Boundedness}
+
+	Summing Steps~5 and~6 over the $d$ coordinates and inserting
+	$\lambda_n \asymp n^{1/(d+2)}$, for which
+	$\lambda^{1+d/2}n^{-1/2} = O(1)$ because $(1 + d/2)/(d+2) = 1/2$,
 	\begin{equation}
-		= \mathbb{E}_{\mathcal{P}_b}\!\left[\sum_{j \sim k}
-		\mathbb{E}_{\mathrm{data}}\!\left[\bar{y}_k^b - \bar{y}_j^b\right]
-		\int_{\partial R_j^b \cap \partial R_k^b} \phi \cdot \nu_{jk}
-		\, d\mathcal{H}^{d-1}\right]
+		\sup_n \E\!\left[|DT|(\Omega)\right] < \infty ,
 	\end{equation}
-	The leaf means satisfy $\mathbb{E}_{\mathrm{data}}[\bar{y}_j^b] \to f(\bar{x}_j^b)$
-	as $n \to \infty$, where $\bar{x}_j^b$ is the centre of leaf $R_j^b$. For
-	adjacent leaves $j$ and $k$, by the Lipschitz continuity of $f$:
-	\begin{equation}
-		\mathbb{E}_{\mathrm{data}}\!\left[\bar{y}_k^b - \bar{y}_j^b\right]
-		\approx f(\bar{x}_k^b) - f(\bar{x}_j^b) = O(D_{\lambda_n})
-	\end{equation}
-	where $D_{\lambda_n}$ is the cell diameter. As $\lambda_n \to \infty$ the
-	cell diameter $D_{\lambda_n} \to 0$ and each term vanishes. More precisely,
-	since $f \in \Wonep$ with $p > d$, the Sobolev embedding
-	$W^{1,p} \hookrightarrow C^{0,\alpha}$ for $\alpha = 1 - d/p$ gives:
-	\begin{equation}
-		\left|\mathbb{E}_{\mathrm{data}}\!\left[\bar{y}_k^b - \bar{y}_j^b\right]\right|
-		\leq C \cdot \operatorname{diam}(R_j^b \cup R_k^b)^\alpha
-		\leq C \cdot D_{\lambda_n}^\alpha \to 0
-	\end{equation}
-	Therefore $\mathbb{E}[\int \phi \cdot d(DT_b)] \to 0$ and the cross terms
-	vanish asymptotically. For $n$ large enough the cross terms are negligible
-	and the second moment is dominated by the diagonal terms.
-	
-	\subsubsection*{Substep 2c: Bound the Diagonal Terms}
-	
-	For the diagonal terms $b = b'$:
-	\begin{equation}
-		\E\!\left[|DT_b|(\Omega)^2\right]
-		= \E\!\left[\left(\sum_{j \sim k} |\bar{y}_k^b - \bar{y}_j^b|
-		\cdot \mathcal{H}^{d-1}(\partial R_j^b \cap \partial R_k^b)\right)^2\right]
-	\end{equation}
-	Expanding the square and separating geometric and response terms using the
-	independence of $\mathcal{P}_b$ from the data:
-	\begin{equation}
-		\E\!\left[|DT_b|(\Omega)^2\right]
-		\leq \mathbb{E}_{\mathcal{P}_b}\!\left[K_{\lambda_n}^2\right]
-		\cdot \sup_{j \sim k} \mathbb{E}_{\mathrm{data}}\!\left[
-		|\bar{y}_k^b - \bar{y}_j^b|^2\right]
-	\end{equation}
-	where $K_{\lambda_n}$ is the number of adjacent pairs, which equals the
-	number of splits.
-	
-	\subsubsection*{Geometric Factor}
-	The Mondrian process generates cuts according to a recursive tree structure.
-	By the conditional independence of subtrees \citep{roy2009mondrian}, the
-	number of splits satisfies the distributional recursion:
-	\begin{equation}
-		K_{\lambda_n} = 1 + K_{\lambda_n, L} + K_{\lambda_n, R}
-	\end{equation}
-	where $K_{\lambda_n, L}$ and $K_{\lambda_n, R}$ are the split counts in the
-	left and right subtrees, conditionally independent given the first cut.
-	From \citet{mourtada2017mondrian}:
-	\begin{equation}
-		\mathbb{E}[K_{\lambda_n}] \leq (e(\lambda_n + 1))^d = O(n^{d/(d+2)})
-	\end{equation}
-	Taking the second moment via the recursion and using conditional independence:
-	\begin{equation}
-		\mathbb{E}[K_{\lambda_n}^2]
-		= \mathbb{E}[K_{\lambda_n}] + \mathbb{E}[K_{\lambda_n}]^2
-		= O(n^{d/(d+2)}) + O(n^{2d/(d+2)})
-		= O(n^{2d/(d+2)})
-	\end{equation}
-	where the first equality uses the Poisson-like variance structure of the
-	Mondrian process implied by the conditional independence recursion.
-	
-	\subsubsection*{Response Factor}
-	For adjacent leaves $j$ and $k$, by Cauchy--Schwarz on the sample means:
-	\begin{equation}
-		\mathbb{E}_{\mathrm{data}}\!\left[|\bar{y}_k^b - \bar{y}_j^b|^2\right]
-		\leq 4\,\mathbb{E}_{\mathrm{data}}\!\left[\|r^{(b)}\|_{L^2}^2\right]
-	\end{equation}
-	where $r^{(b)}$ denotes the residual within the relevant cells. Using the
-	cell diameter bound of \citet{roy2009mondrian}:
-	\begin{equation}
-		\mathbb{E}[D_{\lambda_n}(x)^2] \leq \frac{4d}{\lambda_n^2}
-		= O(n^{-2/(d+2)})
-	\end{equation}
-	and the Hölder continuity of $f \in W^{1,p}$ with $p > d$ giving
-	$\alpha = 1 - d/p$:
-	\begin{equation}
-		\mathbb{E}_{\mathrm{data}}\!\left[|\bar{y}_k^b - \bar{y}_j^b|^2\right]
-		\leq C^2 \left(\mathbb{E}[D_{\lambda_n}(x)^2]\right)^\alpha
-		\leq C^2 \left(\frac{4d}{\lambda_n^2}\right)^\alpha
-		= O(n^{-2\alpha/(d+2)})
-	\end{equation}
-	
-	\subsubsection*{Combining the Two Factors}
-	\begin{equation}
-		\E\!\left[|DT_b|(\Omega)^2\right]
-		\leq O(n^{2d/(d+2)}) \cdot O(n^{-2\alpha/(d+2)})
-		= O(n^{2(d-\alpha)/(d+2)})
-	\end{equation}
-	Therefore:
-	\begin{equation}
-		\E\!\left[|D\fn|(\Omega)^2\right]
-		= \frac{1}{B^2} \sum_b \E\!\left[|DT_b|(\Omega)^2\right]
-		= \frac{1}{B} O(n^{2(d-\alpha)/(d+2)})
-	\end{equation}
-	For this to be bounded uniformly in $n$ we require:
-	\begin{equation}
-		B \gg n^{2(d-\alpha)/(d+2)}
-	\end{equation}
-	This is a condition on the number of trees relative to the dimension and
-	smoothness of $f$. Under this condition:
-	\begin{equation}
-		\E\!\left[|D\fn|(\Omega)\right]
-		\leq \sqrt{\E\!\left[|D\fn|(\Omega)^2\right]}
-		= \sqrt{\frac{1}{B} O(n^{2(d-\alpha)/(d+2)})}
-		< \infty
-	\end{equation}
-	uniformly in $n$, completing the uniform BV boundedness claim.
-	
-	\begin{remark}
-		The condition $B \gg n^{2(d-\alpha)/(d+2)}$ requires the number of trees
-		to grow with $n$ at a rate depending on dimension $d$ and Hölder exponent
-		$\alpha = 1 - d/p$. For $\alpha$ close to $1$ --- achieved when $p \gg d$,
-		meaning $f$ is highly smooth --- the condition is mild and a slowly growing
-		number of trees suffices. For $\alpha$ small --- meaning $f$ has limited
-		smoothness or $d$ is large --- more trees are required. In practice random
-		forests with $B = 500$ or $B = 1000$ trees satisfy this condition for
-		moderate $d$ and $n$.
-	\end{remark}
-	
-	\subsection{Step 3: Apply Lemma~\ref{lem:bv_consistency}}
+	and by \eqref{eq:forest_convexity} the same bound holds for $\fn$ for every
+	$B \geq 1$.
+
+	\subsection{Step 8: Apply Lemma~\ref{lem:bv_consistency}}
 	
 	The $L^1$ consistency condition follows from the $L^2$ consistency result of
 	\citet{mourtada2017mondrian} under the budget $\lambda_n \asymp n^{1/(d+2)}$
@@ -3580,22 +3676,28 @@ supplement.
 		\leq |\Omega|^{1/2} \norm{\fn - f}_{L^2}
 		\xrightarrowp 0
 	\end{equation}
-	Uniform BV boundedness follows from Step~2 under the condition
-	$B \gg n^{2(d-\alpha)/(d+2)}$. Lemma~\ref{lem:bv_consistency} then gives
+	Uniform BV boundedness is Step~7, for every $B \geq 1$.
+	Lemma~\ref{lem:bv_consistency} then gives
 	$D\fn \xrightarrow{w*} Df$ in $\cM$. \qed
 	
 	\begin{remark}
-		Theorem~\ref{thm:forests} is stated for Mondrian forests where the
-		partition is generated independently of the data. The independence is
-		used critically in the decomposition of Substep~2a and in the cross
-		term cancellation of Substep~2b. For Breiman forests with data-dependent
-		splits the partition geometry and response variation are coupled ---
-		splits are chosen to maximize response differences across boundaries,
-		which is precisely the worst case for the BV bound, and the cross term
-		cancellation argument fails because the jump directions are not
-		independent across trees. Extending the result to Breiman forests
-		requires additional control over this coupling and is left as future
-		work.
+		Theorem~\ref{thm:forests} is stated for Mondrian forests, whose
+		partitions are generated independently of the data. Independence enters
+		in exactly two places, both in Step~4: the interface identity of
+		Lemma~\ref{lem:interface} is a statement about the Mondrian process
+		alone, and the cell law behind Lemma~\ref{lem:aspect} likewise. Neither
+		survives data-dependent splitting. For Breiman forests the partition
+		geometry and the response variation are coupled --- splits are chosen to
+		maximize response differences across boundaries, which is the worst case
+		for a bound on total variation --- so both lemmas would need replacing,
+		not merely adapting. That is left as future work.
+
+		What the argument no longer needs is any cancellation between trees.
+		An earlier version bounded the second moment of $|D\fn|(\Omega)$ and
+		relied on cross terms vanishing, which required $B$ to grow with $n$.
+		The per-tree bound of Steps~3 to~7 removes both the cross-term argument
+		and the condition on $B$, so the theorem now covers forests of the fixed
+		size that is used in practice.
 	\end{remark}
 	
 
