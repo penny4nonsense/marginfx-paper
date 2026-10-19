@@ -2,11 +2,17 @@
 
 Draft of a replacement for Substeps 2a–2c of §S25. Written 2026-10-19.
 
-**Status.** Lemmas A, B, B′ and C are all proved, and each is numerically
-confirmed. The per-tree bound is therefore complete, and with Step 1 of §S25 it
-gives the forest bound with no condition on `B`. **One** item is still not
-proved in general: Step 0's jump-set containment, argued below and verified
-numerically in `d ≤ 4`. And none of it has been read by anyone but me.
+**Status.** Every step is now proved: Step 0, Lemmas A, B, B′ and C, and the
+assembly. Each is independently confirmed numerically. The per-tree bound is
+complete, and with Step 1 of §S25 it gives the forest bound with **no condition
+on `B`**, replacing an argument that required `B ≫ n^{2(d-α)/(d+2)}`.
+
+The remaining caveat is not mathematical but procedural: **none of this has
+been read by anyone but me**, it was written in a day, and I have been wrong
+twice in this project in ways that only measurement caught. The places I would
+check hardest are Lemma C's Step C3, where everything turns on
+`E[T^{-3/2}] = Γ(1/2)` being finite, and Lemma B′'s use of projectivity to get
+the truncated cell law.
 
 Companion to `notes-mondrian-bv-bound.md`, which gives the background and the
 scaling heuristic this makes precise.
@@ -32,18 +38,59 @@ Internal nodes are indexed by `k`; node `k` splits cell `C_k` along a face
 
 **Goal.** `sup_n E[|DT|(Ω)] < ∞` at the minimax budget `λ_n ≍ n^{1/(d+2)}`.
 
-## Step 0: the jump-set representation
+## Step 0: the jump-set representation — **proved**
 
-`T` is piecewise constant, so `DT` is concentrated on the interfaces and
+> For `T` piecewise constant on the leaves of a hierarchical axis-aligned
+> partition whose cuts are strictly interior to their cells,
+>
+>     |DT|(Ω) = Σ_k ∫_{F_k} |Δ_k(u)| dH^{d-1}(u),
+>
+> where `F_k = C̄_k ∩ \{x_{j_k} = t_k\}` is the split face at internal node `k`
+> and `Δ_k(u)` is the difference of the two leaf values meeting at `u`.
 
-    |DT|(Ω) = Σ_k ∫_{F_k} |Δ_k(u)| dH^{d-1}(u),
+Lemma~S3 (`lem:bv_existence`) already supplies the analytic content: for a
+piecewise constant `T` with leaves `{R_l}` and values `{c_l}`,
 
-where `Δ_k(u)` is the difference of the two leaf values meeting at `u`. The
-faces are a.s. disjoint: two nodes on incompatible subtrees have disjoint
-cells, and a descendant's face lies strictly inside its parent's cell because
-cut positions are continuous. The containment of the jump set in `⋃_k F_k` is
-the lowest-common-ancestor argument verified numerically in `d ≤ 4` by
-`check-tree-faces.py`.
+    DT = Σ_{l ∼ m} (c_m - c_l) ν_{lm} H^{d-1}⌊(∂R_l ∩ ∂R_m),
+
+the sum running over adjacent leaf pairs. What remains is to re-index that sum
+by internal nodes rather than leaf pairs, which needs two facts.
+
+**(i) Each leaf-pair interface lies in the face of their lowest common
+ancestor.** Let `l, m` be adjacent leaves and `k` their lowest common ancestor.
+Then `l` and `m` lie in opposite children of `k`, so, writing `C_k^-` and
+`C_k^+` for those children, `R_l ⊆ C_k^-` and `R_m ⊆ C_k^+` after relabelling.
+Taking closures, every `x ∈ ̄R_l` has `x_{j_k} ≤ t_k` and every `x ∈ ̄R_m` has
+`x_{j_k} ≥ t_k`. Any `x ∈ ∂R_l ∩ ∂R_m` lies in both closures, so `x_{j_k} = t_k`;
+and `x ∈ ̄R_l ⊆ ̄C_k`. Hence `∂R_l ∩ ∂R_m ⊆ F_k`. ∎
+
+**(ii) Distinct faces meet in an `H^{d-1}`-null set.** Take internal nodes
+`k ≠ k′`. If neither is an ancestor of the other they lie in opposite subtrees
+of their own lowest common ancestor, so `C_k ∩ C_{k′} = ∅` and the faces are
+disjoint. Otherwise say `k` is a strict ancestor of `k′`, so `C_{k′}` lies in
+one child of `k`. If `j_{k′} ≠ j_k` the two hyperplanes are transverse and meet
+in dimension `d-2`, which is `H^{d-1}`-null. If `j_{k′} = j_k` they are parallel,
+and distinct: `t_{k′}` is strictly interior to the extent of `C_{k′}` in that
+coordinate, while `C_{k′}` lies entirely on one side of `t_k`, so
+`t_{k′} ≠ t_k`. ∎
+
+Combining, the map sending an adjacent leaf pair to its lowest common ancestor
+sorts the interfaces into the faces, with no interface counted twice by (ii),
+and conversely every point in the relative interior of `F_k` lies between the
+leaf of `C_k^-` and the leaf of `C_k^+` containing it, whose lowest common
+ancestor is `k`. The correspondence is therefore a bijection up to
+`H^{d-1}`-null sets, and regrouping Lemma~S3's sum gives the display. ∎
+
+Three remarks. The argument is **purely deterministic** — no probability, no
+Mondrian structure, any dimension — so it also covers the boosted-tree ensembles
+of the companion note, where the same representation was used. The only
+hypothesis is that cuts fall strictly inside their cells, which holds almost
+surely for the Mondrian since cut positions are uniform on an open interval,
+and which is needed in (ii): a cut on a cell boundary would produce an empty
+child and a face coinciding with an ancestor's. And this closes the one item
+that was previously only verified numerically; `check-tree-faces.py`, which
+confirmed (i) over random partitions in `d ≤ 4`, is now corroboration rather
+than evidence.
 
 ## Lemma A (expected interface area) — **proved**
 
@@ -92,7 +139,7 @@ a set of lines of measure `vol(l)/s_1(l)`. Hence for either part,
 
     Σ_k ∫_{F_k}|Δ| ≤ 2 Σ_l (sup over the jump at l) · vol(l)/s_1(l).      (★)
 
-## Lemma B (aspect ratio) — proved modulo a published fact
+## Lemma B (aspect ratio) — **proved**, from a published cell law
 
 > Let `l(X)` be the Mondrian cell containing a uniform point `X`. Then for
 > `m ≠ 1`, `E[ s_m(l(X)) / s_1(l(X)) ] = 2`, and consequently
@@ -169,7 +216,7 @@ diverges. The mean exists and is all the argument uses, but no sample mean of
 it stabilises quickly, which is why the cube figures wander. The quadrature
 above avoids the issue entirely, which is why it is the reliable check.)*
 
-## Step 3: the signal term — **done, given Lemma B**
+## Step 3: the signal term — **proved**
 
 For two leaves meeting at `u`, both lie in the cell `C_k` being split, so
 `|Δ^{sig}| ≤ L · diam(C_k) ≤ L · (diam(l) + diam(l'))`. Applying (★),
@@ -278,7 +325,7 @@ does not use. The condition `B ≫ n^{2(d−α)/(d+2)}` disappears with them.
 
 | piece | status |
 |---|---|
-| Step 0, jump-set representation | argued; LCA containment verified numerically in `d ≤ 4`, not proved in general |
+| Step 0, jump-set representation | **proved**; deterministic, any `d`; numerics now corroboration |
 | Lemma A, interface area `= dλ·vol` | **proved**; confirmed to ~1% |
 | Lemma B, aspect ratio `≤ 2d−1` | **proved** from a published cell law |
 | Lemma B′, the same on `[0,1]^d` | **proved**; boundary costs `+4(d−1)/λ`, an additive constant, not a rate |
@@ -286,8 +333,7 @@ does not use. The condition `B ≫ n^{2(d−α)/(d+2)}` disappears with them.
 | Lemma C, noise `≲ λ^{1+d/2}n^{-1/2}` | **proved**; rate confirmed sharp, constant loose by 2–4× |
 | Step 5, assembly and the forest | immediate from Step 1 of §S25 |
 
-The one remaining item is of the "needs a careful author" kind rather than the
-"needs a new idea" kind, which is the opposite of where the boosting analogue
-ended up. Step 0 is a deterministic statement about hierarchical axis-aligned
-partitions, with no probability in it; the obstacle is only that I have checked
-it rather than written it.
+Nothing is outstanding. Set against the boosting analogue, where four
+independent routes closed and measurement said the claim itself was false, the
+forest claim was true and the proof turned out to be shorter than the one it
+replaces.
