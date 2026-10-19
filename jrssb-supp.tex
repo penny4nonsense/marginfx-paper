@@ -682,7 +682,7 @@ supplement.
 	
 	The practical consequence is that adding a learner is usually a matter of
 	locating an existing rate rather than proving a new theorem.
-	Table~\ref{M-tab:learner_checklist} records the position for the classes treated
+	Table~\ref{tab:learner_checklist} records the position for the classes treated
 	here and for several that are not. Penalized linear estimators are the easiest
 	case: the lasso attains $L^2$ rates of order $\sqrt{s \log d / n}$ under
 	standard sparsity and restricted-eigenvalue conditions, comfortably inside the
@@ -714,6 +714,34 @@ supplement.
 	streaming estimators, for instance --- fall outside the sampling framework of
 	Assumption~\ref{M-ass:sampling} altogether and would require a different
 	treatment.
+
+\begin{table}[htbp]
+	\centering
+	\caption{What must be verified to apply the framework to a learner. The
+		inference column is what Theorem~\ref{M-thm:main} consumes; the interpretation
+		column is what Section~\ref{sec:learners} requires in order to read the
+		uncorrected plug-in as a gradient.}
+	\label{tab:learner_checklist}
+	\begin{tabular}{lll}
+		\toprule
+		Learner & Inference: $L^2$ rate & Interpretation: function space \\
+		\midrule
+		Linear and GLM        & parametric        & $W^{1,p}$, exact \\
+		Lasso, ridge          & established       & $W^{1,p}$ \\
+		Splines, series       & established       & $W^{1,p}$ \\
+		Kernel ridge          & established       & $W^{1,p}$ via smooth kernel \\
+		GAM                   & componentwise     & $W^{1,p}$ \\
+		Neural networks       & established       & $W^{1,p}$, proved here \\
+		$L_2$Boost, fixed smoother & established  & $W^{1,p}$/BV, proved here \\
+		Tree boosting (XGBoost) & established     & BV; gradient \emph{open} \\
+		Mondrian forests      & minimax optimal   & BV, proved here \\
+		Breiman forests       & \emph{open}       & BV; gradient \emph{conjectured} \\
+		SVM (smooth kernel)   & available         & $W^{1,p}$ via kernel; not treated \\
+		BART                  & contraction rate  & BV; not treated \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
 
 		% ===== moved from Section 4 of the main paper =====
 	\section{Implementation Details for the Empirical Applications}
@@ -1706,7 +1734,14 @@ supplement.
 	
 	\subsection{Simulation 3: The Debiased Estimator}
 	
-	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{M-sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{M-lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one. For the same reason the design satisfies Assumption~\ref{M-ass:unbounded} rather than the density bounds of Assumption~\ref{M-ass:sampling}: a Gaussian density is not bounded below on $\R^d$, and the representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$ is unbounded. It is square integrable, with second moment \eqref{M-eq:gaussalpha}, and the shift ratio $\exp(h u_j - h^2/2)$ has moments of every order, so both conditions of Assumption~\ref{M-ass:unbounded} hold for every $r$ and $q$. The theorems demonstrated here are therefore the ones proved under that assumption set, and the closed-form representer used below is the exact one for this design rather than a bounded approximation to it.
+	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{M-sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{M-lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one. For the same reason the design satisfies Assumption~\ref{M-ass:unbounded} rather than the density bounds of Assumption~\ref{M-ass:sampling}: a Gaussian density is not bounded below on $\R^d$, and the representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$ is unbounded. It is square integrable, with
+	\begin{equation}
+		\E\left[\alpha_h(X)^2\right]
+		= \frac{e^{-h^2}}{h^2}\,\E\left[\sinh^2(h X_j)\right]
+		= \frac{e^{-h^2}\left(e^{2h^2} - 1\right)}{2h^2} < \infty ,
+		\label{eq:gaussalpha}
+	\end{equation}
+	and all higher moments finite as well; the shift ratio $\exp(h u_j - h^2/2)$ has moments of every order, so both conditions of Assumption~\ref{M-ass:unbounded} hold for every $r$ and $q$. The theorems demonstrated here are therefore the ones proved under that assumption set, and the closed-form representer used below is the exact one for this design rather than a bounded approximation to it.
 	
 	\begin{table}[htbp]
 		\centering
@@ -2235,7 +2270,7 @@ supplement.
 	finiteness follows from \eqref{eq:shiftbound} applied to $f$, which is bounded,
 	together with $\alpha_h \in L^2(P)$ from
 	Assumption~\ref{M-ass:unbounded}(c) and $\E[Y^2] < \infty$; for the Gaussian design
-	the representer's second moment is \eqref{M-eq:gaussalpha}. Either way
+	the representer's second moment is \eqref{eq:gaussalpha}. Either way
 	$\mathrm{Var}(\psi) < \infty$ and the classical CLT applies. For the variance estimator, write
 	$\hat{\psi}_i(\hat{\theta}_h) = \hat{\psi}_i - (\hat{\theta}_h - \theta)$; then:
 	\begin{equation}

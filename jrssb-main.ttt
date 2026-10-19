@@ -1,33 +1,5 @@
 \begin{table}[htbp]
 \centering
-\caption{What must be verified to apply the framework to a learner. The
-inference column is what Theorem~\ref{thm:main} consumes; the interpretation
-column is what Section~\ref{S-sec:learners} requires in order to read the
-uncorrected plug-in as a gradient.}
-\label{tab:learner_checklist}
-\begin{tabular}{lll}
-\toprule
-Learner & Inference: $L^2$ rate & Interpretation: function space \\
-\midrule
-Linear and GLM        & parametric        & $W^{1,p}$, exact \\
-Lasso, ridge          & established       & $W^{1,p}$ \\
-Splines, series       & established       & $W^{1,p}$ \\
-Kernel ridge          & established       & $W^{1,p}$ via smooth kernel \\
-GAM                   & componentwise     & $W^{1,p}$ \\
-Neural networks       & established       & $W^{1,p}$, proved here \\
-$L_2$Boost, fixed smoother & established  & $W^{1,p}$/BV, proved here \\
-Tree boosting (XGBoost) & established     & BV; gradient \emph{open} \\
-Mondrian forests      & minimax optimal   & BV, proved here \\
-Breiman forests       & \emph{open}       & BV; gradient \emph{conjectured} \\
-SVM (smooth kernel)   & available         & $W^{1,p}$ via kernel; not treated \\
-BART                  & contraction rate  & BV; not treated \\
-\bottomrule
-\end{tabular}
-\end{table}
-\efloatseparator
- 
-\begin{table}[htbp]
-\centering
 \small
 \begin{threeparttable}
 \caption{UCI Credit Card Default: Model Comparison. Average marginal effects on P(Default), full specification (A+B+C).}

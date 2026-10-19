@@ -4,45 +4,45 @@ The top-level auxiliary file: jrssb-main.aux
 The style file: plainnat.bst
 Database file #1: references.bib
 Warning--empty publisher in molnar2025
-You've used 34 entries,
+You've used 31 entries,
             2773 wiz_defined-function locations,
-            809 strings with 10425 characters,
-and the built_in function-call counts, 15274 in all, are:
-= -- 1398
-> -- 771
-< -- 29
-+ -- 266
-- -- 231
-* -- 1204
-:= -- 2325
-add.period$ -- 122
-call.type$ -- 34
-change.case$ -- 175
-chr.to.int$ -- 33
-cite$ -- 69
-duplicate$ -- 726
-empty$ -- 1309
-format.name$ -- 283
-if$ -- 3229
+            787 strings with 9903 characters,
+and the built_in function-call counts, 14015 in all, are:
+= -- 1282
+> -- 710
+< -- 26
++ -- 245
+- -- 213
+* -- 1100
+:= -- 2125
+add.period$ -- 109
+call.type$ -- 31
+change.case$ -- 161
+chr.to.int$ -- 30
+cite$ -- 63
+duplicate$ -- 664
+empty$ -- 1201
+format.name$ -- 260
+if$ -- 2965
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 37
-newline$ -- 195
-num.names$ -- 136
-pop$ -- 355
+missing$ -- 32
+newline$ -- 177
+num.names$ -- 124
+pop$ -- 329
 preamble$ -- 1
-purify$ -- 145
+purify$ -- 133
 quote$ -- 0
-skip$ -- 559
+skip$ -- 517
 stack$ -- 0
-substring$ -- 579
-swap$ -- 89
-text.length$ -- 8
+substring$ -- 542
+swap$ -- 84
+text.length$ -- 7
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 334
+type$ -- 311
 warning$ -- 1
-while$ -- 142
+while$ -- 131
 width$ -- 0
-write$ -- 486
+write$ -- 438
 (There was 1 warning)

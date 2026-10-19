@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  19 OCT 2026 15:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.10.3)  19 OCT 2026 16:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -569,80 +569,80 @@ as-pect ra-tio $\U/msb/m/n/12 E\OT1/cmr/m/n/12 [[](\OML/cmm/m/it/12 l\OT1/cmr/m
  []
 
 [12] [13] [14] [15] [16] [17] [18] [19] [20] [21] [22] [23] [24] [25] [26]
-[27] [28] [29] [30] [31]
-Overfull \hbox (7.8269pt too wide) in paragraph at lines 1155--1184
+[27] [28] [29] [30] [31] [32]
+Overfull \hbox (7.8269pt too wide) in paragraph at lines 1183--1212
  [] 
  []
 
-[32] [33] [34] [35] [36] [37] [38] [39] [40] [41] [42] [43] [44] [45] [46]
-[47] [48] [49]
-Overfull \hbox (0.55208pt too wide) in paragraph at lines 1777--1815
+[33] [34] [35] [36] [37] [38] [39] [40] [41] [42] [43] [44] [45] [46] [47]
+[48] [49] [50]
+Overfull \hbox (0.55208pt too wide) in paragraph at lines 1812--1850
  [] 
  []
 
-[50]
-Overfull \hbox (0.55208pt too wide) in paragraph at lines 1885--1923
+[51]
+Overfull \hbox (0.55208pt too wide) in paragraph at lines 1920--1958
  [] 
  []
 
-[51] [52] [53] [54] [55] [56] [57]
+[52] [53] [54] [55] [56] [57] [58]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2119.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 2119.
+(hyperref)                removing `math shift' on input line 2154.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2119.
+(hyperref)                removing `superscript' on input line 2154.
 
-[58] [59] [60] [61] [62] [63] [64]
-Overfull \hbox (3.99106pt too wide) in paragraph at lines 2418--2418
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2154.
+
+[59] [60] [61] [62] [63] [64] [65]
+Overfull \hbox (3.99106pt too wide) in paragraph at lines 2453--2453
 []\T1/cmr/bx/n/17.28 Proof of Lemma [][]S1[][] (Deriva-tive Ex-is-tence, Sobole
 v) 
  []
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2440.
+(hyperref)                removing `math shift' on input line 2475.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 2440.
+(hyperref)                removing `superscript' on input line 2475.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2440.
+(hyperref)                removing `math shift' on input line 2475.
 
-[65] [66]
-Overfull \hbox (22.25499pt too wide) in paragraph at lines 2527--2527
+[66] [67]
+Overfull \hbox (22.25499pt too wide) in paragraph at lines 2562--2562
 []\T1/cmr/bx/n/17.28 Proof of Lemma [][]S2[][] (Deriva-tive Con-sis-tency, Sobo
 lev) 
  []
 
-[67] [68] [69]
+[68] [69] [70]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2657.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 2657.
+(hyperref)                removing `math shift' on input line 2692.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 2657.
+(hyperref)                removing `subscript' on input line 2692.
 
-[70] [71] [72]
-Overfull \hbox (15.73434pt too wide) in paragraph at lines 2805--2812
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 2692.
+
+[71] [72] [73]
+Overfull \hbox (15.73434pt too wide) in paragraph at lines 2840--2847
 \T1/cmr/m/n/12 The proof mir-rors the sub-se-quence ar-gu-ment of Lemma [][]S2[
 ][], re-plac-ing the Rellich--Kondrachov
  []
 
-[73] [74]
-Overfull \hbox (3.1874pt too wide) in paragraph at lines 2871--2874
+[74] [75]
+Overfull \hbox (3.1874pt too wide) in paragraph at lines 2906--2909
 \T1/cmr/m/n/12 For $\OML/cmm/m/it/12 k \OMS/cmsy/m/n/12 ^^U \OML/cmm/m/it/12 K[
 ]$ \T1/cmr/m/n/12 we have $\U/msb/m/n/12 P\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 A[]
  \OMS/cmsy/m/n/12 \ \OML/cmm/m/it/12 E[]\OT1/cmr/m/n/12 ) \OMS/cmsy/m/n/12 ^^U 
@@ -653,53 +653,53 @@ n/12 ^^U [][] \U/msb/m/n/12 P\OT1/cmr/m/n/12 (\OML/cmm/m/it/12 B[]\OT1/cmr/m/n/
 12 )$
  []
 
-[75] [76] [77] [78] [79]
+[76] [77] [78] [79] [80]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3118.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3118.
+(hyperref)                removing `math shift' on input line 3153.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3118.
-
-[80] [81]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3240.
+(hyperref)                removing `superscript' on input line 3153.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3240.
+(hyperref)                removing `math shift' on input line 3153.
+
+[81] [82]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3275.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3240.
-
-[82] [83] [84]
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3351.
+(hyperref)                removing `superscript' on input line 3275.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 3351.
+(hyperref)                removing `math shift' on input line 3275.
+
+[83] [84] [85]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3386.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 3351.
+(hyperref)                removing `superscript' on input line 3386.
 
-[85] [86] [87] [88] [89] [90] [91] [92]
-Overfull \hbox (2.69263pt too wide) in paragraph at lines 3746--3749
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 3386.
+
+[86] [87] [88] [89] [90] [91] [92] [93]
+Overfull \hbox (2.69263pt too wide) in paragraph at lines 3781--3784
 [][]\T1/cmr/bx/n/12 Lemma S10 \T1/cmr/m/n/12 (Per-leaf charg-ing)\T1/cmr/bx/n/1
 2 . []\T1/cmr/m/it/12 Sup-pose each jump be-tween con-sec-u-tive leaves is boun
 ded
  []
 
-[93] [94] [95] [96] (./jrssb-supp.bbl [97] [98]) [99] (./jrssb-supp.aux)
+[94] [95] [96] [97] (./jrssb-supp.bbl [98] [99]) [100] (./jrssb-supp.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
@@ -709,9 +709,9 @@ Package rerunfilecheck Info: File `jrssb-supp.out' has not changed.
  ) 
 Here is how much of TeX's memory you used:
  12839 strings out of 474934
- 196545 string characters out of 5757826
- 1956785 words of memory out of 5000000
- 33779 multiletter control sequences out of 15000+600000
+ 196516 string characters out of 5757826
+ 1955785 words of memory out of 5000000
+ 33776 multiletter control sequences out of 15000+600000
  584708 words of font info for 104 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,18n,79p,2110b,587s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -751,10 +751,10 @@ ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfti1095.pfb><c
 <c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sftt1000.pf
 b><c:/ProgramData/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sftt1200.
 pfb>
-Output written on jrssb-supp.pdf (99 pages, 845407 bytes).
+Output written on jrssb-supp.pdf (100 pages, 847166 bytes).
 PDF statistics:
- 1573 PDF objects out of 1728 (max. 8388607)
- 1389 compressed objects within 14 object streams
- 395 named destinations out of 1000 (max. 500000)
+ 1584 PDF objects out of 1728 (max. 8388607)
+ 1397 compressed objects within 14 object streams
+ 398 named destinations out of 1000 (max. 500000)
  545 words of extra memory for PDF output out of 10000 (max. 10000000)
 
