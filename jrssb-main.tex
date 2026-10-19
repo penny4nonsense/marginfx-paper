@@ -574,49 +574,6 @@ representation; semiparametric efficiency.
 	Section~\ref{sec:inference}. The ratio is not linear, and an estimator for
 	it would carry a second influence-function term for the denominator.
 
-	The practical consequence is that effects on heavily trimmed features are
-	not comparable in magnitude with effects on untrimmed ones. A feature
-	retained for only eight percent of the sample reports a number roughly a
-	twelfth the size of its conditional counterpart, and reporting the two side
-	by side without the retained share invites exactly the wrong comparison.
-	Both $\E[w(X)]$ and the implied scale factor are recoverable from the
-	trimmed fractions reported for every feature in
-	Table~\ref{S-tab:window_settings} of the supplement, and
-	Section~\ref{sec:empirical} flags the cases where the distinction changes
-	the reading.
-
-	\begin{remark}[Data-dependent step sizes]
-		\label{rem:randomh}
-		Definition~\ref{def:window} fixes $h$, and every result below is a
-		statement about the estimand at that fixed value. The default of
-		Section~2 sets $h_j = \max(10^{-4},\, 0.05\,\hat{\sigma}_j)$, which is a
-		function of the data. The two are reconciled by reading all results
-		conditional on the realized $\hat{h}$: the reported quantity is the
-		window effect at the step actually used, which is why $h_j$ is reported
-		alongside every estimate in Table~\ref{S-tab:window_settings} rather than
-		being treated as a tuning parameter. Nothing in the argument requires
-		$h$ to be non-random --- the representation of
-		Lemma~\ref{lem:riesz}, the orthogonality of Lemma~\ref{lem:orth} and the
-		expansion of Theorem~\ref{thm:main} all hold pointwise in $h$ --- and
-		the conditional reading is the natural one, because the estimand is
-		genuinely indexed by the perturbation scale the analyst chose.
-
-		It is worth being explicit about what the conditional reading buys,
-		since the alternative is not free. If one insists instead that the
-		target is $\theta_{h_0}$ at the deterministic limit
-		$h_0 = 0.05\,\sigma_j$, then whenever $h \mapsto \theta_h(f)$ is
-		differentiable at $h_0$ the delta method gives
-		$\theta_{\hat{h}} - \theta_{h_0} = \theta_{h_0}'\,(\hat{h} - h_0) +
-		o_p(n^{-1/2})$, and since $\hat{\sigma}_j$ is root-$n$ consistent this
-		is $O_p(n^{-1/2})$ --- the same order as the sampling error itself. The
-		substitution is therefore \emph{not} asymptotically negligible: it
-		contributes a term to the limiting variance, and an unconditional
-		treatment would have to add that term to $V_h$. We do not pursue this,
-		because the conditional statement is the one that matches how the
-		estimand is used and reported. An analyst who wants the unconditional
-		reading can fix $h$ from prior information or from a pilot sample, at
-		which point the two coincide.
-	\end{remark}
 	
 	The estimand admits an exact dual representation, which is the engine of everything
 	that follows. Extend $q = wp$ by zero outside $\Omega$.
@@ -640,27 +597,19 @@ representation; semiparametric efficiency.
 		\eqref{eq:riesz} holds for every $g$ with $\alpha_h g \in L^1(P)$.
 	\end{lemma}
 	
-	The proof is a change of variables in each half of the finite difference and nothing
-	more. This is worth dwelling on, because it is the point at which the present theory
-	parts ways with the classical average derivative literature. For the derivative
-	functional $\E[\partial_j f(X)]$, the analogous representation is obtained by
-	integration by parts, the representer is the negative score $-\partial_j \log p$ of
-	the covariate density, and a boundary term appears that must be killed by assuming
-	the density vanishes on the boundary --- an assumption incompatible with a density
-	bounded away from zero on a compact support, and the reason
-	\citet{powell1989} pass to density-weighted variants. For the window functional the
-	integration by parts is replaced by exact summation: no boundary term ever arises,
-	because the trimming weight guarantees that every shifted evaluation point stays
-	inside $\Omega$. The representer involves the density only through ratios of its
-	values at points $2h$ apart --- no derivative of $p$, and hence no density
-	derivative estimation, is ever required. The mean-zero property follows from
-	applying \eqref{eq:riesz} to $g \equiv 1$, and the uniform bound makes $\alpha_h$ a
-	bounded weight function, in contrast to the unbounded score-based representers of
-	the derivative functional. The cost of the exactness is the factor $h^{-1}$ in the
-	bound: smaller windows mean noisier representers, the familiar bias--variance logic
-	of a bandwidth, here appearing in the variance of the efficient influence function
-	rather than in a smoothing bias.
-	
+	The proof is a change of variables in each half of the finite difference and
+	nothing more. Two features of \eqref{eq:riesz} carry the rest of the paper.
+	No boundary term arises, because the trimming weight keeps every shifted
+	evaluation point inside $\Omega$, so the density need not be assumed to
+	vanish on the boundary as it must be for the derivative functional; and the
+	representer involves the density only through ratios of its values at points
+	$2h$ apart, so no density derivative is ever estimated. The mean-zero property
+	follows by applying \eqref{eq:riesz} to $g \equiv 1$. The cost of the
+	exactness is the factor $h^{-1}$ in the bound: smaller windows mean noisier
+	representers. Section~\ref{S-sec:extras} compares the construction with the
+	integration-by-parts representation of the classical average derivative, which
+	is where the boundary term and the density score come from.
+
 	The classical estimand is recovered in the small-window limit.
 	
 	\begin{proposition}[Recovery of the Average Derivative]
@@ -684,29 +633,6 @@ representation; semiparametric efficiency.
 	proposition as the licence to interpret it as a derivative summary when the truth is
 	smooth.
 	
-	\begin{remark}[Binary and Categorical Variables]
-		\label{rem:binary}
-		For a binary $X_j \in \{0,1\}$ the contrast estimand of Section~2 is
-		$\theta^{\mathrm{bin}} = \E[w(X_{-j})\{f(X_{-j}, 1) - f(X_{-j}, 0)\}]$, and the
-		same change-of-variables argument --- with the integral over $x_j$ replaced by a
-		sum over its two support points --- yields the representer:
-		\begin{equation}
-			\alpha^{\mathrm{bin}}(u) = w(u_{-j})\left[
-			\frac{\mathbf{1}\{u_j = 1\}}{\pi(u_{-j})}
-			- \frac{\mathbf{1}\{u_j = 0\}}{1 - \pi(u_{-j})}\right],
-			\qquad \pi(x_{-j}) = \Prob(X_j = 1 \mid X_{-j} = x_{-j})
-		\end{equation}
-		These are inverse propensity weights, and the resulting orthogonal score is the
-		augmented inverse probability weighting score of \citet{robins1994} with $X_j$
-		in the role of the treatment. The overlap condition
-		$\varepsilon \leq \pi \leq 1 - \varepsilon$ plays exactly the role the trimming
-		weight plays in the continuous case, and every result of
-		Section~\ref{sec:inference} applies verbatim with
-		$(\alpha_h, \theta_h)$ replaced by
-		$(\alpha^{\mathrm{bin}}, \theta^{\mathrm{bin}})$. Continuous, binary, and
-		categorical effects are thus instances of one construction rather than a
-		definition and two patches.
-	\end{remark}
 	
 	\subsection{Orthogonal Score, Cross-Fitting, and Efficient Inference}
 	\label{sec:inference}
@@ -786,43 +712,21 @@ representation; semiparametric efficiency.
 	converge faster than $n^{-1/4}$; the product form also permits trading accuracy in
 	one nuisance against the other.
 
-	Under Assumption~\ref{ass:unbounded} in place of the density bounds, the three
-	conditions are read as follows. Condition (a) is strengthened to
-	$\Pq{\hat{f}^{(-k)} - f}{2 + \delta} = o_p(1)$ for a $\delta > 0$ with
-	$(2 + \delta)/2$ conjugate to the $r$ of \eqref{eq:shiftmoment}; condition (c) is
-	replaced by $\Pq{\hat{\alpha}^{(-k)}}{q} \leq \bar{A}_q < \infty$ for the $q$ of
-	Assumption~\ref{ass:unbounded}(c); and condition (b) is unchanged.
+	Under Assumption~\ref{ass:unbounded} in place of the density bounds, (a)
+	strengthens to an $L^{2+\delta}$ requirement and (c) to a $q$th moment bound,
+	while the product condition (b) --- the one that governs how fast the
+	nuisances must converge --- is unchanged. That it is unchanged is a
+	consequence of the exactness of Lemma~\ref{lem:orth}: the bias is a product
+	of two $L^2$ errors with no linearization remainder, so the step of the
+	argument that carries the rates never touches a density bound, and the rate
+	conditions of Section~\ref{S-sec:rates} apply verbatim under either
+	assumption set. Theorems~\ref{thm:main} and~\ref{thm:efficiency} and
+	Proposition~\ref{prop:robust} hold in both cases, and the proofs carry the
+	two side by side at the three points where they differ.
+	Section~\ref{S-sec:extras} states the modified conditions and shows that the
+	strengthening of (a) is free whenever the learner's error is uniformly
+	bounded.
 
-	That last point is the one worth emphasizing. What changes between the two
-	assumption sets are a consistency requirement and a boundedness requirement; the
-	product condition (b), which governs how fast the nuisances must converge, is
-	identical in both. The reason is the exactness of Lemma~\ref{lem:orth}: the bias
-	is a product of two $L^2$ errors with no linearization remainder to control, so
-	the step of the argument that carries the rates never touches a density bound.
-	Everything in Section~\ref{S-sec:rates} therefore applies verbatim under either
-	assumption set. Had the bias carried the usual remainder term, the higher
-	integrability would have propagated into the rate conditions and the thresholds
-	of Section~\ref{S-sec:rates} would have moved.
-
-	Where the learner's error is uniformly bounded --- as it is in the compactly
-	supported settings in which the rate results of Section~\ref{S-sec:rates} are
-	proved, whose estimators are truncated at a known bound on $f$ --- the
-	strengthening of (a) is free. Writing $\Delta = \hat{f}^{(-k)} - f$,
-	interpolation gives
-	\begin{equation}
-		\Pq{\Delta}{2 + \delta}
-		\leq \norm{\Delta}_\infty^{\delta/(2 + \delta)}\,
-		\Ptwo{\Delta}^{2/(2 + \delta)}
-		\label{eq:interp}
-	\end{equation}
-	so $L^2$ consistency implies $L^{2+\delta}$ consistency with no additional
-	assumption. On unbounded support it is a genuine additional requirement, though a
-	mild one, and it holds for the learners used in the Gaussian design of
-	Section~\ref{sec:simulation}.
-
-	Theorem~\ref{thm:main}, Theorem~\ref{thm:efficiency} and
-	Proposition~\ref{prop:robust} hold under either assumption set. The proofs in the
-	supplement carry the two cases side by side at the three points where they differ.
 	
 	\begin{theorem}[Asymptotic Linearity and Normality]
 		\label{thm:main}
@@ -898,38 +802,31 @@ representation; semiparametric efficiency.
 		$\E[\hat{\theta}_h] = \theta_h(f)$ at every sample size.
 	\end{proposition}
 	
-	The practical reach of Proposition~\ref{prop:robust} is wider than its hypotheses
-	may suggest, because condition (a) is the condition that off-the-shelf machine
-	learning defaults actually satisfy. A depth-capped forest, an early-stopped
-	boosting run, a network of fixed width --- fixed-complexity learners generally ---
-	converge not to $f$ but to a pseudo-true limit $g$ within their approximation
-	class, so Assumption~\ref{ass:nuisance}(a) fails and Theorem~\ref{thm:main} is
-	silent about them. The proposition covers exactly this case whenever the
-	representer side is strong: in simulation designs and designed experiments the
-	covariate density is known and $\alpha_h$ is computable in closed form; and in the
-	binary case of Remark~\ref{rem:binary}, a randomized $X_j$ means a \emph{known}
-	propensity score, so the marginal effect of a randomized treatment is validly
-	covered for any black-box learner with no consistency requirement whatsoever ---
-	the model-agnostic analog of the classical robustness of randomization
-	\citep{robins1994}. The mirror-image direction of the double robustness is worth
-	recording too: since the bias identity is symmetric, a learner converging at the
-	parametric rate --- a correctly specified GLM --- tolerates an arbitrarily poor
-	representer estimate, which is how the classical delta-method validity of
-	parametric average marginal effects is nested here as the opposite corner of the
-	same identity.
-	
-	Two honest qualifications. First, when $g \neq f$ the estimator is asymptotically
-	linear with influence function different from the efficient one; there is no
-	conflict with Theorem~\ref{thm:efficiency} below, because such an estimator is
-	not regular, and efficiency is restored exactly when $g = f$, at which point
-	\eqref{eq:vrobust} reduces to the bound. The noise component of the variance is
-	invariant in $g$; misspecification of the learner is paid entirely through the
-	dispersion of $m_g$, typically as wider intervals. Second, in observational data
-	the density is unknown and condition (b) demands a parametric-rate representer,
-	which Riesz regression delivers only under strong structure; the proposition is
-	therefore a complement to Theorem~\ref{thm:main}, not a replacement --- the
+	The reach of Proposition~\ref{prop:robust} is wider than its hypotheses may
+	suggest, because condition (a) is what off-the-shelf defaults actually
+	satisfy. Fixed-complexity learners --- a depth-capped forest, an early-stopped
+	boosting run, a network of fixed width --- converge not to $f$ but to a
+	pseudo-true limit $g$ in their approximation class, so
+	Assumption~\ref{ass:nuisance}(a) fails and Theorem~\ref{thm:main} is silent
+	about them. The proposition covers exactly that case whenever the representer
+	side is strong: in simulation designs and designed experiments $\alpha_h$ is
+	known in closed form, and in the binary case of Remark~\ref{S-rem:binary} a
+	randomized $X_j$ means a known propensity score, so the marginal effect of a
+	randomized treatment is validly covered for any black-box learner with no
+	consistency requirement at all --- the model-agnostic analogue of the
+	classical robustness of randomization \citep{robins1994}.
+
+	Two qualifications. When $g \neq f$ the estimator is asymptotically linear
+	with an influence function other than the efficient one; there is no conflict
+	with Theorem~\ref{thm:efficiency}, because such an estimator is not regular,
+	and efficiency is restored exactly when $g = f$. And in observational data the
+	density is unknown, so condition (b) demands a parametric-rate representer,
+	which Riesz regression delivers only under strong structure. The proposition
+	is a complement to Theorem~\ref{thm:main} rather than a replacement: the
 	theorem splits the burden multiplicatively across the two nuisances, the
-	proposition shifts it entirely onto one of them.
+	proposition shifts it entirely onto one. Section~\ref{S-sec:extras} records
+	the mirror-image direction, under which a parametric-rate learner tolerates an
+	arbitrarily poor representer estimate.
 	
 	\begin{theorem}[Semiparametric Efficiency]
 		\label{thm:efficiency}
@@ -970,34 +867,6 @@ representation; semiparametric efficiency.
 		$H_0 : \theta_h(f) = 0$.
 	\end{corollary}
 	
-	\begin{remark}[Resampling-Free and Resampling-Based Inference]
-		\label{rem:bootstrap}
-		Corollary~\ref{cor:ci} requires no resampling: the coefficient table of
-		Section~2 is produced from a single pass of cross-fitting, with $K$ model fits
-		in place of the $B$ refits of the bootstrap --- a reduction of one to two orders
-		of magnitude in computation. When a resampling distribution is nonetheless
-		wanted (for simultaneous bands across coefficients, for example), asymptotic
-		linearity delivers one for free: the multiplier bootstrap that perturbs the
-		estimated influence function values $\hat{\psi}_i$ by i.i.d.\ mean-zero
-		weights is consistent \citep[Chapter~3.6]{vandervaart1996weak} under the
-		conditions of Theorem~\ref{thm:main}, and costs no additional model fits.
-	\end{remark}
-	
-	\begin{remark}[The Model-Refitting Bootstrap]
-		\label{rem:refit}
-		The refitting bootstrap of Section~2, applied to the uncorrected plug-in
-		average, is not covered by these guarantees, for two reasons that the present
-		framework makes visible. First, it recenters at the fitted model, so it
-		measures variability around $\E[w \Dh \hat{f}]$ rather than around
-		$\theta_h(f)$: the regularization bias
-		$\E[\alpha_h (\hat{f} - f)]$ --- first order for slowly converging learners
-		--- is invisible to it. This is the mechanism behind the collapse of random
-		forest coverage documented in Section~5. Second, evaluating each refitted model
-		at the original sample holds the empirical covariate distribution fixed and
-		thereby omits the first variance component of \eqref{eq:effbound} from the
-		bootstrap distribution. The refitting bootstrap retains a legitimate role as a diagnostic for how far the fitted function moves under resampling, variability which the asymptotic theory conditions away; it should be read as that diagnostic,
-		not as the inferential procedure.
-	\end{remark}
 	
 	\subsection{What Learner Gradients Estimate, and Which Learners Qualify}
 	\label{sec:gradients}

@@ -82,12 +82,208 @@ Learning via Average Marginal Effects''}
 \date{\today}
 \maketitle
 
-This supplement reports two of the three empirical applications, the
-detailed results of the three simulation studies, and proofs of all
-results stated in the main paper. References of the form Theorem~1,
+This supplement reports extensions and qualifications of the results of
+Section~3, two of the three empirical applications, the detailed results
+of the three simulation studies, and proofs of all results stated in the
+main paper. References of the form Theorem~1,
 Lemma~2, Section~2.4 and so on refer to the main paper; sections,
 tables and equations carrying an \textsf{S} prefix are internal to this
 supplement.
+
+	% ===== moved from Section 3 of the main paper =====
+	\section{Extensions and Qualifications of the Main Results}
+	\label{sec:extras}
+
+	This section collects material that elaborates Section~3 of the main paper
+	without being needed to state its results: the comparison of the
+	finite-difference Riesz representation with the classical
+	integration-by-parts one, the reading of the results when the step size is
+	data-dependent, the binary and categorical cases, the form the nuisance
+	conditions take under the unbounded-support assumption, and what the window
+	effect's relation to resampling is. Each subsection is self-contained and
+	referenced from the point in the main text it belongs to.
+
+	\subsection{Interpreting Effects on Heavily Trimmed Features}
+
+	The practical consequence is that effects on heavily trimmed features are
+	not comparable in magnitude with effects on untrimmed ones. A feature
+	retained for only eight percent of the sample reports a number roughly a
+	twelfth the size of its conditional counterpart, and reporting the two side
+	by side without the retained share invites exactly the wrong comparison.
+	Both $\E[w(X)]$ and the implied scale factor are recoverable from the
+	trimmed fractions reported for every feature in
+	Table~\ref{tab:window_settings} of the supplement, and
+	Section~\ref{M-sec:empirical} flags the cases where the distinction changes
+	the reading.
+
+	\subsection{Data-Dependent Step Sizes}
+
+	\begin{remark}[Data-dependent step sizes]
+		\label{rem:randomh}
+		Definition~\ref{M-def:window} fixes $h$, and every result below is a
+		statement about the estimand at that fixed value. The default of
+		Section~2 sets $h_j = \max(10^{-4},\, 0.05\,\hat{\sigma}_j)$, which is a
+		function of the data. The two are reconciled by reading all results
+		conditional on the realized $\hat{h}$: the reported quantity is the
+		window effect at the step actually used, which is why $h_j$ is reported
+		alongside every estimate in Table~\ref{tab:window_settings} rather than
+		being treated as a tuning parameter. Nothing in the argument requires
+		$h$ to be non-random --- the representation of
+		Lemma~\ref{M-lem:riesz}, the orthogonality of Lemma~\ref{M-lem:orth} and the
+		expansion of Theorem~\ref{M-thm:main} all hold pointwise in $h$ --- and
+		the conditional reading is the natural one, because the estimand is
+		genuinely indexed by the perturbation scale the analyst chose.
+
+		It is worth being explicit about what the conditional reading buys,
+		since the alternative is not free. If one insists instead that the
+		target is $\theta_{h_0}$ at the deterministic limit
+		$h_0 = 0.05\,\sigma_j$, then whenever $h \mapsto \theta_h(f)$ is
+		differentiable at $h_0$ the delta method gives
+		$\theta_{\hat{h}} - \theta_{h_0} = \theta_{h_0}'\,(\hat{h} - h_0) +
+		o_p(n^{-1/2})$, and since $\hat{\sigma}_j$ is root-$n$ consistent this
+		is $O_p(n^{-1/2})$ --- the same order as the sampling error itself. The
+		substitution is therefore \emph{not} asymptotically negligible: it
+		contributes a term to the limiting variance, and an unconditional
+		treatment would have to add that term to $V_h$. We do not pursue this,
+		because the conditional statement is the one that matches how the
+		estimand is used and reported. An analyst who wants the unconditional
+		reading can fix $h$ from prior information or from a pilot sample, at
+		which point the two coincide.
+	\end{remark}
+
+	\subsection{Comparison with the Classical Average Derivative Representation}
+
+	The proof is a change of variables in each half of the finite difference and nothing
+	more. This is worth dwelling on, because it is the point at which the present theory
+	parts ways with the classical average derivative literature. For the derivative
+	functional $\E[\partial_j f(X)]$, the analogous representation is obtained by
+	integration by parts, the representer is the negative score $-\partial_j \log p$ of
+	the covariate density, and a boundary term appears that must be killed by assuming
+	the density vanishes on the boundary --- an assumption incompatible with a density
+	bounded away from zero on a compact support, and the reason
+	\citet{powell1989} pass to density-weighted variants. For the window functional the
+	integration by parts is replaced by exact summation: no boundary term ever arises,
+	because the trimming weight guarantees that every shifted evaluation point stays
+	inside $\Omega$. The representer involves the density only through ratios of its
+	values at points $2h$ apart --- no derivative of $p$, and hence no density
+	derivative estimation, is ever required. The mean-zero property follows from
+	applying \eqref{M-eq:riesz} to $g \equiv 1$, and the uniform bound makes $\alpha_h$ a
+	bounded weight function, in contrast to the unbounded score-based representers of
+	the derivative functional. The cost of the exactness is the factor $h^{-1}$ in the
+	bound: smaller windows mean noisier representers, the familiar bias--variance logic
+	of a bandwidth, here appearing in the variance of the efficient influence function
+	rather than in a smoothing bias.
+	
+
+	\subsection{Binary and Categorical Variables}
+
+	\begin{remark}[Binary and Categorical Variables]
+		\label{rem:binary}
+		For a binary $X_j \in \{0,1\}$ the contrast estimand of Section~2 is
+		$\theta^{\mathrm{bin}} = \E[w(X_{-j})\{f(X_{-j}, 1) - f(X_{-j}, 0)\}]$, and the
+		same change-of-variables argument --- with the integral over $x_j$ replaced by a
+		sum over its two support points --- yields the representer:
+		\begin{equation}
+			\alpha^{\mathrm{bin}}(u) = w(u_{-j})\left[
+			\frac{\mathbf{1}\{u_j = 1\}}{\pi(u_{-j})}
+			- \frac{\mathbf{1}\{u_j = 0\}}{1 - \pi(u_{-j})}\right],
+			\qquad \pi(x_{-j}) = \Prob(X_j = 1 \mid X_{-j} = x_{-j})
+		\end{equation}
+		These are inverse propensity weights, and the resulting orthogonal score is the
+		augmented inverse probability weighting score of \citet{robins1994} with $X_j$
+		in the role of the treatment. The overlap condition
+		$\varepsilon \leq \pi \leq 1 - \varepsilon$ plays exactly the role the trimming
+		weight plays in the continuous case, and every result of
+		Section~\ref{M-sec:inference} applies verbatim with
+		$(\alpha_h, \theta_h)$ replaced by
+		$(\alpha^{\mathrm{bin}}, \theta^{\mathrm{bin}})$. Continuous, binary, and
+		categorical effects are thus instances of one construction rather than a
+		definition and two patches.
+	\end{remark}
+
+	\subsection{Nuisance Conditions under Unbounded Support}
+
+	Under Assumption~\ref{M-ass:unbounded} in place of the density bounds, the three
+	conditions are read as follows. Condition (a) is strengthened to
+	$\Pq{\hat{f}^{(-k)} - f}{2 + \delta} = o_p(1)$ for a $\delta > 0$ with
+	$(2 + \delta)/2$ conjugate to the $r$ of \eqref{M-eq:shiftmoment}; condition (c) is
+	replaced by $\Pq{\hat{\alpha}^{(-k)}}{q} \leq \bar{A}_q < \infty$ for the $q$ of
+	Assumption~\ref{M-ass:unbounded}(c); and condition (b) is unchanged.
+
+	That last point is the one worth emphasizing. What changes between the two
+	assumption sets are a consistency requirement and a boundedness requirement; the
+	product condition (b), which governs how fast the nuisances must converge, is
+	identical in both. The reason is the exactness of Lemma~\ref{M-lem:orth}: the bias
+	is a product of two $L^2$ errors with no linearization remainder to control, so
+	the step of the argument that carries the rates never touches a density bound.
+	Everything in Section~\ref{sec:rates} therefore applies verbatim under either
+	assumption set. Had the bias carried the usual remainder term, the higher
+	integrability would have propagated into the rate conditions and the thresholds
+	of Section~\ref{sec:rates} would have moved.
+
+	Where the learner's error is uniformly bounded --- as it is in the compactly
+	supported settings in which the rate results of Section~\ref{sec:rates} are
+	proved, whose estimators are truncated at a known bound on $f$ --- the
+	strengthening of (a) is free. Writing $\Delta = \hat{f}^{(-k)} - f$,
+	interpolation gives
+	\begin{equation}
+		\Pq{\Delta}{2 + \delta}
+		\leq \norm{\Delta}_\infty^{\delta/(2 + \delta)}\,
+		\Ptwo{\Delta}^{2/(2 + \delta)}
+		\label{eq:interp}
+	\end{equation}
+	so $L^2$ consistency implies $L^{2+\delta}$ consistency with no additional
+	assumption. On unbounded support it is a genuine additional requirement, though a
+	mild one, and it holds for the learners used in the Gaussian design of
+	Section~\ref{M-sec:simulation}.
+
+	Theorem~\ref{M-thm:main}, Theorem~\ref{M-thm:efficiency} and
+	Proposition~\ref{M-prop:robust} hold under either assumption set. The proofs in the
+	supplement carry the two cases side by side at the three points where they differ.
+
+	\subsection{Resampling}
+
+	\begin{remark}[Resampling-Free and Resampling-Based Inference]
+		\label{rem:bootstrap}
+		Corollary~\ref{M-cor:ci} requires no resampling: the coefficient table of
+		Section~2 is produced from a single pass of cross-fitting, with $K$ model fits
+		in place of the $B$ refits of the bootstrap --- a reduction of one to two orders
+		of magnitude in computation. When a resampling distribution is nonetheless
+		wanted (for simultaneous bands across coefficients, for example), asymptotic
+		linearity delivers one for free: the multiplier bootstrap that perturbs the
+		estimated influence function values $\hat{\psi}_i$ by i.i.d.\ mean-zero
+		weights is consistent \citep[Chapter~3.6]{vandervaart1996weak} under the
+		conditions of Theorem~\ref{M-thm:main}, and costs no additional model fits.
+	\end{remark}
+	
+	\begin{remark}[The Model-Refitting Bootstrap]
+		\label{rem:refit}
+		The refitting bootstrap of Section~2, applied to the uncorrected plug-in
+		average, is not covered by these guarantees, for two reasons that the present
+		framework makes visible. First, it recenters at the fitted model, so it
+		measures variability around $\E[w \Dh \hat{f}]$ rather than around
+		$\theta_h(f)$: the regularization bias
+		$\E[\alpha_h (\hat{f} - f)]$ --- first order for slowly converging learners
+		--- is invisible to it. This is the mechanism behind the collapse of random
+		forest coverage documented in Section~5. Second, evaluating each refitted model
+		at the original sample holds the empirical covariate distribution fixed and
+		thereby omits the first variance component of \eqref{M-eq:effbound} from the
+		bootstrap distribution. The refitting bootstrap retains a legitimate role as a diagnostic for how far the fitted function moves under resampling, variability which the asymptotic theory conditions away; it should be read as that diagnostic,
+		not as the inferential procedure.
+	\end{remark}
+
+	\subsection{The Mirror Direction of the Double Robustness}
+
+	The bias identity of Lemma~\ref{M-lem:orth} is symmetric in its two
+	arguments, and Proposition~\ref{M-prop:robust} exploits only one direction of
+	it. The other is worth recording: a learner converging at the parametric rate
+	--- a correctly specified generalized linear model, for instance --- tolerates
+	an arbitrarily poor representer estimate, since the product
+	$\Ptwo{\alpha_h - \tilde{\alpha}} \cdot \Ptwo{\tilde{f} - f}$ is
+	$o_p(n^{-1/2})$ as soon as either factor is. This is how the classical
+	delta-method validity of parametric average marginal effects is nested in the
+	present framework, as the opposite corner of one identity rather than as a
+	separate theory.
 
 		% ===== moved from Section 3.2 of the main paper =====
 	\section{Function Spaces and Well-Behaved Estimators}
@@ -1172,7 +1368,7 @@ supplement.
 	
 	Table~\ref{tab:ames_housing_model_comparison} compares all four models on the full specification. All four are well fitted, with $R^2$ ranging from 0.802 for linear regression to 0.954 for XGBoost, the random forest at 0.953 and the neural network at 0.932 with normalization. The GrLivArea AME is \$68, \$81, \$70, and \$66 for linear regression, random forest, XGBoost, and neural network respectively --- a range of \$15 across four models that differ fundamentally in their functional form, and all four intervals overlap comfortably. Under the debiased estimator this agreement means something different from what it meant under the plug-in. Every column is now an estimate of the same $\theta_{j,h}$, so agreement is evidence that the four nuisance estimates are all good enough for the correction to do its work, not evidence that four different models happen to have similar slopes. Disagreement, correspondingly, is now diagnostic of nuisance quality rather than of functional form.
 
-	The most consequential change from the plug-in results is in the standard errors, and it runs in the opposite direction to the one the refitting bootstrap suggested. Under that bootstrap the neural network's standard errors were implausibly tight --- on the order of single dollars for several variables, \$7 for bedrooms and \$8 for overall quality --- because resampling propagated uncertainty through the model fitting but the smooth differentiable surface produced nearly identical finite differences across replicates. The influence-function standard errors for the same quantities are \$3,830 and \$2,394. The random forest shows the same correction: the high-neighborhood standard error rises from \$256 to \$24,636. Those earlier figures were not precision but the bootstrap's inability to see a bias that every replicate shared, which is the failure mode of Remark~\ref{M-rem:refit}, and their disappearance is the clearest single indication in the empirical results that the orthogonal score is doing what it was constructed to do.
+	The most consequential change from the plug-in results is in the standard errors, and it runs in the opposite direction to the one the refitting bootstrap suggested. Under that bootstrap the neural network's standard errors were implausibly tight --- on the order of single dollars for several variables, \$7 for bedrooms and \$8 for overall quality --- because resampling propagated uncertainty through the model fitting but the smooth differentiable surface produced nearly identical finite differences across replicates. The influence-function standard errors for the same quantities are \$3,830 and \$2,394. The random forest shows the same correction: the high-neighborhood standard error rises from \$256 to \$24,636. Those earlier figures were not precision but the bootstrap's inability to see a bias that every replicate shared, which is the failure mode of Remark~\ref{rem:refit}, and their disappearance is the clearest single indication in the empirical results that the orthogonal score is doing what it was constructed to do.
 
 	Read with those intervals attached, the bedroom variable is more equivocal than the plug-in made it look. The AME is $-$\$26,455 for linear regression, $-$\$9,212 for the random forest, $-$\$3,464 for XGBoost, and $-$\$12,639 for the neural network. All four are negative, consistent with the well-known hedonic finding that holding square footage fixed, more bedrooms means smaller rooms, but only the neural network estimate is significant at conventional levels and the linear estimate only marginally so. The plug-in reported all four as significant with standard errors between \$7 and \$3,042. The honest reading is that the sign is stable across architectures while this sample cannot pin down the magnitude, which is a weaker conclusion than the paper could previously state and a better supported one.
 	
@@ -1664,7 +1860,7 @@ supplement.
 	
 	Table~\ref{tab:sim2_calibration_linear} reports coverage of nominal 95\% intervals for the linear classification design. Two distinct failures are visible, and Section~\ref{M-sec:inference} predicts both.
 	
-	The first is the one the paper is built around. Under the random forest, coverage at $n=5{,}000$ falls to $0.186$ for $x_1$ and $0.268$ for $x_2$ while remaining near nominal for the noise features, whose true effect is zero and whose regularization bias is therefore also zero. This is the mechanism of Remark~\ref{M-rem:refit}: the refitting bootstrap is consistent for the dispersion of the plug-in average around its own expectation, but that expectation is displaced from $\theta_{j,h}$ by $\E[\alpha_h(\hat f - f)]$, and resampling cannot see the displacement because every replicate recentres at a similarly regularized fit. The interval shrinks at the usual rate; the bias does not shrink at all; coverage follows the ratio down. XGBoost, whose bias does vanish with $n$, keeps coverage between $0.877$ and $0.976$ throughout, so the failure is specific to learners whose regularization bias persists rather than general to flexible learners.
+	The first is the one the paper is built around. Under the random forest, coverage at $n=5{,}000$ falls to $0.186$ for $x_1$ and $0.268$ for $x_2$ while remaining near nominal for the noise features, whose true effect is zero and whose regularization bias is therefore also zero. This is the mechanism of Remark~\ref{rem:refit}: the refitting bootstrap is consistent for the dispersion of the plug-in average around its own expectation, but that expectation is displaced from $\theta_{j,h}$ by $\E[\alpha_h(\hat f - f)]$, and resampling cannot see the displacement because every replicate recentres at a similarly regularized fit. The interval shrinks at the usual rate; the bias does not shrink at all; coverage follows the ratio down. XGBoost, whose bias does vanish with $n$, keeps coverage between $0.877$ and $0.976$ throughout, so the failure is specific to learners whose regularization bias persists rather than general to flexible learners.
 	
 	The second failure is milder, and it affects even a correctly specified model. Logistic regression covers at $0.881$, $0.878$ and $0.886$ for $x_1$ and at $0.726$, $0.766$ and $0.781$ for $x_2$, with no tendency to improve as the sample grows, while covering at roughly the nominal rate for the two noise features. The pattern orders the features by coefficient size --- $\beta_2 = 3$, $\beta_1 = 2$, and zero for $x_3$ and $x_4$ --- and that ordering identifies the cause. As Section~\ref{M-sec:inference} notes, each replicate is evaluated at the observed sample rather than at the resample, so the bootstrap distribution omits the sampling variability of the average of the derivative over the covariates. That omitted component is identically zero when the fitted derivative does not vary with $x$ and grows with how much it does, and under a logistic link the derivative varies most for the feature with the largest coefficient. The estimated standard errors are correspondingly too small: averaged over cells the ratio of the bootstrap standard error to the Monte Carlo standard deviation is $0.86$ for logistic regression, $0.89$ for the network and $0.90$ for the forest. Neither failure is detectable from the bootstrap output alone, which is the practical point: both produce intervals that look unremarkable.
 	
