@@ -7,10 +7,10 @@ Status, by section:
   Step 2 is verified and (A2) is repairable by configuration, but (A3) does not
   hold, and the quantity the lemma bounds — while convergent in `M` for each
   fixed `n` — has a limit growing like `n^{0.8}`, so it is not uniform in `n`.
-  At a fixed round count it is flat in `n`, but a fixed round count gives no
-  consistency; §4.5 shows that stopping at the risk-minimising round rescues
-  the bound only for targets the tree class captures with a bounded boosting
-  path. See §4.4 and §4.5.
+  Early stopping does not rescue it (§4.5), and nor does the cancellation the
+  subadditive bound discards: §4.6 measures the true `|D₁f̂_n|(Ω)` and finds it
+  overshooting the target's own variation by `2.08×` at `n=8000`, and widening.
+  The obstruction is in the estimator, not the proof technique.
 - **§6.1–6.2 are verified** — geometry in `d ≤ 4` and the ensemble bound with
   face overlap deliberately induced. §6.5's two obstacles stand.
 - **§8 is now the recommended position**, for regression as well as
@@ -287,6 +287,59 @@ in the slow-growth group (`n^{0.11}` to `n^{0.18}` over a 16-fold range of `n`),
 so nothing in Section 5 of the paper is in jeopardy. The difficulty is with the
 generality a theorem would have to claim, not with the experiments reported.
 
+### 4.6 The true total variation, not the bound — and why the news is good
+
+Everything in §4.4 and §4.5 measures `Σ ν‖h_m‖_∞`, which bounds
+`|Df̂_n|(Ω)` by summing each tree's variation separately. That step discards
+cancellation: jumps from different trees can partly undo one another, so the
+true variation of the ensemble can be far smaller than the sum of the parts.
+The obvious hope is that the subadditive step is the whole problem and the real
+quantity is bounded. **It is not.**
+
+`|D₁ f̂_n|(Ω)` computed directly by one-dimensional sections
+(`check-xgboost-truetv.py`), at the risk-minimising round:
+
+| target | `n=500` | `n=2000` | `n=8000` | `|D₁f|` of the target | growth |
+|---|---|---|---|---|---|
+| `2x₁+3x₂` | 2159 (0.83×) | 2527 (0.97×) | 2555 (0.99×) | 2592 | `n^{0.06}` |
+| `5exp(−‖x‖²/2)` | 935 (1.30×) | 1242 (1.72×) | 1495 (2.08×) | 720 | `n^{0.17}` |
+
+Cancellation helps substantially — the radial exponent falls from `n^{0.32}` for
+the bound to `n^{0.17}` for the truth — but the growth survives. So the failure
+in §4.5 is a property of the estimator, not an artefact of the proof technique,
+and a better route to the same lemma will not fix it.
+
+*(Calibration: the linear row is exact arithmetic — `∂₁f ≡ 2` over the box gives
+`2·6⁴ = 2592` — and the measurement returns 2555, so the estimator is sound.
+Sections are drawn Gaussian while the volume factor is Lebesgue, so these are a
+density-weighted variation rather than the pure Lebesgue one; the weighting is
+identical across `n`, which is all the comparison needs.)*
+
+**The ratios are the real finding.** For the linear target `|Df̂|` rises to the
+truth from below — `0.83×, 0.97×, 0.99×` — exactly as it should when
+`f̂ → f` strictly. For the radial target it **overshoots, and the overshoot
+widens with `n`**: `1.30×, 1.72×, 2.08×`. At the statistically optimal stopping
+point the fitted surface carries more than twice the total variation of the
+function it is estimating, and is getting worse, while its `L²` risk continues
+to fall.
+
+That is the whole difficulty in one line: **`L²` consistency does not imply BV
+convergence, and for a target the learner approximates awkwardly the two move
+in opposite directions.** It also disposes of difficulty-conditioned stopping
+as a fix. `M*` *is* a difficulty-conditioned rule — chosen from the data,
+separately for each target and each `n` — and the overshoot is measured at
+`M*`. Stopping earlier would trade away the consistency that `M → ∞` was
+needed for in the first place.
+
+**And this is good news for the paper.** A learner whose fitted surface has
+twice the variation of the truth, at its own optimal stopping point, has a
+plug-in gradient that is largely measuring its own wiggle. That is precisely
+the paper's thesis — the uncorrected plug-in should not be trusted, and the
+orthogonal correction is what makes the effect estimable. The failure of
+Theorem S2 to extend to XGBoost is not an embarrassment to be worked around; it
+is an instance of the phenomenon the paper is about, and §10's narrowing can
+say so.
+
 ## 5. XGBoost's regularisers in the light of §4
 
 | setting | role in the lemma |
@@ -503,9 +556,11 @@ machinery for exactly that case.
 The honest summary after the checks: **do not chase the `M → ∞` theorem.**
 
 §4's route is refuted, not merely unproved — (A3) is false, the conclusion is
-false in `n` once boosting runs to interpolation (§4.4), and early stopping
-recovers it only under a hypothesis on `f` that is no easier to check than the
-original problem (§4.5). §6.5's obstruction for logistic loss is independent
+false in `n` once boosting runs to interpolation (§4.4), early stopping recovers
+it only under a hypothesis on `f` no easier to check than the original problem
+(§4.5), and §4.6 shows the failure survives in the true total variation, so no
+sharper proof of the same lemma will help. Four independent lines of attack,
+all closed. §6.5's obstruction for logistic loss is independent
 and also structural. The remaining work to rescue a limit theorem would be to
 find some other functional of the ensemble that is both uniformly bounded and
 strong enough to drive BV convergence, and nothing in the checks suggests one
@@ -535,3 +590,12 @@ Narrow the three places that currently imply coverage:
 
 and add a sentence to §3.5 recording that XGBoost is covered for inference and
 for the pairing identity but not for gradient consistency.
+
+§4.6 suggests saying slightly more than that, and saying it as a strength. The
+reason gradient consistency fails for tree boosting is that at its own optimal
+stopping point the fitted surface carries roughly twice the total variation of
+the function it estimates, and the gap widens with `n`, even as its `L²` risk
+falls — so its plug-in gradient is substantially measuring its own roughness.
+That is the paper's thesis, demonstrated on the learner the empirical work
+actually uses. A sentence to that effect turns an admitted gap into an instance
+of the argument.
