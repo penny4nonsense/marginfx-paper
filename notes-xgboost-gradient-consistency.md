@@ -1,13 +1,15 @@
 # Gradient consistency for XGBoost: why the current proof misses it, and a route
 
-Status: **proposed route, not a proof.** Nothing here is established. §2 is a
-finding about the existing theorem and I am confident in it; §3 onward is a
-plan, with the open gaps listed in §6.
+Status, by section:
 
-Written 2026-10-19, following the referee note on Theorem S2 (§S24).
+- **§2 is a finding about Theorem S2.** I am confident in it.
+- **§4 is a draft lemma with a full proof.** Derived 2026-10-19, **not yet
+  checked by anyone**. If it survives, it closes the hard half of the problem.
+- **§5–§7 are open.** §6 lists what is still missing; one item there
+  (assumption A2 versus the settings actually run) is a practical problem, not
+  just a technical one.
 
-Companion to `notes-mondrian-bv-bound.md`. The two are independent: this one
-looks more tractable.
+Companion to `notes-mondrian-bv-bound.md`, and independent of it.
 
 ---
 
@@ -19,7 +21,11 @@ To put XGBoost under Lemma S4 (BV derivative consistency) and conclude
 1. `sup_n E[ |Df̂ₙ|(Ω) ] < ∞`   — uniform BV boundedness
 2. `‖f̂ₙ − f‖_{L¹} →_p 0`       — L¹ consistency
 
-with `f̂ₙ = ν Σ_{m ≤ M} h_m`, each `h_m` a regression tree of depth ≤ D.
+with `f̂_M = ν Σ_{m ≤ M} h_m`, each `h_m` a regression tree of depth ≤ D.
+
+Condition 2 is available in the literature (Zhang & Yu 2005, *Ann. Statist.*,
+boosting with early stopping, tree base learners under step-size restrictions).
+**Condition 1 is the work**, and §4 is a candidate proof of it.
 
 ## 2. Why the current theorem cannot be stretched to cover it
 
@@ -27,123 +33,193 @@ Theorem S2 assumes `F̂_m = (I − (I−S)^{m+1})Y` for a **fixed, symmetric, li
 `S` with `0 < λ_k ≤ 1` for all k. That representation holds only if the same
 operator is applied every round.
 
-**Case (ii) of the theorem — tree stumps — appears to have no examples at all.**
-The eigenvalue condition forces `S` to be full rank. Any tree is a projection
-onto the piecewise-constant functions on its partition, so its spectrum is
-`{0,1}` with `n − (#leaves)` zeros, giving `ρ = max_k(1−λ_k) = 1` and a
-divergent geometric series. The supplement says as much in its own closing
-remark ("as occurs for linear projection operators ... the geometric series does
-not converge"). So:
+**Case (ii) — tree stumps — appears to have no examples at all.** The eigenvalue
+condition forces `S` to be full rank, but any tree is a projection onto the
+piecewise-constant functions on its partition, so its spectrum is `{0,1}` with
+`n − (#leaves)` zeros, giving `ρ = max_k(1−λ_k) = 1` and a divergent geometric
+series. The supplement says as much in its own closing remark. So a **fixed**
+stump is excluded by the hypothesis, while an **adaptive** stump — which is what
+Case (ii) describes, threshold `t_m` indexed by iteration — is not a fixed
+linear `S` at all. Shrinkage gives spectrum `{0, ν}`, still with zeros; an L2
+leaf penalty does not help either. The zeros are unavoidable for any finite-rank
+base learner. The same objection applies to the "shallow neural net base
+learners" offered under Case (i); fixed-smoothing-parameter **splines** are the
+surviving example, which is Bühlmann–Yu's original setting.
 
-- a **fixed** stump is a projection and is excluded by the eigenvalue condition;
-- an **adaptive** stump — which is what Case (ii) actually describes, its
-  threshold `t_m` being indexed by iteration — is not a fixed linear `S`, so
-  neither the representation nor the geometric decay applies.
+This is not a theorem to broaden. It needs a different engine.
 
-Shrinkage does not rescue this (`νS` has spectrum `{0, ν}`), nor does an L2 leaf
-penalty. The zeros are unavoidable for any finite-rank base learner. The same
-objection applies to the "shallow neural net base learners" offered as an
-example under Case (i); fixed-smoothing-parameter **splines** are the surviving
-example, which is Bühlmann–Yu's original setting.
+## 3. The structural observation
 
-Conclusion: this is not a theorem to broaden. It needs a different engine.
+**The BV bound does not care where the splits fall.** For a tree `h` whose
+internal nodes each contribute one split face `F_k`,
 
-## 3. The structural observation that makes a different engine possible
+    |Dh|(Ω) = Σ_k ∫_{F_k} |Δ_k(u)| dH^{d-1}(u) ≤ 2‖h‖_∞ Σ_k H^{d-1}(F_k),
 
-**The BV bound does not care where the splits are.** For a tree `h` whose
-internal nodes each contribute one split face,
+and `H^{d-1}(F_k) ≤ diam(Ω)^{d-1}` wherever the split lands. Split locations —
+the greedy, data-dependent, non-linear part, the part that destroys the spectral
+argument — enter only through face areas that are bounded regardless.
 
-    |Dh|(Ω) = Σ_{adjacent leaves l,l'} |c_l − c_l'| · H^{d-1}(∂R_l ∩ ∂R_l')
-            ≤ (#internal nodes) · 2‖h‖_∞ · diam(Ω)^{d-1},
+Greediness obstructs condition 2, not condition 1. And condition 2 is citable.
+So everything reduces to controlling `ν Σ_m ‖h_m‖_∞`.
 
-since the total interface area is at most the sum of the internal nodes' split
-faces, and each of those is at most `diam(Ω)^{d-1}` wherever it falls. Hence
+## 4. Draft lemma: uniform BV boundedness
 
-    |Df̂ₙ|(Ω) ≤ ν · (2^D − 1) · 2 · diam(Ω)^{d-1} · Σ_{m ≤ M} ‖h_m‖_∞.
+**Assumptions.** Squared-error loss; leaf weights `w_l = −G_l/(H_l + λ)` with
+`λ ≥ 0`; and
 
-Split *locations* — the data-dependent, greedy, non-linear part, the part that
-destroys the spectral argument — enter only through face areas that are bounded
-regardless. Greediness is not an obstacle to condition 1.
+- **(A1)** depth `≤ D`, so at most `2^D` leaves and `2^D − 1` internal nodes;
+- **(A2)** every leaf holds at least `κn` observations, `κ ∈ (0, 2^{-D}]`;
+- **(A3)** *edge condition*: `‖h_m‖_{2,n} ≥ γ‖u_m‖_{2,n}` for all `m ≤ M`, some
+  `γ ∈ (0,1]`, where `‖·‖_{2,n}` is the empirical RMS norm and `u_m` the
+  residual vector at round `m`;
+- **(A4)** `ν ∈ (0,1]`;
+- **(A5)** Assumption 1 of the paper (`E[Y²] < ∞`).
 
-It is an obstacle to condition 2, and that half is already in the literature:
-Zhang & Yu (2005, *Ann. Statist.*), boosting with early stopping, covers tree
-base learners under step-size restrictions.
+**Claim.** For every `M`,
 
-**So the whole problem reduces to bounding `ν Σ_{m ≤ M} ‖h_m‖_∞`.**
+    E|Df̂_M|(Ω)  ≤  4 (2^D − 1) diam(Ω)^{d-1} κ^{-1/2} γ^{-2} (E[Y²])^{1/2}  <  ∞,
 
-## 4. The proposed engine: an edge condition in place of a spectral one
+uniformly in `n` and in `M`.
 
-The existing proof needs `ρ < 1` and obtains it from the eigenvalues of a fixed
-operator. Obtain it instead from a **weak-learning / edge condition**: each
-round captures at least a fixed fraction `γ` of the remaining residual, so that
+**Proof.**
 
-    ‖u_{m+1}‖² ≤ (1 − 2νγ² + O(ν²)) ‖u_m‖² ,
+*Step 1 (geometry).* By §3, `|Dh_m|(Ω) ≤ 2‖h_m‖_∞ (2^D − 1) A` with
+`A = diam(Ω)^{d-1}`, using (A1).
 
-giving geometric decay and a summable `Σ_m ‖h_m‖`. This is the standard
-assumption of the boosting literature, it is a statement about the base learner
-class relative to `f` rather than about a fixed operator, and it **survives
-adaptivity** — indeed greedy selection is what makes an edge condition
-plausible.
+*Step 2 (leaf values, empirical L² to sup norm).* For squared-error loss
+`g_i = −u_i` and `h_i = 1`, so the leaf weight is
+`w_l = (Σ_{i∈l} u_i)/(n_l + λ) = θ_l ū_l` with `θ_l = n_l/(n_l+λ) ∈ (0,1]`.
+By Cauchy–Schwarz and then (A2),
 
-Same engine as the current proof, different and compatible hypothesis.
+    |ū_l| ≤ n_l^{-1} Σ_{i∈l}|u_i| ≤ n_l^{-1/2} (Σ_{i∈l} u_i²)^{1/2}
+         ≤ (n/n_l)^{1/2} ‖u_m‖_{2,n} ≤ κ^{-1/2} ‖u_m‖_{2,n},
 
-## 5. XGBoost's own regularisers are the hypotheses one would want
+hence `‖h_m‖_∞ ≤ κ^{-1/2} ‖u_m‖_{2,n}`.
 
-Unusually, the practical defaults all push the right way. With the paper's
-settings (`max_depth` 4, `learning_rate` 0.05, 100–200 rounds):
+**This is the step that closes the L² → L∞ gap**, and it works because leaf
+values are *averages*, not pointwise values: a minimum leaf fraction converts a
+bound on the empirical L² norm of the residuals into a sup-norm bound on the
+fitted function. It is also why (A2) is load-bearing rather than cosmetic.
 
-| setting | effect on the bound |
+*Step 3 (residual recursion).* `u_{m+1} = u_m − ν h_m`. Since
+`⟨u_m, h_m⟩_n = n^{-1} Σ_l θ_l n_l ū_l²` and
+`‖h_m‖²_{2,n} = n^{-1} Σ_l θ_l² n_l ū_l²`, and `θ_l ≥ θ_l²`, we get
+`⟨u_m, h_m⟩_n ≥ ‖h_m‖²_{2,n}` — the L2 leaf penalty helps here rather than
+hurting. Therefore
+
+    ‖u_{m+1}‖²  =  ‖u_m‖² − 2ν⟨u_m,h_m⟩ + ν²‖h_m‖²
+                ≤  ‖u_m‖² − ν(2−ν)‖h_m‖²
+                ≤  ‖u_m‖² (1 − ν(2−ν)γ²)  =:  ρ² ‖u_m‖²
+
+by (A3), with `ρ < 1` for `ν ∈ (0,1]`, `γ ∈ (0,1]`. Hence
+`‖u_m‖_{2,n} ≤ ρ^m ‖Y‖_{2,n}`.
+
+*Step 4 (the sum, and why ν cancels).* Since `‖h_m‖ ≤ ‖u_m‖`,
+
+    Σ_{m<M} ν ‖h_m‖_{2,n} ≤ ν ‖Y‖_{2,n} Σ_m ρ^m ≤ ν ‖Y‖_{2,n} / (1−ρ),
+
+and `1 − ρ = 1 − (1 − ν(2−ν)γ²)^{1/2} ≥ ν(2−ν)γ²/2 ≥ νγ²/2` for `ν ≤ 1`, so
+`ν/(1−ρ) ≤ 2γ^{-2}` and
+
+    Σ_{m<M} ν ‖h_m‖_{2,n}  ≤  2 γ^{-2} ‖Y‖_{2,n}.
+
+**The learning rate cancels.** The bound does not degrade as `ν → 0`, which is
+the right behaviour: a smaller learning rate buys more rounds, and the two
+effects offset exactly.
+
+*Step 5 (assemble).* Combining Steps 1, 2 and 4,
+
+    |Df̂_M|(Ω) ≤ Σ_m ν|Dh_m|(Ω) ≤ 2(2^D−1) A κ^{-1/2} Σ_m ν‖u_m‖_{2,n}
+              ≤ 4(2^D−1) A κ^{-1/2} γ^{-2} ‖Y‖_{2,n}.
+
+Take expectations and use `E‖Y‖_{2,n} ≤ (E‖Y‖²_{2,n})^{1/2} = (E[Y²])^{1/2}`,
+finite by (A5). ∎
+
+**Numerical check (2026-10-19).** Steps 3 and 4 were checked numerically over
+`ν ∈ [0.001, 1]` and `γ ∈ [0.03, 1]`: `ρ < 1`, `1 − ρ ≥ νγ²/2` and
+`ν/(1−ρ) ≤ 2γ^{-2}` hold throughout, and simulating the recursion with the edge
+binding exactly gives a realised `Σ ν‖h_m‖` at worst 60% of the claimed bound.
+
+The same simulation shows **the constant `2γ^{-2}` is loose by a factor of about
+`2/γ`**: the realised sum converges to `γ^{-1}‖Y‖` as `ν → 0`. The looseness
+enters at `‖h_m‖ ≤ ‖u_m‖` in Step 4, which throws away the edge. Writing
+`‖h_m‖ = c‖u_m‖` for `c ∈ [γ,1]` gives a sum of about `c^{-1}‖Y‖`, maximised at
+`c = γ`; so the sharp constant looks like `γ^{-1}`, attained in the weak-learner
+limit, and the proof above is a safe but crude route to it. Sharpening it is
+cosmetic — uniform boundedness, which is all condition 1 needs, follows either
+way — but it would improve the explicit constant if the lemma is ever stated.
+
+**Two features worth noting.**
+
+1. *The bound is uniform in M.* So condition 1 places **no constraint on the
+   stopping rule**, and early stopping can be chosen purely to deliver condition
+   2. The two halves decouple completely.
+2. *The constant is explicit and interpretable*: depth enters as `2^D`, the
+   minimum leaf fraction as `κ^{-1/2}`, the edge as `γ^{-2}`.
+
+## 5. XGBoost's regularisers in the light of §4
+
+| setting | role in the lemma |
 |---|---|
-| `max_depth = 4` | ≤16 leaves, ≤15 split faces per round; bounds the face count with no asymptotics |
-| `learning_rate ν = 0.05` | multiplies the total variation bound directly |
-| `reg_lambda` (L2 on leaf weights, default 1) | leaf weight is `−G_l/(H_l+λ)`; for squared error this is the leaf-mean residual shrunk by `n_l/(n_l+λ)`, so it shrinks the jumps |
-| `min_child_weight` | keeps leaves from being nearly empty — the exact obstacle that blocks the Mondrian argument |
+| `max_depth = 4` | (A1): ≤15 internal nodes per round |
+| `learning_rate = 0.05` | (A4); cancels out of the final bound |
+| `reg_lambda` (L2 on leaf weights) | gives `θ_l ≤ 1` in Step 3, strengthening `⟨u,h⟩ ≥ ‖h‖²` |
+| `min_child_weight` | **(A2) — load-bearing.** See the gap below |
 
-A theorem stated under these conditions would be describing the estimator people
-actually run, not an idealisation of it.
+## 6. What is still missing
 
-## 6. The gaps
-
-1. **The edge condition itself.** Needs stating, and defending as reasonable for
-   depth-D trees against an `f ∈ BV`. This is the substantive assumption.
-2. **L² → L∞ — the real technical gap.** Bühlmann–Yu-style decay is in `L²`, but
-   total variation needs the *jump* magnitudes, which are leaf-level residual
-   averages. An `L²` bound controls those only if leaves are not tiny.
-   `min_child_weight` supplies that, but the step has to be made explicitly
-   rather than waved through. **This is where I would expect the work to be.**
-3. **L¹ consistency under early stopping.** Cite rather than prove (Zhang & Yu
-   2005; Biau & Cadre for related tree results).
-4. **Subsampling**, if enabled, as extra randomness to condition on.
-5. **Second-order (Newton) boosting.** XGBoost minimises a quadratic
-   approximation with Hessian weights. For squared error the Hessian is 1 and
-   this is ordinary L₂Boost; for logistic loss it is not, and the residual
-   recursion changes. The classification experiments use the latter.
+1. **(A2) versus the runs actually performed.** This is the practical problem.
+   XGBoost's default `min_child_weight` is 1, so leaves may hold a handful of
+   observations and (A2) fails as configured. Either set
+   `min_child_weight = κn` and re-run, or weaken (A2). Some condition of this
+   kind looks genuinely necessary: a *thin* cell has large face area and few
+   points, so both factors in Step 2 move the wrong way at once. A geometric
+   variant — minimum cell width in the split coordinate — would also serve, and
+   under the density bounds of Assumption 1 the two are related, but that
+   equivalence needs proving.
+2. **(A3) cannot hold indefinitely under (A2).** With leaves forced to hold
+   `κn` points the tree class has bounded complexity, so `u_m` converges to the
+   residual of a projection onto a fixed closed span and the edge must fail
+   eventually. The honest statement assumes (A3) only for the `M` rounds
+   actually run — which is fine, since the bound is uniform in `M` — but the
+   interaction should be stated rather than left implicit. It is also a further
+   reason the relevant regime is the early-stopped one.
+3. **Newton boosting / logistic loss.** Step 2 and Step 3 both use
+   `g_i = −u_i`, `h_i = 1`, which is squared-error. The paper's classification
+   applications fit XGBoost under logistic loss, where `h_i = p_i(1−p_i)` and
+   the recursion differs. The regression case is covered by §4 as written; the
+   classification case needs the analysis redone.
+4. **Subsampling**, if enabled, as additional randomness to condition on.
+5. **The consistency half** still has to be imported and matched to the same
+   assumption set — in particular, Zhang & Yu's step-size conditions must be
+   compatible with (A3) and (A4).
 
 ## 7. The alternative worth weighing
 
-With `M` **fixed** at 100–200 rounds, which is what is actually run, condition 1
-is trivial — a finite sum of bounded-depth trees has bounded total variation,
-no edge condition needed — but condition 2 fails: a fixed-round ensemble does
-not converge to `f`. That puts XGBoost-as-run in the pseudo-true regime, which
+With `M` **fixed** at the 100–200 rounds actually run, condition 1 is trivial —
+a finite sum of bounded-depth trees has bounded total variation, with no edge
+condition and no (A2) — but condition 2 fails: a fixed-round ensemble does not
+converge to `f`. That places XGBoost-as-run in the pseudo-true regime, which
 **Proposition 2 (double robustness) already covers**.
 
 So there is a defensible position in which the correct statement about
-XGBoost-as-run is a double-robustness statement rather than a gradient
-consistency one, and the gradient result is about the `M → ∞` idealisation. That
-is worth deciding deliberately rather than by default.
+XGBoost-as-run is a double-robustness one, and gradient consistency belongs to
+the `M → ∞` idealisation. Worth deciding deliberately rather than by default.
 
-## 8. Effort, and what it does not block
+## 8. Effort
 
-Weeks to a couple of months for the BV lemma, granting the edge condition —
-a paper section or a short standalone note. More tractable than the Mondrian
-repair, which has no comparable workaround for its nearly-empty-cells obstacle.
+If §4 survives checking, the remaining work is items 1–5 of §6, of which 1 and 3
+are the substantive ones. That is weeks rather than months, and materially more
+tractable than the Mondrian repair, whose nearly-empty-cells obstacle has no
+comparable workaround. §4 itself took an afternoon, which is a reason to be
+suspicious of it until it has been read carefully.
 
-Nothing in the main inference theory waits on this. Theorem 1 consumes an `L²`
-rate and nothing else, and XGBoost has such rates. The pairing identity
-(Theorem 3) already characterises what its window effect measures, since a
-finite sum of piecewise-constant trees is `BV`. What is unproved is only that
-XGBoost's **uncorrected plug-in** is consistent for the gradient — the quantity
-the paper argues throughout should not be relied on.
+Nothing in the main inference theory waits on any of this: Theorem 1 consumes an
+`L²` rate and nothing else, and the pairing identity (Theorem 3) already
+characterises what XGBoost's window effect measures, a finite sum of
+piecewise-constant trees being BV. What is unproved is only that the
+**uncorrected plug-in** is gradient-consistent — the quantity the paper argues
+throughout should not be relied on.
 
 ## 9. If it is not proved before submission
 
@@ -151,8 +227,7 @@ Narrow the three places that currently imply coverage:
 
 - the checklist row `Gradient boosting | established | BV, proved here`;
 - the abstract's "boosted trees";
-- Case (ii) of Theorem S2, which §2 above suggests is empty as stated.
+- Case (ii) of Theorem S2, which §2 suggests is empty as stated;
 
 and add a sentence to §3.5 recording that XGBoost is covered for inference and
-for the pairing identity but not for gradient consistency. A referee will ask
-the moment they see XGBoost in the empirical tables.
+for the pairing identity but not for gradient consistency.
