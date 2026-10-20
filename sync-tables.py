@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Copy freshly generated table bodies into paper_long.tex.
+"""Copy freshly generated table bodies into the live paper.
 
 generate_tables.py writes a complete table* environment per table into
-tables/*.tex, but paper_long.tex carries its own wrapper around each one --
+tables/*.tex, but the paper carries its own wrapper around each one --
 some tables are wrapped in \\resizebox, and all of them are indented to match
 the surrounding source. Rewriting the whole environment would throw that away,
 so this script replaces only the part that actually changes: everything from
@@ -11,7 +11,11 @@ so this script replaces only the part that actually changes: everything from
 Tables are matched by \\label, which both files carry, so the mapping does not
 depend on file order or on the caption text.
 
-Usage:  python sync-tables.py [--check]
+The tables are split across the two documents: the credit-default model
+comparison sits in the main text and the rest in the supplement, so both are
+targets and a label a given file does not carry is simply skipped there.
+
+Usage:  python sync-tables.py [--check] [--paper FILE ...] [--tables DIR]
 
 --check reports what would change without writing.
 """
@@ -19,10 +23,10 @@ import os
 import re
 import sys
 
-PAPER = 'paper_long.tex'
+PAPERS = ['jrssb-main.tex', 'jrssb-supp.tex']
 TABLES_DIR = 'tables'
 
-# label -> generated file, for every table paper_long.tex embeds
+# label -> generated file, for every table the paper embeds
 TABLE_FILES = {
     'tab:adult_spec_search':                  'adult_table1.tex',
     'tab:adult_model_comparison':             'adult_table2.tex',
@@ -105,7 +109,7 @@ def replace_one(paper, label, body):
 
     m = BODY.search(paper, at)
     if m is None:
-        raise ValueError(f'no body found after {label} in {PAPER}')
+        raise ValueError(f'no body found after {label}')
 
     # Indentation of the \begin{tabular} line the paper currently uses.
     line_start = paper.rfind('\n', 0, m.start()) + 1
@@ -119,31 +123,21 @@ def replace_one(paper, label, body):
     return paper[:m.start()] + new_body + paper[m.end():], 'updated'
 
 
-def main():
-    # Both targets are settable so the ICDM camera-ready can be synced from
-    # its own pipeline's tables:
-    #     python sync-tables.py --paper paper_icdm.tex --tables tables-icdm
-    global PAPER, TABLES_DIR
-    check = '--check' in sys.argv
-    if '--paper' in sys.argv:
-        PAPER = sys.argv[sys.argv.index('--paper') + 1]
-    if '--tables' in sys.argv:
-        TABLES_DIR = sys.argv[sys.argv.index('--tables') + 1]
-    print(f'{PAPER}  <-  {TABLES_DIR}/\n')
-
-    # newline='' so the file's own line endings survive the round trip --
-    # paper_long.tex is CRLF, and rewriting it as LF would make every line of
-    # the next git diff look changed.
-    with open(PAPER, encoding='utf-8', newline='') as fh:
+def sync_one(paper_path, check):
+    """Sync every table the given file carries. Returns (changed, skipped)."""
+    # newline='' so the file's own line endings survive the round trip -- these
+    # files are CRLF, and rewriting as LF would make every line of the next
+    # git diff look changed.
+    with open(paper_path, encoding='utf-8', newline='') as fh:
         raw = fh.read()
     crlf = '\r\n' in raw
     paper = raw.replace('\r\n', '\n')
 
-    changed, skipped, absent = [], [], []
+    changed, skipped, absent, missing = [], [], [], []
     for label, filename in TABLE_FILES.items():
         path = os.path.join(TABLES_DIR, filename)
         if not os.path.exists(path):
-            skipped.append(f'{label}: {path} missing')
+            missing.append(f'{label}: {path} missing')
             continue
         paper, status = replace_one(paper, label, extract_body(path))
         if status == 'updated':
@@ -153,20 +147,50 @@ def main():
         else:
             absent.append(label)
 
-    for line in changed + skipped:
+    print(f'{paper_path}  <-  {TABLES_DIR}/')
+    for line in changed + skipped + missing:
         print(' ', line)
-    if absent:
-        print(f'\n  ({len(absent)} table(s) not embedded in {PAPER})')
+    print(f'  ({len(absent)} of {len(TABLE_FILES)} not embedded here)')
+
+    if changed and not check:
+        if crlf:
+            paper = paper.replace('\n', '\r\n')
+        with open(paper_path, 'w', encoding='utf-8', newline='') as fh:
+            fh.write(paper)
+    print()
+    return changed, absent
+
+
+def main():
+    # Targets are settable so an older paper can be synced from its own
+    # pipeline's tables:
+    #     python sync-tables.py --paper archive/paper_icdm.tex --tables tables-icdm
+    global TABLES_DIR
+    check = '--check' in sys.argv
+    papers = list(PAPERS)
+    if '--paper' in sys.argv:
+        at = sys.argv.index('--paper') + 1
+        papers = [a for a in sys.argv[at:] if not a.startswith('--')]
+    if '--tables' in sys.argv:
+        TABLES_DIR = sys.argv[sys.argv.index('--tables') + 1]
+
+    total, embedded = 0, set()
+    for p in papers:
+        changed, absent = sync_one(p, check)
+        total += len(changed)
+        embedded |= set(TABLE_FILES) - set(absent)
+
+    orphans = sorted(set(TABLE_FILES) - embedded)
+    if orphans:
+        print('generated but embedded in no target:')
+        for o in orphans:
+            print(' ', o)
+        print()
 
     if check:
-        print('\n--check: nothing written')
-        return
-
-    if crlf:
-        paper = paper.replace('\n', '\r\n')
-    with open(PAPER, 'w', encoding='utf-8', newline='') as fh:
-        fh.write(paper)
-    print(f'\n{len(changed)} table(s) written into {PAPER}')
+        print('--check: nothing written')
+    else:
+        print(f'{total} table(s) written across {len(papers)} file(s)')
 
 
 if __name__ == '__main__':

@@ -1,6 +1,0 @@
-Need to add discussion of proofs for other methods and which space is important (Asymptotics)
-Need to revise introduction with update to asymptotics
-Need to revise conclusion with update to asymptotics
-Need to revise abstract with update to asymptotics. 
-
-Need to make changes from reading

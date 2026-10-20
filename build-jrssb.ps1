@@ -1,7 +1,8 @@
 # build-jrssb.ps1 -- compile the JRSS-B main paper + supplement.
 #
-# Unlike the AoS pair (build.ps1), this pair uses article.cls, which permits
-# xr-hyper, so there is no sync-labels.py step: each document declares
+# Unlike the AoS pair (now archive/build.ps1), this pair uses article.cls,
+# which permits xr-hyper, so there is no sync-labels.py step (also archived,
+# and superseded by it): each document declares
 # \externaldocument for the other and picks the numbers out of its .aux.
 #
 # That still makes ordering matter. Each document can only resolve references
