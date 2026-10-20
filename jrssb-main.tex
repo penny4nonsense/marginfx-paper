@@ -1259,6 +1259,24 @@ that substantially improved this work. Helpful comments were also provided by
 Walter Johnston, Max Pariazar and Rahul Sethi. Any remaining errors are the
 author's own.
 
+\emph{Use of artificial intelligence.}
+Claude (Anthropic) was used extensively in preparing this paper, the
+supplement and the accompanying code. It drafted and revised prose in both
+documents and carried out the restructuring of material between them. Its
+contribution to the mathematics is concentrated in the gradient-consistency
+results of the supplement and not in the inference theory: it produced the
+current form of the per-tree bound for Mondrian forests, including the
+per-leaf charging and truncated inverse-moment lemmas, and the gradient
+modulus lemma behind Lemma~\ref{S-lem:sobolev_consistency}, and it established
+numerically that gradient consistency for greedily grown gradient boosting is
+not attainable by the available routes, which is why
+Theorem~\ref{S-thm:boosting} is stated for a fixed symmetric linear learner
+only. It wrote the numerical verification scripts that accompany those proofs
+and parts of the table-generating code, and was used to check quoted numbers
+against the stored results. Claude is not an author of this work. All
+mathematical claims and all reported numbers are the author's, who has
+verified the arguments and is solely responsible for the content.
+
 \bibliographystyle{plainnat}
 \bibliography{references}
 
