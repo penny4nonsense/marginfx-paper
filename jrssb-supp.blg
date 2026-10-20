@@ -3,44 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: jrssb-supp.aux
 The style file: plainnat.bst
 Database file #1: references.bib
-You've used 21 entries,
+You've used 26 entries,
             2773 wiz_defined-function locations,
-            736 strings with 8294 characters,
-and the built_in function-call counts, 9862 in all, are:
-= -- 906
-> -- 483
-< -- 20
-+ -- 165
-- -- 144
-* -- 784
-:= -- 1476
-add.period$ -- 74
-call.type$ -- 21
-change.case$ -- 107
-chr.to.int$ -- 21
-cite$ -- 42
-duplicate$ -- 475
-empty$ -- 850
-format.name$ -- 175
-if$ -- 2105
+            768 strings with 8948 characters,
+and the built_in function-call counts, 11702 in all, are:
+= -- 1069
+> -- 564
+< -- 24
++ -- 194
+- -- 168
+* -- 919
+:= -- 1770
+add.period$ -- 91
+call.type$ -- 26
+change.case$ -- 129
+chr.to.int$ -- 26
+cite$ -- 52
+duplicate$ -- 576
+empty$ -- 1021
+format.name$ -- 206
+if$ -- 2489
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 25
-newline$ -- 121
-num.names$ -- 84
-pop$ -- 221
+missing$ -- 33
+newline$ -- 148
+num.names$ -- 104
+pop$ -- 268
 preamble$ -- 1
-purify$ -- 90
+purify$ -- 108
 quote$ -- 0
-skip$ -- 370
+skip$ -- 437
 stack$ -- 0
-substring$ -- 421
-swap$ -- 74
+substring$ -- 463
+swap$ -- 79
 text.length$ -- 9
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 201
+type$ -- 241
 warning$ -- 0
-while$ -- 91
+while$ -- 110
 width$ -- 0
-write$ -- 304
+write$ -- 375

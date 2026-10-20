@@ -116,6 +116,17 @@ supplement.
 	Section~\ref{M-sec:empirical} flags the cases where the distinction changes
 	the reading.
 
+	\subsection{Relationship to Classical Average Marginal Effects}
+
+	
+	Average marginal effects are a standard tool in the econometrics of nonlinear models \citep{greene2012, wooldridge2010}. For parametric models the estimator $\widehat{\mathrm{AME}}_j$ defined above reduces exactly to the classical result. Consider a generalized linear model with inverse link function $\mu$ and linear predictor $\eta_i = \mathbf{x}_i^\top \boldsymbol{\beta}$, so that $f(\mathbf{x}_i) = \mu(\eta_i)$. The marginal effect of variable $j$ at observation $i$ is:
+	\begin{equation}
+		\frac{\partial f}{\partial x_j}\bigg|_{\mathbf{x}_i} = \beta_j \cdot \mu'(\eta_i)
+	\end{equation}
+	and the population average marginal effect is $\mathrm{AME}_j = \beta_j \cdot E[\mu'(\eta)]$. For the identity link $\mu'(\eta) = 1$ and $\mathrm{AME}_j = \beta_j$ --- the marginal effect is constant across observations and equals the OLS coefficient. For the logistic link $\mu'(\eta) = \Lambda(\eta)(1 - \Lambda(\eta))$ and the AME averages the logistic density over the sample \citep{greene2012}. For the probit link $\mu'(\eta) = \phi(\eta)$, the standard normal density evaluated at the linear predictor \citep{wooldridge2010}.
+	
+	In each case $\widehat{\mathrm{AME}}_j$ recovers the classical result automatically --- the finite difference applied to the model output numerically approximates $\beta_j \cdot \mu'(\eta_i)$ without requiring knowledge of the link function. The framework therefore nests the entire GLM family as a special case and reduces to familiar output when the model is parametric. This backward compatibility is what the \texttt{marginaleffects} package in R and Python implements \citep{arelbundock2024marginaleffects}; the present framework extends that implementation with formal asymptotic guarantees for machine learning models.
+	
 	\subsection{Data-Dependent Step Sizes}
 
 	\begin{remark}[Data-dependent step sizes]
@@ -945,6 +956,35 @@ supplement.
 
 	Across the three empirical applications we fit four model classes: logistic or linear regression as the parametric baseline, a random forest, XGBoost, and a feedforward neural network. The random forest uses 200 trees with a maximum depth of 8. XGBoost uses 200 boosting rounds with a maximum depth of 4 and a learning rate of 0.05. The neural network architecture and training schedule depend on the outcome type. For binary classification, the network is a feedforward architecture with two hidden layers of 64 and 32 units trained with the Adam optimizer at a learning rate of $10^{-3}$, with early stopping on a 10\% validation split with patience of 20 epochs. For continuous regression, the network is deeper --- four hidden layers of 256, 128, 64, and 32 units --- trained at a learning rate of $3 \times 10^{-4}$ with patience of 50 epochs, reflecting the larger capacity required to fit the continuous outcome surface and the longer training horizon needed for the optimization to converge. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 to ensure scale-invariant gradient updates and predictions on the natural outcome scale. Estimation follows the debiased cross-fitted procedure of Section~2.4 with $K=5$ folds: within each fold the learner and the Riesz representer are fit on the other four folds and evaluated on the held-out fold, and standard errors come from the sample variance of the orthogonal score. No learner is ever differenced at an observation it was trained on. Every model class is refit from scratch on each fold, including the neural networks, whose early stopping schedule is applied within the fold. The fit statistics reported at the foot of each table are computed from a single full-sample fit and are descriptive of the learner rather than of the estimator; they are not used in the estimation. Where applicable, predicted probabilities for classification models are extracted from \texttt{predict\_proba(X)[:,1]} as discussed in Section~2.
 
+	\subsection*{Binary and categorical variables, and classifier outputs}
+
+	For binary or categorical variables the partial derivative does not exist and the finite difference is replaced by a contrast. The marginal effect for observation $i$ is:
+	\begin{equation}
+		m_{ij} = \hat{f}\!\left(\mathbf{x}_i^{(j,1)}\right) - \hat{f}\!\left(\mathbf{x}_i^{(j,0)}\right)
+	\end{equation}
+	which measures the change in predicted outcome when $x_j$ is switched from 0 to 1 holding all other variables at their observed values. The sample average marginal effect is then $\widehat{\mathrm{AME}}_j = n^{-1}\sum_{i=1}^n m_{ij}$, with interpretation identical to the continuous case: a change in $x_j$ from 0 to 1 is associated with a $\widehat{\mathrm{AME}}_j$ change in the predicted outcome, on average across the sample.
+	
+	For binary classification models, $\hat{f}$ must return the estimated conditional probability $\hat{P}(Y=1 \mid \mathbf{x})$ rather than the predicted class label. Class labels are discrete and their finite differences are identically zero; the method requires a continuous output. This is the predicted probability of the positive class, available as \texttt{predict\_proba(X)[:,1]} in scikit-learn and equivalent interfaces in other frameworks. The AME is then interpreted as the change in predicted probability associated with a one-unit change in $x_j$, on average across the sample.
+	
+	\subsection*{Window settings and the reading of trimmed effects}
+
+The window estimand requires two settings to be fixed before estimation, and because $\theta_{j,h}$ is defined by them they are reported rather than treated as tuning. The step size is the default $h_j = \max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features. The floor matters for count variables such as bedrooms, bathrooms, years of education and months delayed: a count has no mass strictly between its levels, so a window narrower than one unit has an empty interior, and for a piecewise constant learner the difference across it vanishes except where the window happens to straddle a split. At $h_j = 0.5$ the window is exactly the one-unit contrast, which is also the quantity of substantive interest for a count. The second setting is the trimming weight, which gives weight zero to observations lying within $h_j$ of the boundary of the observed support of $x_j$, where $x \pm h_j e_j$ would require the learner to extrapolate. For most features this removes a negligible share of the sample, but for variables with mass sitting exactly on a boundary it does not: capital gains and capital losses are zero for over ninety percent of the Adult sample, and zero is the minimum of their observed support, so those features are retained for $7.7\%$ and $4.7\%$ of observations respectively. By \eqref{M-eq:trimscale} the reported effects are the effects among that small minority scaled by its population share, not the effects on the full sample and not the conditional effects among the retained; dividing by the retained share recovers the latter. They should not be read against the untrimmed features in the same column without that adjustment. Table~\ref{tab:window_settings} of the supplement reports $h_j$ and the trimmed fraction for every feature in all three applications, and the discussion below flags the cases where the trimming is large enough to change the interpretation.
+	\subsection*{The model-refitting bootstrap as a diagnostic}
+
+	The package additionally retains a nonparametric model-refitting bootstrap
+	\citep{efron1979, efrontibshirani1993} as a \emph{diagnostic} for how far the fitted function moves when the sample is perturbed --- variability that the asymptotic theory conditions away. The learner's settings are held fixed across replicates; if the learner is tuned, the tuning is part of what each replicate refits. For $b = 1, \dots, B$: draw
+	$\mathcal{D}^{(b)}$ by resampling $(\mathbf{x}_i, y_i)$ pairs jointly with
+	replacement; refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ from a fresh initialization at the same settings; and recompute the plug-in average
+	marginal effect. The dispersion of the replicates measures how sensitive the reported effects are to the joint variability of resampling and refitting, and large dispersion is a useful warning that the
+	fitted model is unstable. It is not, however, a substitute for the influence
+	function standard errors above, for reasons Section~3 makes precise: the
+	refitting bootstrap recenters at the fitted model and is therefore blind to the
+	regularization bias that the correction term removes --- a blindness whose
+	consequences for coverage are documented for random forests in Section~5 --- and,
+	because each replicate is evaluated at the original sample, it omits the
+	component of sampling variance that comes from averaging a heterogeneous effect
+	over a finite sample of covariate values.
+	
 	\begin{table}[htbp]
 		\centering
 		\small
@@ -1417,10 +1457,16 @@ supplement.
 	This section reports the three simulation studies in full: every
 	sample size, every data generating process, every feature, and the
 	sieve-representer and bounded-support arms of Simulation 3. The
-	design, the learners and their hyperparameters are described in
-	Section~\ref{M-sec:simulation} of the main paper, and
+	designs and outcome types are described in
+	Section~\ref{M-sec:simulation} of the main paper, the learners and their
+	hyperparameters are set out immediately below, and
 	Table~\ref{M-tab:sim_summary} there summarizes the results that
 	follow.
+
+	\subsection*{Learners and hyperparameters}
+
+	The simulation study fits four model classes with hyperparameters chosen to balance computational tractability against representativeness of typical applied use. The random forest uses 100 trees with a maximum depth of 6, and XGBoost uses 100 boosting rounds with a maximum depth of 4 and a learning rate of 0.05 --- conservative settings that prevent overfitting on the small sample sizes considered while remaining flexible enough to capture the nonlinear and interaction structures in the data generating processes. The neural network is a feedforward architecture with two hidden layers of 32 and 16 units, trained for 50 epochs with batch size 64 and learning rate $10^{-3}$ using the Adam optimizer. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 to ensure scale-invariant gradient updates. Logistic and linear regression are included as baselines and use no hyperparameter tuning. All model fits are performed independently on each Monte Carlo iteration with no warm starting between iterations, so the variance estimates reflect the full sampling distribution of the AME estimator including model fitting variability. The Monte Carlo ground truth AMEs are computed once at the start of the study using $n=1{,}000{,}000$ observations drawn from the true prediction function directly, with the resulting AMEs treated as known quantities for the bias and coverage calculations. Simulation 2 uses 1{,}000 bootstrap resamples per Monte Carlo iteration and 1{,}000 Monte Carlo iterations per cell for the linear, logistic, random forest and XGBoost learners. The neural network uses 200 resamples and 500 iterations: every resample is a fresh training run, which makes the network roughly nine tenths of the total cost of the study, and the calibration result the argument rests on is the forest's. Percentile intervals are used throughout, which is why the resample count is set well above the couple of hundred that would suffice for a standard error alone. Simulation 3 uses 1{,}000 Monte Carlo iterations per cell for every learner; it needs no resampling, since its standard errors come from the influence function.
+
 
 	\subsection{Simulation 1: Recovering the Window Effect}
 	

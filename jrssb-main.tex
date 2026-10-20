@@ -128,15 +128,12 @@ representation; semiparametric efficiency.
 	
 	The machine learning literature has produced a rich set of post-hoc interpretability
 	methods that attempt to explain black-box model predictions without parametric
-	assumptions. Partial dependence plots \citep{friedman2001pdp} visualize the marginal
-	relationship between a feature and the predicted outcome by averaging over the
-	empirical distribution of other features. LIME \citep{ribeiro2016lime} fits a local
-	linear approximation to the prediction function in the neighbourhood of individual
-	observations. SHAP \citep{lundberg2017shap} assigns each feature a contribution to
-	each prediction based on Shapley values from cooperative game theory, providing a
-	unified framework that nests several earlier methods. These tools are widely used in
-	practice and are surveyed comprehensively in \citet{molnar2025} and
-	\citet{doshivelez2017interpretability}. They share a fundamental limitation, however: they produce point estimates
+	assumptions. Partial dependence plots \citep{friedman2001pdp} average the predicted
+	outcome over the empirical distribution of the other features; LIME
+	\citep{ribeiro2016lime} fits a local linear approximation around individual
+	observations; SHAP \citep{lundberg2017shap} attributes each prediction across
+	features by Shapley values. These are widely used and are surveyed in
+	\citet{molnar2025} and \citet{doshivelez2017interpretability}. They share a fundamental limitation, however: they produce point estimates
 	with no associated sampling distribution. A SHAP value, a PDP slope and a LIME
 	coefficient are descriptive quantities, carrying no standard error, no
 	confidence interval and no basis for a hypothesis test, so a researcher cannot
@@ -215,9 +212,9 @@ representation; semiparametric efficiency.
 	model fits when a resampling distribution is wanted. The result is a coefficient
 	table --- estimate, standard error, and significance level --- directly analogous
 	to the output of a parametric regression but with no restrictions on the
-	functional form of $\hat{f}$. The framework nests the classical GLM result as a
-	special case: when $\hat{f}$ is a logistic regression, the estimator recovers the
-	classical AME automatically. When $\hat{f}$ is XGBoost or a random forest or a
+	functional form of $\hat{f}$, and it nests the classical GLM result: for a
+	logistic regression the estimator recovers the classical AME automatically.
+	When $\hat{f}$ is XGBoost or a random forest or a
 	neural network, the same formula applies and produces output on the same scale
 	and with the same interpretation, and for binary regressors the construction
 	specializes to augmented inverse probability weighting with the regressor in the
@@ -302,7 +299,14 @@ representation; semiparametric efficiency.
 	
 	\section{Method}
 	
-	We propose a framework for interpreting any supervised machine learning model through the lens of average marginal effects. The framework is agnostic to the choice of learner --- the same estimation procedure applies whether $\hat{f}$ is a neural network, a gradient boosted model, a random forest, or any other supervised learner. Crucially, the framework produces standard errors from the influence function of a Neyman-orthogonal score, evaluated by cross-fitting, enabling hypothesis tests and confidence intervals that existing model-agnostic interpretability methods do not support. A refitting bootstrap is retained, but as a diagnostic rather than as the basis for inference: Section~\ref{sec:inference} shows that it is blind to the learner's regularization bias, which is precisely the term the orthogonal correction removes. SHAP values and permutation-based feature importance measures provide point estimates of variable importance but no basis for inference. The average marginal effect estimator proposed here yields a coefficient table --- estimate, standard error, and significance --- directly analogous to the output of a parametric regression, with no restrictions on the functional form of $\hat{f}$.
+	This section sets out the estimand and the estimation procedure. Both are
+	agnostic to the learner: the same steps apply whether $\hat{f}$ is a neural
+	network, a gradient boosted model or a random forest. Standard errors come
+	from the influence function of a Neyman-orthogonal score evaluated by
+	cross-fitting, which is what yields a coefficient table --- estimate,
+	standard error and significance --- analogous to parametric regression
+	output. A refitting bootstrap is retained as a diagnostic rather than as the
+	basis for inference, for reasons Section~\ref{sec:inference} makes precise.
 	
 	\subsection{Estimand}
 	
@@ -337,24 +341,14 @@ representation; semiparametric efficiency.
 	\end{equation}
 	where $\hat{\sigma}_j$ is the sample standard deviation of the $j$-th feature. Scaling $h_j$ to the spread of $x_j$ ensures the finite difference is neither so small as to introduce numerical instability nor so large as to obscure local behaviour. The floor of $10^{-4}$ guards against degenerate cases where $\hat{\sigma}_j \approx 0$. Observations within $h_j$ of the boundary of the observed support receive trimming weight zero, so that $\hat{f}$ is never evaluated at points where the regression function is unidentified; the trimmed shell carries probability mass of order $h_j$, and with the default step this exclusion is small. Untrimmed evaluation --- the default in earlier implementations --- silently extrapolates the fitted model outside the support, and the trimming weight should be understood as the repair of that extrapolation rather than as a restriction of the method.
 	
-	For binary or categorical variables the partial derivative does not exist and the finite difference is replaced by a contrast. The marginal effect for observation $i$ is:
-	\begin{equation}
-		m_{ij} = \hat{f}\!\left(\mathbf{x}_i^{(j,1)}\right) - \hat{f}\!\left(\mathbf{x}_i^{(j,0)}\right)
-	\end{equation}
-	which measures the change in predicted outcome when $x_j$ is switched from 0 to 1 holding all other variables at their observed values. The sample average marginal effect is then $\widehat{\mathrm{AME}}_j = n^{-1}\sum_{i=1}^n m_{ij}$, with interpretation identical to the continuous case: a change in $x_j$ from 0 to 1 is associated with a $\widehat{\mathrm{AME}}_j$ change in the predicted outcome, on average across the sample.
-	
-	For binary classification models, $\hat{f}$ must return the estimated conditional probability $\hat{P}(Y=1 \mid \mathbf{x})$ rather than the predicted class label. Class labels are discrete and their finite differences are identically zero; the method requires a continuous output. This is the predicted probability of the positive class, available as \texttt{predict\_proba(X)[:,1]} in scikit-learn and equivalent interfaces in other frameworks. The AME is then interpreted as the change in predicted probability associated with a one-unit change in $x_j$, on average across the sample.
-	
-	\subsection{Relationship to Classical Average Marginal Effects}
-	
-	Average marginal effects are a standard tool in the econometrics of nonlinear models \citep{greene2012, wooldridge2010}. For parametric models the estimator $\widehat{\mathrm{AME}}_j$ defined above reduces exactly to the classical result. Consider a generalized linear model with inverse link function $\mu$ and linear predictor $\eta_i = \mathbf{x}_i^\top \boldsymbol{\beta}$, so that $f(\mathbf{x}_i) = \mu(\eta_i)$. The marginal effect of variable $j$ at observation $i$ is:
-	\begin{equation}
-		\frac{\partial f}{\partial x_j}\bigg|_{\mathbf{x}_i} = \beta_j \cdot \mu'(\eta_i)
-	\end{equation}
-	and the population average marginal effect is $\mathrm{AME}_j = \beta_j \cdot E[\mu'(\eta)]$. For the identity link $\mu'(\eta) = 1$ and $\mathrm{AME}_j = \beta_j$ --- the marginal effect is constant across observations and equals the OLS coefficient. For the logistic link $\mu'(\eta) = \Lambda(\eta)(1 - \Lambda(\eta))$ and the AME averages the logistic density over the sample \citep{greene2012}. For the probit link $\mu'(\eta) = \phi(\eta)$, the standard normal density evaluated at the linear predictor \citep{wooldridge2010}.
-	
-	In each case $\widehat{\mathrm{AME}}_j$ recovers the classical result automatically --- the finite difference applied to the model output numerically approximates $\beta_j \cdot \mu'(\eta_i)$ without requiring knowledge of the link function. The framework therefore nests the entire GLM family as a special case and reduces to familiar output when the model is parametric. This backward compatibility is what the \texttt{marginaleffects} package in R and Python implements \citep{arelbundock2024marginaleffects}; the present framework extends that implementation with formal asymptotic guarantees for machine learning models.
-	
+	For binary or categorical variables the partial derivative does not exist and
+	the finite difference is replaced by the contrast
+	$\hat{f}(\mathbf{x}_i^{(j,1)}) - \hat{f}(\mathbf{x}_i^{(j,0)})$, with the
+	interpretation unchanged. Binary classification models must return the
+	estimated conditional probability rather than the predicted class label,
+	whose finite differences are identically zero. Both points are set out in
+	Section~\ref{S-app:empirical_details} of the supplement.
+
 	\subsection{Inference}
 	
 	Inference is based on a debiased, cross-fitted estimator whose formal analysis is
@@ -395,60 +389,44 @@ representation; semiparametric efficiency.
 	influence function values with i.i.d.\ mean-zero weights is available at no
 	additional model fits.
 	
-	The package additionally retains a nonparametric model-refitting bootstrap
-	\citep{efron1979, efrontibshirani1993} as a \emph{diagnostic} for how far the fitted function moves when the sample is perturbed --- variability that the asymptotic theory conditions away. The learner's settings are held fixed across replicates; if the learner is tuned, the tuning is part of what each replicate refits. For $b = 1, \dots, B$: draw
-	$\mathcal{D}^{(b)}$ by resampling $(\mathbf{x}_i, y_i)$ pairs jointly with
-	replacement; refit $\hat{f}^{(b)}$ on $\mathcal{D}^{(b)}$ from a fresh initialization at the same settings; and recompute the plug-in average
-	marginal effect. The dispersion of the replicates measures how sensitive the reported effects are to the joint variability of resampling and refitting, and large dispersion is a useful warning that the
-	fitted model is unstable. It is not, however, a substitute for the influence
-	function standard errors above, for reasons Section~3 makes precise: the
-	refitting bootstrap recenters at the fitted model and is therefore blind to the
-	regularization bias that the correction term removes --- a blindness whose
-	consequences for coverage are documented for random forests in Section~5 --- and,
-	because each replicate is evaluated at the original sample, it omits the
-	component of sampling variance that comes from averaging a heterogeneous effect
-	over a finite sample of covariate values.
-	
+	A nonparametric model-refitting bootstrap \citep{efron1979,
+	efrontibshirani1993} is retained as a \emph{diagnostic} for how far the
+	fitted function moves when the sample is perturbed --- variability the
+	asymptotic theory conditions away --- and large dispersion across replicates
+	is a useful warning that the fitted model is unstable. It is not a substitute
+	for the influence function standard errors, because it recenters at the
+	fitted model and is therefore blind to the regularization bias that the
+	correction removes, with consequences for coverage documented in Section~5.
+	The procedure and the second reason it understates variance are in
+	Section~\ref{S-app:empirical_details}.
+
 	\section{Asymptotic Theory}
 	\label{sec:theory}
 	
 	\subsection{Overview}
 
-	The theory must deliver three things: a population estimand that is well
-	defined for any supervised learner, including learners that are nowhere
-	differentiable; valid root-$n$ inference on that estimand under conditions
-	flexible learners can actually satisfy, in particular without requiring the
-	learner itself to converge at the parametric rate, which fails whenever the
-	complexity of the function class grows with the sample size; and an account
-	of what the gradient of a fitted model measures. This section delivers them
-	in turn.
+	The theory must deliver three things: a population estimand well defined for
+	any supervised learner, including learners that are nowhere differentiable;
+	valid root-$n$ inference on it under conditions flexible learners can
+	actually satisfy, in particular without requiring the learner to converge at
+	the parametric rate, which fails whenever the complexity of the function
+	class grows with the sample size; and an account of what the gradient of a
+	fitted model measures.
 
-	The organizing observation is structural: the average marginal effect is a
-	\emph{linear} functional of the regression function, and linearity has three
-	consequences that together carry the entire argument. First, the functional
-	admits an exact Riesz representation --- an explicit weight $\alpha_h$
-	against which averaging a function reproduces the average of its finite
-	difference (Lemma~\ref{lem:riesz}) --- obtained by a change of variables
-	rather than integration by parts, so that no boundary terms arise and no
-	derivative of the covariate density is ever needed. Second, the estimation
-	bias of a debiased moment built from that representation is \emph{exactly} a
-	product of two estimation errors (Lemma~\ref{lem:orth}), an identity rather
-	than a product plus a linearization remainder as it would be for a nonlinear
-	functional. Root-$n$ inference therefore requires only that the product of
-	the $L^2$ errors of two nuisance estimates be $o_p(n^{-1/2})$ --- for
-	instance, both converging faster than $n^{-1/4}$ --- rather than root-$n$
-	convergence of the learner in any norm (Theorem~\ref{thm:main}). Third, the
-	resulting estimator attains the semiparametric efficiency bound for the
-	estimand (Theorem~\ref{thm:efficiency}).
-
-	The estimand analysed here is exactly the quantity the estimator of
-	Section~2 computes, with the step $h$ treated as part of the estimand rather
-	than as a numerical approximation to a derivative; what a learner's own
-	gradient estimates is taken up in Section~\ref{sec:gradients}. The plug-in
-	average is the first component of the orthogonal score, and the correction
-	term $\alpha_h(x_i)\,(y_i - \hat{f}(x_i))$ removes, at first order, the bias
-	that regularization of the learner transmits to it --- the mechanism the
-	simulations of Section~\ref{sec:simulation} display directly.
+	The organizing observation is that the average marginal effect is a
+	\emph{linear} functional of the regression function, and the three results
+	follow from that linearity in turn. The functional admits an exact Riesz
+	representation obtained by a change of variables rather than integration by
+	parts (Lemma~\ref{lem:riesz}); the estimation bias of a debiased moment built
+	from it is \emph{exactly} a product of two nuisance errors
+	(Lemma~\ref{lem:orth}), an identity rather than a product plus a
+	linearization remainder, so root-$n$ inference needs only that product to be
+	$o_p(n^{-1/2})$ (Theorem~\ref{thm:main}); and the resulting estimator attains
+	the semiparametric efficiency bound (Theorem~\ref{thm:efficiency}). The
+	estimand analysed here is exactly what the estimator of Section~2 computes,
+	with $h$ part of the estimand rather than a numerical approximation to a
+	derivative; what a learner's own gradient estimates is taken up in
+	Section~\ref{sec:gradients}.
 
 	\subsection{Notation and Preliminaries}
 
@@ -955,28 +933,37 @@ representation; semiparametric efficiency.
 	All three applications fit the same four model classes --- logistic or linear
 	regression as the parametric baseline, a random forest, XGBoost, and a
 	feedforward neural network --- and estimate the window effect by the debiased
-	cross-fitted procedure of Section~2.4 with $K=5$ folds: within each fold the
-	learner and the Riesz representer are fit on the other four and evaluated on
-	the held-out fold, so no learner is ever differenced at an observation it was
-	trained on, and standard errors come from the sample variance of the
-	orthogonal score. Architectures, hyperparameters, training schedules and the
-	handling of predicted probabilities are common to the three applications and
-	are recorded in Section~\ref{S-app:empirical_details} of the supplement.
+	cross-fitted procedure of Section~2.4 with $K=5$ folds. Architectures,
+	hyperparameters, training schedules, the handling of predicted probabilities
+	and the cross-fitting protocol are common to the three and are recorded in
+	Section~\ref{S-app:empirical_details} of the supplement.
 
-The window estimand requires two settings to be fixed before estimation, and because $\theta_{j,h}$ is defined by them they are reported rather than treated as tuning. The step size is the default $h_j = \max(10^{-4},\, 0.05\hat{\sigma}_j)$, floored at $0.5$ for integer-valued features. The floor matters for count variables such as bedrooms, bathrooms, years of education and months delayed: a count has no mass strictly between its levels, so a window narrower than one unit has an empty interior, and for a piecewise constant learner the difference across it vanishes except where the window happens to straddle a split. At $h_j = 0.5$ the window is exactly the one-unit contrast, which is also the quantity of substantive interest for a count. The second setting is the trimming weight, which gives weight zero to observations lying within $h_j$ of the boundary of the observed support of $x_j$, where $x \pm h_j e_j$ would require the learner to extrapolate. For most features this removes a negligible share of the sample, but for variables with mass sitting exactly on a boundary it does not: capital gains and capital losses are zero for over ninety percent of the Adult sample, and zero is the minimum of their observed support, so those features are retained for $7.7\%$ and $4.7\%$ of observations respectively. By \eqref{eq:trimscale} the reported effects are the effects among that small minority scaled by its population share, not the effects on the full sample and not the conditional effects among the retained; dividing by the retained share recovers the latter. They should not be read against the untrimmed features in the same column without that adjustment. Table~\ref{S-tab:window_settings} of the supplement reports $h_j$ and the trimmed fraction for every feature in all three applications, and the discussion below flags the cases where the trimming is large enough to change the interpretation.
-	
+	The window estimand requires two settings to be fixed before estimation, and
+	because $\theta_{j,h}$ is defined by them they are reported rather than
+	treated as tuning: the step size, at the default
+	$h_j = \max(10^{-4},\, 0.05\hat{\sigma}_j)$ but floored at $0.5$ for
+	integer-valued features so that the window is the one-unit contrast, and the
+	trimming weight, which gives weight zero to observations within $h_j$ of the
+	boundary of the observed support. For most features the trimming removes a
+	negligible share of the sample; where it does not, the reported effect is the
+	effect among the retained minority scaled by its population share, by
+	\eqref{eq:trimscale}, and is not comparable in magnitude with an untrimmed
+	feature in the same column without dividing by that share.
+	Table~\ref{S-tab:window_settings} of the supplement reports $h_j$ and the
+	trimmed fraction for every feature in all three applications, and discusses
+	the features whose trimming is large enough to change the reading; the
+	discussion below flags them as they arise.
+
 		\subsection{UCI Credit Default}
 	
 	The second dataset is the UCI Default of Credit Card Clients dataset \citep{yeh2009, UCI}, comprising 30,000 observations of Taiwanese credit card holders. The outcome is whether a cardholder defaulted on their payment in the following month. Features are organized into demographics (age, sex, education, marital status), payment history (average payment status, months delayed), and bill and payment amounts (average bill amount, average payment amount, payment ratio). The specification search considers logistic regression and a TensorFlow neural network, providing a direct comparison between a classical parametric model and a deep learning approach on the same inferential task. Two features here carry substantial trimming. Months delayed takes seven integer values and 70.9\% of the sample sits on one of the two outer ones, so its effect is identified among cardholders strictly inside that range; education takes four levels and is trimmed at 36.8\%. Both take the floored step size $h_j = 0.5$, so their reported effects are one-level contrasts. The payment ratio, which turns out to carry the largest effect in the application, is continuous and trimmed at 18.4\%.
 	
-	A specification search over the three covariate blocks --- demographics,
-	payment history, and billing and payment amounts --- is reported in
-	Section~\ref{S-app:credit_spec} of the supplement. Its conclusions are that
-	payment history dominates the demographic block, that the payment ratio is
-	much the largest effect in the design once it is available, and that the
-	ordering and approximate magnitude of the effects are stable across
-	specifications, while the demographic effects shrink substantially once
-	payment history is controlled for. The remainder of this section works with
+	A specification search over the three covariate blocks is reported in
+	Section~\ref{S-app:credit_spec} of the supplement: payment history dominates
+	the demographic block, the payment ratio is much the largest effect once it is
+	available, and the ordering and approximate magnitude of the effects are
+	stable across specifications while the demographic effects shrink
+	substantially once payment history is controlled for. The remainder of this section works with
 	the full specification.
 
 	\begin{table}[htbp]
@@ -1045,7 +1032,6 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	
 	We evaluate the estimator through three simulation studies, which together separate what the window average recovers from what can be said about it. Simulation 1 examines the bias and root mean squared error of the uncorrected plug-in window average as a function of sample size, across three data generating processes and two outcome types. Simulation 2 asks whether the refitting bootstrap of Section~\ref{sec:inference} delivers valid intervals for that plug-in, comparing empirical coverage of nominal 95\% intervals against the target. Simulation 3 repeats both exercises for the debiased cross-fitted estimator of Section~\ref{sec:inference}, holding the designs, learners and windows fixed so that the two estimators differ only in the orthogonal correction. The three are best read in order: the first locates a bias, the second shows that resampling cannot see it, and the third removes it. All features $x_1, x_2, x_3, x_4$ are drawn independently from $N(0,1)$. Features $x_1$ and $x_2$ have nonzero true effects; $x_3$ and $x_4$ are pure noise with true AME of zero. Three data generating processes are considered. The linear DGP sets $\eta = 2x_1 + 3x_2$. The nonlinear DGP sets $\eta = 2x_1^2 + 3x_2$, so that the true AME of $x_1$ is zero in the regression case by symmetry of $N(0,1)$ --- $\mathbb{E}[4x_1] = 0$ --- but nonzero in the classification case where the sigmoid breaks that symmetry. The interaction DGP sets $\eta = 2x_1 + 3x_2 + 2x_1 x_2$, which preserves the marginal AMEs of $x_1$ and $x_2$ at 2.0 and 3.0 respectively in the regression case since $\mathbb{E}[2x_2] = \mathbb{E}[2x_1] = 0$. For regression, the outcome is $y = \eta + \varepsilon$ where $\varepsilon \sim N(0,1)$. For classification, $P(y=1) = \sigma(\eta)$ where $\sigma$ denotes the logistic function. True AMEs for all DGPs and outcome types are computed via Monte Carlo integration using $n = 1{,}000{,}000$ observations drawn from the true prediction function directly, treating the result as ground truth. Sample sizes of $n \in \{250, 500, 1\,000, 2\,500, 5\,000\}$ are evaluated over 500 Monte Carlo iterations for classification and 1{,}000 iterations for regression.
 	
-	The simulation study fits four model classes with hyperparameters chosen to balance computational tractability against representativeness of typical applied use. The random forest uses 100 trees with a maximum depth of 6, and XGBoost uses 100 boosting rounds with a maximum depth of 4 and a learning rate of 0.05 --- conservative settings that prevent overfitting on the small sample sizes considered while remaining flexible enough to capture the nonlinear and interaction structures in the data generating processes. The neural network is a feedforward architecture with two hidden layers of 32 and 16 units, trained for 50 epochs with batch size 64 and learning rate $10^{-3}$ using the Adam optimizer. For regression outcomes, the network includes the input normalization layer and target standardization wrapper described in Section~2 to ensure scale-invariant gradient updates. Logistic and linear regression are included as baselines and use no hyperparameter tuning. All model fits are performed independently on each Monte Carlo iteration with no warm starting between iterations, so the variance estimates reflect the full sampling distribution of the AME estimator including model fitting variability. The Monte Carlo ground truth AMEs are computed once at the start of the study using $n=1{,}000{,}000$ observations drawn from the true prediction function directly, with the resulting AMEs treated as known quantities for the bias and coverage calculations. Simulation 2 uses 1{,}000 bootstrap resamples per Monte Carlo iteration and 1{,}000 Monte Carlo iterations per cell for the linear, logistic, random forest and XGBoost learners. The neural network uses 200 resamples and 500 iterations: every resample is a fresh training run, which makes the network roughly nine tenths of the total cost of the study, and the calibration result the argument rests on is the forest's. Percentile intervals are used throughout, which is why the resample count is set well above the couple of hundred that would suffice for a standard error alone. Simulation 3 uses 1{,}000 Monte Carlo iterations per cell for every learner; it needs no resampling, since its standard errors come from the influence function.
 	
 
 	Table~\ref{tab:sim_summary} collects the three studies on the linear data
@@ -1215,21 +1201,13 @@ and the closed-form representer. Full per-feature results are in the supplement.
 	argument for the correction rather than a gap in it.
 
 	Empirically the four model classes agree far more closely under the debiased
-	estimator than under the plug-in, and they do so because they are now
-	estimating the same quantity rather than each reporting the slope of its own
-	fit. The credit default application shows it most sharply: plug-in estimates
-	of the payment-ratio effect ranging from $-$0.431 to $0.0009$ across the four
-	learners --- a set that cannot all be describing the same world --- become
-	four significant negative estimates telling one story. Standard errors move
-	in the direction the theory predicts, which in several places means upward,
-	the refitting bootstrap having reported $0.0000$ to four decimal places for
-	the random forest where the influence-function standard error for the same
-	quantity is orders of magnitude larger: narrow intervals around a displaced
-	centre, the failure mode isolated in Simulation~2. The cost of the correction
-	is visible in the smallest application, where with $n = 1{,}460$ observations
-	several Ames Housing effects that the plug-in reported as precisely
-	determined are no longer distinguishable from zero, and the estimator reports
-	that rather than concealing it.
+	estimator than under the plug-in, because they are now estimating the same
+	quantity rather than each reporting the slope of its own fit, and standard
+	errors move in the direction the theory predicts, which in several places
+	means upward. The cost is visible in the smallest application, where several
+	Ames Housing effects that the plug-in reported as precisely determined are no
+	longer distinguishable from zero, and the estimator reports that rather than
+	concealing it.
 
 	The most pressing open problem concerns Breiman random forests
 	\citep{breiman2001rf}, which produce the least stable plug-in estimates of

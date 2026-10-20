@@ -1,4 +1,4 @@
-\begin{thebibliography}{21}
+\begin{thebibliography}{26}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -12,6 +12,15 @@ Luigi Ambrosio, Nicola Fusco, and Diego Pallara.
 \newblock Oxford Mathematical Monographs. Oxford University Press, Oxford,
   2000.
 \newblock ISBN 9780198502456.
+
+\bibitem[Arel-Bundock et~al.(2024)Arel-Bundock, Greifer, and
+  Heiss]{arelbundock2024marginaleffects}
+Vincent Arel-Bundock, Noah Greifer, and Andrew Heiss.
+\newblock How to interpret statistical models using {marginaleffects} for {R}
+  and {Python}.
+\newblock \emph{Journal of Statistical Software}, 111\penalty0 (9):\penalty0
+  1--32, 2024.
+\newblock \doi{10.18637/jss.v111.i09}.
 
 \bibitem[Bartlett et~al.(2017)Bartlett, Foster, and
   Telgarsky]{bartlett2017spectrally}
@@ -51,6 +60,17 @@ Dheeru Dua and Casey Graff.
 \newblock {UCI} machine learning repository, 2019.
 \newblock URL \url{https://archive.ics.uci.edu/ml}.
 
+\bibitem[Efron(1979)]{efron1979}
+Bradley Efron.
+\newblock Bootstrap methods: Another look at the jackknife.
+\newblock \emph{Annals of Statistics}, 7\penalty0 (1):\penalty0 1--26, 1979.
+\newblock \doi{10.1214/aos/1176344552}.
+
+\bibitem[Efron and Tibshirani(1993)]{efrontibshirani1993}
+Bradley Efron and Robert~J. Tibshirani.
+\newblock \emph{An Introduction to the Bootstrap}.
+\newblock Chapman and Hall, New York, 1993.
+
 \bibitem[Evans(2010)]{evans2010pde}
 Lawrence~C. Evans.
 \newblock \emph{Partial Differential Equations}, volume~19 of \emph{Graduate
@@ -63,6 +83,11 @@ Lawrence~C. Evans and Ronald~F. Gariepy.
 \newblock \emph{Measure Theory and Fine Properties of Functions}.
 \newblock CRC Press, Boca Raton, FL, revised edition, 2015.
 \newblock ISBN 9781482242386.
+
+\bibitem[Greene(2012)]{greene2012}
+William~H. Greene.
+\newblock \emph{Econometric Analysis}.
+\newblock Prentice Hall, Upper Saddle River, NJ, 7 edition, 2012.
 
 \bibitem[Hornik et~al.(1990)Hornik, Stinchcombe, and
   White]{hornik1990universal}
@@ -141,5 +166,10 @@ Grace Wahba.
 \newblock \emph{Spline Models for Observational Data}, volume~59 of
   \emph{CBMS-NSF Regional Conference Series in Applied Mathematics}.
 \newblock SIAM, Philadelphia, PA, 1990.
+
+\bibitem[Wooldridge(2010)]{wooldridge2010}
+Jeffrey~M. Wooldridge.
+\newblock \emph{Econometric Analysis of Cross Section and Panel Data}.
+\newblock MIT Press, Cambridge, MA, 2 edition, 2010.
 
 \end{thebibliography}
