@@ -53,7 +53,7 @@ Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
 \end{tabular}
 \begin{tablenotes}
 \footnotesize
-\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent standard normal covariates. Trimming is inactive because the support is unbounded. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
+\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = [\mathbb{1}\{u_j \geq a + 2h\} - \mathbb{1}\{u_j \leq b - 2h\}]/(2h)$ on $[a,b] = [-\sqrt{3},\sqrt{3}]$, which follows from the representation lemma with the constant density cancelling and is bounded by $1/(2h)$. Covariates are drawn independently and uniformly on $[-\sqrt{3},\sqrt{3}]$, so each coordinate has unit variance. The trimming weight is active here, unlike in the Gaussian arms, and the true values reflect the boundary shell it excises. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
 \end{tablenotes}
 \end{threeparttable}
 \end{table*}

@@ -144,9 +144,9 @@ than discarded, because both are claims a reader may reasonably doubt.
 
 ## Known gaps
 
-- `tables/sim3_bias_classification_linear_uniform.tex` is generated but
-  embedded in neither document, while the supplement's bounded-support
-  discussion cites statistics covering its classification cells. Either the
-  table belongs in the supplement or that text should not claim them.
 - The data availability statement promises a DOI for this repository. One
   needs minting (Zenodo) before acceptance.
+
+`sync-tables.py --check` reports any generated table that no document embeds,
+which is how the last one was found; it should print nothing under "generated
+but embedded in no target".

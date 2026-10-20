@@ -1162,6 +1162,36 @@ def load_sim3_results(outcome_type: str, dgp: str) -> pd.DataFrame:
     return pd.concat(dfs, ignore_index=True)
 
 
+def representer_note(dgp: str) -> str:
+    """The representer sentence for a Simulation 3 bias table.
+
+    The bounded-support arm is a different experiment from the Gaussian ones:
+    uniform covariates, a step-function representer that falls out of the
+    representation lemma once the constant density cancels, and -- unlike the
+    Gaussian arms -- an active trimming weight. Emitting one set of notes for
+    both described the wrong design on the uniform tables.
+    """
+    if dgp.endswith('_uniform'):
+        return (
+            r'the closed-form Riesz representer '
+            r'$\alpha_h(u) = [\mathbb{1}\{u_j \geq a + 2h\} - '
+            r'\mathbb{1}\{u_j \leq b - 2h\}]/(2h)$ on '
+            r'$[a,b] = [-\sqrt{3},\sqrt{3}]$, which follows from the '
+            r'representation lemma with the constant density cancelling and '
+            r'is bounded by $1/(2h)$. Covariates are drawn independently and '
+            r'uniformly on $[-\sqrt{3},\sqrt{3}]$, so each coordinate has '
+            r'unit variance. The trimming weight is active here, unlike in '
+            r'the Gaussian arms, and the true values reflect the boundary '
+            r'shell it excises.'
+        )
+    return (
+        r'the closed-form Riesz representer '
+        r'$\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent '
+        r'standard normal covariates. Trimming is inactive because the '
+        r'support is unbounded.'
+    )
+
+
 def make_sim3_bias_rmse_table(outcome_type: str, dgp: str) -> tuple:
     """
     Bias and RMSE of the debiased estimator, laid out like the Simulation 1
@@ -1254,10 +1284,7 @@ def make_sim3_bias_rmse_table(outcome_type: str, dgp: str) -> tuple:
         r'\begin{tablenotes}',
         r'\footnotesize',
         r'\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ '
-        r'folds and the closed-form Riesz representer '
-        r'$\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent '
-        r'standard normal covariates. Trimming is inactive because the '
-        r'support is unbounded. Bias is the mean of '
+        r'folds and ' + representer_note(dgp) + r' Bias is the mean of '
         r'$\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, '
         r'over the Monte Carlo iterations. True values computed by Monte '
         r'Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and '

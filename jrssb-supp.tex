@@ -1976,7 +1976,7 @@ The window estimand requires two settings to be fixed before estimation, and bec
 	
 	\subsection{Simulation 3: The Debiased Estimator}
 	
-	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{M-sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{M-lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive throughout because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one. For the same reason the design satisfies Assumption~\ref{M-ass:unbounded} rather than the density bounds of Assumption~\ref{M-ass:sampling}: a Gaussian density is not bounded below on $\R^d$, and the representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$ is unbounded. It is square integrable, with
+	Simulation 3 repeats the design of Simulation 2 for the debiased cross-fitted estimator of Section~\ref{M-sec:inference}. The covariates are independent standard normals, so the Riesz representer of Lemma~\ref{M-lem:riesz} is available in closed form, $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, and the estimator requires no representer estimation at all; a second arm reported at the end of this subsection replaces it with a sieve estimate, to show what is lost when the covariate density is unknown. Cross-fitting uses $K=5$ folds. The data generating processes, learners, hyperparameters, sample sizes, window $h$ and Monte Carlo ground truth are all held at the values used in the two preceding studies, so any difference between Simulation 3 and its predecessors is attributable to the orthogonal correction and to nothing else. Trimming is inactive in the Gaussian arms because the covariate support is unbounded and the trimming weight of Section~2.1 is therefore identically one; the bounded-support arm reported at the end of this subsection is the one design that exercises it. For the same reason the design satisfies Assumption~\ref{M-ass:unbounded} rather than the density bounds of Assumption~\ref{M-ass:sampling}: a Gaussian density is not bounded below on $\R^d$, and the representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$ is unbounded. It is square integrable, with
 	\begin{equation}
 		\E\left[\alpha_h(X)^2\right]
 		= \frac{e^{-h^2}}{h^2}\,\E\left[\sinh^2(h X_j)\right]
@@ -2268,12 +2268,72 @@ The window estimand requires two settings to be fixed before estimation, and bec
 				\end{tabular}
 				\begin{tablenotes}
 				\footnotesize
-				\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = e^{-h^2/2}\sinh(h u_j)/h$, exact for independent standard normal covariates. Trimming is inactive because the support is unbounded. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
+				\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = [\mathbb{1}\{u_j \geq a + 2h\} - \mathbb{1}\{u_j \leq b - 2h\}]/(2h)$ on $[a,b] = [-\sqrt{3},\sqrt{3}]$, which follows from the representation lemma with the constant density cancelling and is bounded by $1/(2h)$. Covariates are drawn independently and uniformly on $[-\sqrt{3},\sqrt{3}]$, so each coordinate has unit variance. The trimming weight is active here, unlike in the Gaussian arms, and the true values reflect the boundary shell it excises. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
+				\end{tablenotes}
+		\end{threeparttable}
+	\end{table}
+
+	\begin{table}[htbp]
+		\centering
+		\small
+		\begin{threeparttable}
+			\caption{Simulation 3: debiased estimator, bounded-support linear classification DGP. Bias and RMSE (in parentheses) by sample size.}
+			\label{tab:sim3_bias_classification_linear_uniform}
+			\begin{tabular}{lrrrrrr}
+				\toprule
+				& & \multicolumn{5}{c}{Bias (RMSE)} \\
+				\cmidrule(lr){3-7}
+				Variable & True AME & $n=250$ & $n=500$ & $n=1,000$ & $n=2,500$ & $n=5,000$ \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Logistic}} \\
+				\quad x1 & 0.1787 & 0.0014 & 0.0011 & -0.0006 & 0.0003 & -0.0003 \\
+				&  & (0.0461) & (0.0321) & (0.0225) & (0.0148) & (0.0103) \\
+				\quad x2 & 0.2730 & 0.0000 & 0.0014 & -0.0007 & 0.0002 & -0.0002 \\
+				&  & (0.0282) & (0.0200) & (0.0148) & (0.0090) & (0.0060) \\
+				\quad x3 & 0.0000 & -0.0043 & 0.0012 & -0.0010 & -0.0010 & 0.0006 \\
+				&  & (0.0454) & (0.0326) & (0.0232) & (0.0142) & (0.0102) \\
+				\quad x4 & 0.0000 & 0.0014 & 0.0002 & -0.0006 & 0.0001 & -0.0001 \\
+				&  & (0.0469) & (0.0342) & (0.0227) & (0.0154) & (0.0101) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Random Forest}} \\
+				\quad x1 & 0.1787 & -0.0012 & 0.0015 & -0.0007 & 0.0000 & -0.0004 \\
+				&  & (0.0596) & (0.0385) & (0.0260) & (0.0170) & (0.0114) \\
+				\quad x2 & 0.2730 & 0.0010 & 0.0005 & -0.0004 & 0.0001 & 0.0003 \\
+				&  & (0.0469) & (0.0313) & (0.0214) & (0.0121) & (0.0078) \\
+				\quad x3 & 0.0000 & -0.0053 & 0.0007 & -0.0013 & -0.0009 & 0.0006 \\
+				&  & (0.0519) & (0.0359) & (0.0241) & (0.0152) & (0.0104) \\
+				\quad x4 & 0.0000 & 0.0004 & 0.0001 & 0.0001 & -0.0000 & -0.0000 \\
+				&  & (0.0533) & (0.0381) & (0.0252) & (0.0164) & (0.0103) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: XGBoost}} \\
+				\quad x1 & 0.1787 & -0.0012 & 0.0007 & -0.0001 & 0.0003 & -0.0002 \\
+				&  & (0.0688) & (0.0426) & (0.0279) & (0.0177) & (0.0116) \\
+				\quad x2 & 0.2730 & 0.0038 & 0.0006 & -0.0002 & 0.0001 & 0.0004 \\
+				&  & (0.0629) & (0.0399) & (0.0261) & (0.0132) & (0.0086) \\
+				\quad x3 & 0.0000 & -0.0053 & 0.0009 & -0.0009 & -0.0009 & 0.0005 \\
+				&  & (0.0514) & (0.0363) & (0.0244) & (0.0151) & (0.0103) \\
+				\quad x4 & 0.0000 & -0.0023 & -0.0001 & 0.0003 & 0.0000 & 0.0002 \\
+				&  & (0.0525) & (0.0386) & (0.0248) & (0.0162) & (0.0104) \\
+				\midrule
+				\multicolumn{7}{l}{\textit{Panel: Neural Net}} \\
+				\quad x1 & 0.1787 & 0.0017 & 0.0010 & -0.0004 & 0.0004 & -0.0005 \\
+				&  & (0.0480) & (0.0332) & (0.0231) & (0.0152) & (0.0105) \\
+				\quad x2 & 0.2730 & 0.0004 & 0.0015 & -0.0009 & 0.0001 & -0.0002 \\
+				&  & (0.0302) & (0.0221) & (0.0159) & (0.0093) & (0.0063) \\
+				\quad x3 & 0.0000 & -0.0050 & 0.0015 & -0.0008 & -0.0009 & 0.0006 \\
+				&  & (0.0481) & (0.0342) & (0.0238) & (0.0145) & (0.0103) \\
+				\quad x4 & 0.0000 & 0.0007 & 0.0003 & -0.0004 & 0.0001 & 0.0001 \\
+				&  & (0.0473) & (0.0348) & (0.0233) & (0.0157) & (0.0102) \\
+				\bottomrule
+				\end{tabular}
+				\begin{tablenotes}
+				\footnotesize
+				\item \textit{Notes:} Debiased cross-fitted estimator with $K=5$ folds and the closed-form Riesz representer $\alpha_h(u) = [\mathbb{1}\{u_j \geq a + 2h\} - \mathbb{1}\{u_j \leq b - 2h\}]/(2h)$ on $[a,b] = [-\sqrt{3},\sqrt{3}]$, which follows from the representation lemma with the constant density cancelling and is bounded by $1/(2h)$. Covariates are drawn independently and uniformly on $[-\sqrt{3},\sqrt{3}]$, so each coordinate has unit variance. The trimming weight is active here, unlike in the Gaussian arms, and the true values reflect the boundary shell it excises. Bias is the mean of $\hat{\theta}_{j,h} - \theta_{j,h}$ and RMSE its root mean square, over the Monte Carlo iterations. True values computed by Monte Carlo integration at $n=1{,}000{,}000$. Noise features $x_3$ and $x_4$ have a true effect of zero.
 				\end{tablenotes}
 		\end{threeparttable}
 	\end{table}
 	
-	Table~\ref{tab:sim3_bias_regression_linear_uniform} reports bias and RMSE. The estimator behaves as it does on the unbounded designs: bias is at most $0.002$ on the signal features at any sample size and for any learner, and RMSE declines at the $O(n^{-1/2})$ rate. Coverage is the quantity of interest, and across the $160$ combinations of learner, sample size and feature in this arm it has mean $0.944$ and lies between $0.890$ and $0.970$, against a mean of $0.948$ over the matched Gaussian cells. The two assumption sets therefore deliver the same behaviour to within four thousandths. Since the two designs share a predictor and a coordinate variance and differ only in the covariate law, that agreement isolates boundedness as making no material difference: what the moment conditions buy is coverage of the Gaussian case, not a weaker guarantee within it. The influence-function standard errors are honest on both, with a mean ratio to the Monte Carlo standard deviation of $0.99$ here.
+	Tables~\ref{tab:sim3_bias_regression_linear_uniform} and~\ref{tab:sim3_bias_classification_linear_uniform} report bias and RMSE for the two outcome types. The estimator behaves as it does on the unbounded designs: bias is at most $0.002$ on the signal features at any sample size and for any learner, and RMSE declines at the $O(n^{-1/2})$ rate. Coverage is the quantity of interest, and across the $160$ combinations of learner, sample size and feature in this arm it has mean $0.944$ and lies between $0.890$ and $0.970$, against a mean of $0.948$ over the matched Gaussian cells. The two assumption sets therefore deliver the same behaviour to within four thousandths. Since the two designs share a predictor and a coordinate variance and differ only in the covariate law, that agreement isolates boundedness as making no material difference: what the moment conditions buy is coverage of the Gaussian case, not a weaker guarantee within it. The influence-function standard errors are honest on both, with a mean ratio to the Monte Carlo standard deviation of $0.99$ here.
 	
 	The bounded design is nonetheless the slightly harder of the two at small samples, and the pattern is worth recording rather than averaging away. Fourteen of the $160$ cells fall below $0.93$; thirteen are classification and eleven have $n \leq 500$. The weakest is the logistic coefficient on $x_2$, whose coverage runs $0.912$, $0.890$, $0.908$, $0.948$ and $0.958$ across the five sample sizes while the ratio of the estimated standard error to the Monte Carlo standard deviation runs $0.87$, $0.91$, $0.96$, $1.00$ and $1.07$. This is finite-sample understatement of the standard error converging to correctness, not a failure of the assumption set: the mean ratio over all cells at $n=250$ is $0.958$ and at $n=5{,}000$ is $1.015$. The trimming weight is the plausible source, since it discards a shell of probability $O(h)$ and so costs effective sample size exactly where there is least of it to spare.
 	
